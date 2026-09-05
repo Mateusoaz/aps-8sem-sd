@@ -1,0 +1,17 @@
+{
+	"fonte": {
+		"id": "sensor-ar-01",
+		"tipo": "sensor",
+		"organização": "Prefeitura"
+	},
+	"estacao": "Outono",
+	"dataColetada": "2026-09-04 00:00",
+	"dados": {
+		"mp25": 12.0,
+		"co": 32.0,
+		"no3": 16.0,
+		"temp": 26.0
+	}
+}
+
+

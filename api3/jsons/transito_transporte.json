@@ -1,0 +1,6 @@
+{
+  "fonte": { "id": "sensor-radar-01", "tipo": "sensor", "organização": "Prefeitura" },
+  "veiculo": "automóvel",
+  "dataColetada": "2026-09-05 00:00",
+  "dados": { "rodovia": "BR-101", "velocidade": 80.0, "placa": "ABC1D23" }
+}

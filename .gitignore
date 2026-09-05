@@ -1,0 +1,19 @@
+# Bancos SQLite: gerados/localmente e nunca versionados
+api*/data/*.db
+api*/data/*.db-*
+
+# Artefatos de compilação
+api*/api/*.exe
+api*/api/bin/
+api*/api/obj/
+api*/api/target/
+
+# Ferramentas baixadas localmente
+tools/
+
+# Estrutura anterior, mantida apenas como cópia local durante a migração
+/data/
+/database/
+/jsons/
+/services/
+/simulator/
