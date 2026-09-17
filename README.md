@@ -14,6 +14,48 @@ O projeto contém quatro APIs independentes, todas em C#/.NET 9. Cada uma recebe
 - .NET SDK 9 ou superior;
 - Python 3.10 ou superior (apenas para os scripts de envio).
 
+Para a execução com contêineres, basta ter Docker Desktop com Docker Compose; o .NET SDK não é necessário no computador que vai executar as imagens.
+
+## Executar com Docker
+
+Na raiz do projeto, no PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d --build
+docker compose ps
+```
+
+O Compose cria quatro imagens versionadas (`1.0.0`), uma por API, e quatro volumes nomeados independentes para os bancos SQLite. As APIs ficam disponíveis nas portas 3001 a 3004. Se uma porta do computador estiver ocupada, altere apenas o valor `API*_HOST_PORT` no arquivo `.env`. Esse arquivo não deve ser enviado ao GitHub.
+
+Para verificar as rotas de saúde:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:3001/health/live
+Invoke-RestMethod http://127.0.0.1:3001/health/ready
+docker compose ps
+```
+
+Troque `3001` por `3002`, `3003` ou `3004` para conferir as demais APIs. `/health/live` indica que o processo está respondendo; `/health/ready` também consulta o SQLite e retorna HTTP 503 se ele estiver indisponível.
+
+Os clientes Python continuam na máquina e podem enviar dados aos contêineres:
+
+```powershell
+python .\api1\scripts\enviar_dados.py --amostras 10 --docker
+```
+
+Troque `api1` por `api2`, `api3` ou `api4`. A opção `--docker` evita consultar o banco SQLite local: no Compose, ele fica no volume do serviço.
+
+```powershell
+docker compose logs api1
+docker compose exec api1 id
+docker compose down
+```
+
+`down` preserva os volumes, portanto os dados sobrevivem à recriação dos contêineres. **Não use `docker compose down -v` se quiser manter os bancos:** essa opção apaga os quatro volumes.
+
+Nota: o roteiro da aula usa PostgreSQL, cache e fila em um projeto de exemplo. Este projeto usa SQLite embutido em cada API e ainda não tem cache nem fila; o Compose reflete a arquitetura real, sem criar serviços fictícios.
+
 ## Executar
 
 Em terminais separados, inicie as APIs desejadas:

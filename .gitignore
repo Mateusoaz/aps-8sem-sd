@@ -11,6 +11,9 @@ api*/api/target/
 # Ferramentas baixadas localmente
 tools/
 
+# Configuração local do Docker
+.env
+
 # Estrutura anterior, mantida apenas como cópia local durante a migração
 /data/
 /database/

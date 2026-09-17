@@ -1,0 +1,80 @@
+name: aps-sistemas-distribuidos
+
+services:
+  api1:
+    build:
+      context: ./api1/api
+    image: aps-qualidade-ar:1.0.0
+    environment:
+      PORT: "3001"
+      DB_PATH: /data/qualidade_ar.db
+    ports:
+      - "${API1_HOST_PORT:-3001}:3001"
+    volumes:
+      - api1-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3001/health/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
+  api2:
+    build:
+      context: ./api2/api
+    image: aps-alagamentos:1.0.0
+    environment:
+      PORT: "3002"
+      DB_PATH: /data/alagamentos.db
+    ports:
+      - "${API2_HOST_PORT:-3002}:3002"
+    volumes:
+      - api2-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3002/health/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
+  api3:
+    build:
+      context: ./api3/api
+    image: aps-transito:1.0.0
+    environment:
+      PORT: "3003"
+      DB_PATH: /data/transito.db
+    ports:
+      - "${API3_HOST_PORT:-3003}:3003"
+    volumes:
+      - api3-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3003/health/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
+  api4:
+    build:
+      context: ./api4/api
+    image: aps-inversao-termica:1.0.0
+    environment:
+      PORT: "3004"
+      DB_PATH: /data/inversao_termica.db
+    ports:
+      - "${API4_HOST_PORT:-3004}:3004"
+    volumes:
+      - api4-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3004/health/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  api1-data:
+  api2-data:
+  api3-data:
+  api4-data:

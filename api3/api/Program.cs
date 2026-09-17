@@ -10,6 +10,23 @@ app.MapPost("/api/v1/sensores/{sourceId}/eventos", async (string sourceId, Event
   if(string.IsNullOrWhiteSpace(payload.Fonte?.Id)||string.IsNullOrWhiteSpace(payload.Fonte.Tipo)||string.IsNullOrWhiteSpace(payload.Veiculo)||string.IsNullOrWhiteSpace(payload.DataColetada)||payload.Dados is null||string.IsNullOrWhiteSpace(payload.Dados.Rodovia))return Results.BadRequest(new{erro="Campos obrigatórios ausentes"});
   if(request.Headers.TryGetValue("X-Source-Id",out var header)&&header!=payload.Fonte.Id)return Results.BadRequest(new{erro="X-Source-Id diverge de fonte.id"}); if(sourceId!=payload.Fonte.Id)return Results.NotFound(new{erro="A rota deve usar o mesmo sensor de fonte.id"}); return await Db.Save(cs,payload);
 });
-app.Run("http://localhost:"+(Environment.GetEnvironmentVariable("PORT")??"3003"));
+app.MapGet("/health/live", () => Results.Ok(new { status = "live", instancia = Environment.MachineName }));
+app.MapGet("/health/ready", async () =>
+{
+  try
+  {
+    await using var connection = new SqliteConnection(cs);
+    await connection.OpenAsync();
+    await using var command = connection.CreateCommand();
+    command.CommandText = "SELECT 1";
+    await command.ExecuteScalarAsync();
+    return Results.Ok(new { status = "ready", instancia = Environment.MachineName });
+  }
+  catch (Exception)
+  {
+    return Results.StatusCode(503);
+  }
+});
+app.Run("http://0.0.0.0:"+(Environment.GetEnvironmentVariable("PORT")??"3003"));
 record Fonte(string Id,string Tipo,[property: JsonPropertyName("organização")] string? Organizacao); record Dados(string Rodovia,double Velocidade,string? Placa); record Evento(Fonte Fonte,string Veiculo,string DataColetada,Dados Dados);
 static class Db { public static async Task Init(string cs){await using var c=new SqliteConnection(cs);await c.OpenAsync();var q=c.CreateCommand();q.CommandText="PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS ingestoes(id INTEGER PRIMARY KEY AUTOINCREMENT,source_id TEXT NOT NULL,source_type TEXT NOT NULL,source_organization TEXT,collected_at TEXT NOT NULL,received_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,payload_hash TEXT NOT NULL UNIQUE,payload_json TEXT NOT NULL); CREATE TABLE IF NOT EXISTS eventos_transito(ingestion_id INTEGER PRIMARY KEY REFERENCES ingestoes(id),veiculo TEXT NOT NULL,rodovia TEXT NOT NULL,velocidade_kmh REAL NOT NULL,placa TEXT);";await q.ExecuteNonQueryAsync();} public static async Task<IResult> Save(string cs,Evento p){var json=System.Text.Json.JsonSerializer.Serialize(p);var hash=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json))).ToLowerInvariant();await using var c=new SqliteConnection(cs);await c.OpenAsync();var e=c.CreateCommand();e.CommandText="SELECT id FROM ingestoes WHERE payload_hash=$hash";e.Parameters.AddWithValue("$hash",hash);if(await e.ExecuteScalarAsync() is long old)return Results.Ok(new{status="já recebido",ingestionId=old});await using var tx=(SqliteTransaction)await c.BeginTransactionAsync();try{var i=c.CreateCommand();i.Transaction=tx;i.CommandText="INSERT INTO ingestoes(source_id,source_type,source_organization,collected_at,payload_hash,payload_json) VALUES($id,$type,$org,$date,$hash,$json) RETURNING id";i.Parameters.AddWithValue("$id",p.Fonte.Id);i.Parameters.AddWithValue("$type",p.Fonte.Tipo);i.Parameters.AddWithValue("$org",(object?)p.Fonte.Organizacao??DBNull.Value);i.Parameters.AddWithValue("$date",p.DataColetada);i.Parameters.AddWithValue("$hash",hash);i.Parameters.AddWithValue("$json",json);var id=(long)(await i.ExecuteScalarAsync())!;var r=c.CreateCommand();r.Transaction=tx;r.CommandText="INSERT INTO eventos_transito VALUES($id,$vehicle,$road,$speed,$plate)";r.Parameters.AddWithValue("$id",id);r.Parameters.AddWithValue("$vehicle",p.Veiculo);r.Parameters.AddWithValue("$road",p.Dados.Rodovia);r.Parameters.AddWithValue("$speed",p.Dados.Velocidade);r.Parameters.AddWithValue("$plate",(object?)p.Dados.Placa??DBNull.Value);await r.ExecuteNonQueryAsync();await tx.CommitAsync();return Results.Created($"/ingestoes/{id}",new{status="recebido",ingestionId=id});}catch(Exception x){await tx.RollbackAsync();return Results.Problem(x.Message,statusCode:500);}}}
