@@ -17,3 +17,10 @@ tools/
 /jsons/
 /services/
 /simulator/
+
+# Credenciais locais para o PostgreSQL
+.env
+
+# Artefatos da API da raiz
+/bin/
+/obj/

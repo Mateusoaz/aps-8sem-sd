@@ -27,6 +27,52 @@ Em terminais separados, inicie as APIs desejadas:
 
 Cada API cria automaticamente seu banco SQLite em `data/`. Não é necessário servidor de banco de dados.
 
+## Executar com Docker
+
+Com o Docker Desktop em execução, crie o arquivo de credenciais e inicie a pilha completa:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d --build
+docker compose ps
+```
+
+O Compose publica a API principal na porta `8080`, as APIs de sensores nas portas `3001` a `3004` e preserva os bancos em volumes nomeados do Docker. Para verificar a disponibilidade:
+
+```powershell
+Invoke-RestMethod http://localhost:8080/health/ready
+Invoke-RestMethod http://localhost:3001/health/ready
+Invoke-RestMethod http://localhost:3002/health/ready
+Invoke-RestMethod http://localhost:3003/health/ready
+Invoke-RestMethod http://localhost:3004/health/ready
+```
+
+Para encerrar os contêineres, preservando os dados:
+
+```powershell
+docker compose down
+```
+
+O cache Redis e a fila RabbitMQ tambem iniciam com a pilha. O painel da fila fica em `http://localhost:15672`, usando as credenciais definidas no `.env`.
+
+Para executar o cliente leve conteinerizado, que envia uma leitura de exemplo para a `api1` pela rede interna do Compose:
+
+```powershell
+docker compose --profile ferramentas run --rm cliente
+```
+
+## Evidências para o relatório
+
+```powershell
+docker images
+docker compose ps
+docker compose exec api1 id
+docker compose restart api1
+docker compose ps
+```
+
+O comando `docker compose down` preserva os volumes. Use `docker compose down -v` somente para apagar os bancos, o cache e a fila.
+
 Para enviar leituras de exemplo:
 
 ```powershell

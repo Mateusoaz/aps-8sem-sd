@@ -1,0 +1,177 @@
+services:
+  banco:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - dados_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  cache:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - dados_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  fila:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "15672:15672"
+    volumes:
+      - dados_rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    image: sensor-api:1.0.0
+    environment:
+      CONNECTION_STRING: Host=banco;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    ports:
+      - "8080:8080"
+    depends_on:
+      banco:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:8080/health/ready || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api1:
+    build: ./api1/api
+    image: qualidade-ar-api:1.0.0
+    environment:
+      PORT: 3001
+      DB_PATH: /data/qualidade_ar.db
+    ports:
+      - "3001:3001"
+    volumes:
+      - dados_api1:/data
+    depends_on:
+      api1-permissoes:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/health/ready > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api1-permissoes:
+    image: busybox:1.37
+    user: "0"
+    command: ["sh", "-c", "chown -R 1654:1654 /data"]
+    volumes:
+      - dados_api1:/data
+
+  api2:
+    build: ./api2/api
+    image: alagamentos-api:1.0.0
+    environment:
+      PORT: 3002
+      DB_PATH: /data/alagamentos.db
+    ports:
+      - "3002:3002"
+    volumes:
+      - dados_api2:/data
+    depends_on:
+      api2-permissoes:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3002/health/ready > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api2-permissoes:
+    image: busybox:1.37
+    user: "0"
+    command: ["sh", "-c", "chown -R 1654:1654 /data"]
+    volumes:
+      - dados_api2:/data
+
+  api3:
+    build: ./api3/api
+    image: transito-api:1.0.0
+    environment:
+      PORT: 3003
+      DB_PATH: /data/transito.db
+    ports:
+      - "3003:3003"
+    volumes:
+      - dados_api3:/data
+    depends_on:
+      api3-permissoes:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3003/health/ready > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api3-permissoes:
+    image: busybox:1.37
+    user: "0"
+    command: ["sh", "-c", "chown -R 1654:1654 /data"]
+    volumes:
+      - dados_api3:/data
+
+  api4:
+    build: ./api4/api
+    image: inversao-termica-api:1.0.0
+    environment:
+      PORT: 3004
+      DB_PATH: /data/inversao_termica.db
+    ports:
+      - "3004:3004"
+    volumes:
+      - dados_api4:/data
+    depends_on:
+      api4-permissoes:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3004/health/ready > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api4-permissoes:
+    image: busybox:1.37
+    user: "0"
+    command: ["sh", "-c", "chown -R 1654:1654 /data"]
+    volumes:
+      - dados_api4:/data
+
+  cliente:
+    build: ./cliente
+    image: cliente-sensor:1.0.0
+    profiles: ["ferramentas"]
+    depends_on:
+      api1:
+        condition: service_healthy
+
+volumes:
+  dados_postgres:
+  dados_api1:
+  dados_api2:
+  dados_api3:
+  dados_api4:
+  dados_redis:
+  dados_rabbitmq:
