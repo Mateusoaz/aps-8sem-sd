@@ -11,6 +11,7 @@ SUFFIX = "ocorrencias"
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--amostras", type=int, default=1)
+    parser.add_argument("--docker", action="store_true", help="não consulta o SQLite local; o banco está no volume Docker")
     args = parser.parse_args()
     if args.amostras < 1: parser.error("--amostras deve ser maior que zero")
     for indice in range(args.amostras):
@@ -18,9 +19,10 @@ def main():
         payload["dataColetada"] = (datetime.now() + timedelta(microseconds=indice)).strftime("%Y-%m-%d %H:%M:%S.%f")
         sensor = payload["fonte"]["id"]
         body = json.dumps(payload, ensure_ascii=False).encode()
-        request = Request(f"http://localhost:3002/api/v1/sensores/{sensor}/{SUFFIX}", data=body, method="POST", headers={"Content-Type":"application/json", "X-Source-Id":sensor})
+        request = Request(f"http://127.0.0.1:3002/api/v1/sensores/{sensor}/{SUFFIX}", data=body, method="POST", headers={"Content-Type":"application/json", "X-Source-Id":sensor})
         inicio = time.perf_counter()
         with urlopen(request, timeout=5) as response:
             print(f"HTTP {response.status} | {(time.perf_counter()-inicio)*1000:.2f} ms | {response.read().decode()}")
-    with sqlite3.connect(DB_FILE) as db: print("Registros persistidos:", db.execute("SELECT COUNT(*) FROM ingestoes").fetchone()[0])
+    if not args.docker:
+        with sqlite3.connect(DB_FILE) as db: print("Registros persistidos:", db.execute("SELECT COUNT(*) FROM ingestoes").fetchone()[0])
 if __name__ == "__main__": main()

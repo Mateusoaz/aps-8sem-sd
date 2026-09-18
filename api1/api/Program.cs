@@ -17,7 +17,24 @@ app.MapPost("/api/v1/sensores/{sourceId}/leituras", async (string sourceId, Leit
     if (sourceId != payload.Fonte.Id) return Results.NotFound(new { erro = "A rota deve usar o mesmo sensor de fonte.id" });
     return await Database.Save(connectionString, payload.Fonte, payload.DataColetada, payload, "leituras_qualidade_ar", "estacao,mp25,co,no3,temperatura_c", "$estacao,$mp25,$co,$no3,$temp", cmd => { cmd.Parameters.AddWithValue("$estacao", payload.Estacao); cmd.Parameters.AddWithValue("$mp25", payload.Dados.Mp25); cmd.Parameters.AddWithValue("$co", payload.Dados.Co); cmd.Parameters.AddWithValue("$no3", payload.Dados.No3); cmd.Parameters.AddWithValue("$temp", payload.Dados.Temp); });
 });
-app.Run("http://localhost:" + (Environment.GetEnvironmentVariable("PORT") ?? "3001"));
+app.MapGet("/health/live", () => Results.Ok(new { status = "live", instancia = Environment.MachineName }));
+app.MapGet("/health/ready", async () =>
+{
+    try
+    {
+        await using var connection = new SqliteConnection(connectionString);
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT 1";
+        await command.ExecuteScalarAsync();
+        return Results.Ok(new { status = "ready", instancia = Environment.MachineName });
+    }
+    catch (Exception)
+    {
+        return Results.StatusCode(503);
+    }
+});
+app.Run("http://0.0.0.0:" + (Environment.GetEnvironmentVariable("PORT") ?? "3001"));
 
 record Fonte(string Id, string Tipo, [property: JsonPropertyName("organização")] string? Organizacao);
 record Dados(double Mp25, double Co, double No3, double Temp);
