@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup><TargetFramework>net9.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
-  <ItemGroup><PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.8" /></ItemGroup>
+  <ItemGroup><PackageReference Include="Npgsql" Version="9.0.5" /><Compile Include="../../PostgresStore.cs" Link="PostgresStore.cs" /><Compile Include="../../DomainStore.cs" Link="DomainStore.cs" /></ItemGroup>
 </Project>

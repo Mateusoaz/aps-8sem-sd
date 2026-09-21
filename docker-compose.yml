@@ -1,80 +1,82 @@
 name: aps-sistemas-distribuidos
 
 services:
-  api1:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+      POSTGRES_DB: aps_monitoramento
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-postgres.sql:/docker-entrypoint-initdb.d/init-postgres.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=\"$$POSTGRES_PASSWORD\" psql -h postgres -U postgres -d aps_monitoramento -tAc 'SELECT 1' >/dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  air-quality-api:
+    restart: unless-stopped
     build:
-      context: ./api1/api
-    image: aps-qualidade-ar:1.0.0
+      context: .
+      dockerfile: api1/api/Dockerfile
+    image: aps-air-quality:3.0.0
     environment:
       PORT: "3001"
-      DB_PATH: /data/qualidade_ar.db
+      DATABASE_URL: Host=postgres;Database=aps_monitoramento;Username=postgres;Password=${POSTGRES_PASSWORD}
     ports:
       - "${API1_HOST_PORT:-3001}:3001"
-    volumes:
-      - api1-data:/data
+    depends_on:
+      postgres: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3001/health/ready"]
       interval: 10s
       timeout: 3s
-      retries: 3
+      retries: 5
       start_period: 15s
 
-  api2:
+  overflow-api:
+    restart: unless-stopped
     build:
-      context: ./api2/api
-    image: aps-alagamentos:1.0.0
+      context: .
+      dockerfile: api2/api/Dockerfile
+    image: aps-overflow:3.0.0
     environment:
       PORT: "3002"
-      DB_PATH: /data/alagamentos.db
+      DATABASE_URL: Host=postgres;Database=aps_monitoramento;Username=postgres;Password=${POSTGRES_PASSWORD}
     ports:
       - "${API2_HOST_PORT:-3002}:3002"
-    volumes:
-      - api2-data:/data
+    depends_on:
+      postgres: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3002/health/ready"]
       interval: 10s
       timeout: 3s
-      retries: 3
+      retries: 5
       start_period: 15s
 
-  api3:
+  thermal-inversion-api:
+    restart: unless-stopped
     build:
-      context: ./api3/api
-    image: aps-transito:1.0.0
+      context: .
+      dockerfile: api4/api/Dockerfile
+    image: aps-thermal-inversion:3.0.0
     environment:
       PORT: "3003"
-      DB_PATH: /data/transito.db
+      DATABASE_URL: Host=postgres;Database=aps_monitoramento;Username=postgres;Password=${POSTGRES_PASSWORD}
     ports:
       - "${API3_HOST_PORT:-3003}:3003"
-    volumes:
-      - api3-data:/data
+    depends_on:
+      postgres: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3003/health/ready"]
       interval: 10s
       timeout: 3s
-      retries: 3
-      start_period: 15s
-
-  api4:
-    build:
-      context: ./api4/api
-    image: aps-inversao-termica:1.0.0
-    environment:
-      PORT: "3004"
-      DB_PATH: /data/inversao_termica.db
-    ports:
-      - "${API4_HOST_PORT:-3004}:3004"
-    volumes:
-      - api4-data:/data
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3004/health/ready"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
+      retries: 5
       start_period: 15s
 
 volumes:
-  api1-data:
-  api2-data:
-  api3-data:
-  api4-data:
+  postgres-data:
+    name: aps-sistemas-distribuidos_postgres-data
