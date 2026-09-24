@@ -1,9 +1,0 @@
-bin/
-obj/
-.git/
-.env
-*.db
-*.db-*
-*.pfx
-Dockerfile*
-README*

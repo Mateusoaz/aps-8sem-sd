@@ -1,80 +1,120 @@
-name: aps-sistemas-distribuidos
+# Pilha completa: 1 banco PostgreSQL + 3 APIs .NET 8, cada um em seu próprio contêiner.
+# Subir tudo:   docker compose up -d --build
+# Derrubar:     docker compose down          (mantém os dados)
+# Zerar dados:  docker compose down -v       (apaga o volume do banco)
+
+name: aps-sd
 
 services:
-  api1:
-    build:
-      context: ./api1/api
-    image: aps-qualidade-ar:1.0.0
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      PORT: "3001"
-      DB_PATH: /data/qualidade_ar.db
+      POSTGRES_USER: ${POSTGRES_USER:?Defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
     ports:
-      - "${API1_HOST_PORT:-3001}:3001"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - api1-data:/data
+      # Volume nomeado: os dados sobrevivem a restart/down do contêiner
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3001/health/ready"]
+      # $$ escapa o $ para a variável ser lida DENTRO do contêiner
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  air-quality-api:
+    build: ./src/AirQuality.Api
+    image: aps-sd/air-quality-api:${APP_VERSION:-1.0.0}
+    restart: unless-stopped
+    environment:
+      # "postgres" é o NOME DO SERVIÇO acima — o DNS interno do Compose resolve para o IP do contêiner
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=air_quality;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Alerts__Pm25Limit: ${AIR_PM25_LIMIT:-25}
+      Alerts__Pm25ConsecutiveReadings: ${AIR_PM25_CONSECUTIVE_READINGS:-3}
+    ports:
+      - "${AIR_QUALITY_API_PORT:-5001}:8080"
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/health/live"]
       interval: 10s
       timeout: 3s
       retries: 3
       start_period: 15s
 
-  api2:
-    build:
-      context: ./api2/api
-    image: aps-alagamentos:1.0.0
+  flooding-api:
+    build: ./src/Flooding.Api
+    image: aps-sd/flooding-api:${APP_VERSION:-1.0.0}
+    restart: unless-stopped
     environment:
-      PORT: "3002"
-      DB_PATH: /data/alagamentos.db
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=flooding;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Alerts__OverflowLevelCm: ${FLOODING_OVERFLOW_LEVEL_CM:-300}
     ports:
-      - "${API2_HOST_PORT:-3002}:3002"
-    volumes:
-      - api2-data:/data
+      - "${FLOODING_API_PORT:-5002}:8080"
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3002/health/ready"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/health/live"]
       interval: 10s
       timeout: 3s
       retries: 3
       start_period: 15s
 
-  api3:
-    build:
-      context: ./api3/api
-    image: aps-transito:1.0.0
+  thermal-inversion-api:
+    build: ./src/ThermalInversion.Api
+    image: aps-sd/thermal-inversion-api:${APP_VERSION:-1.0.0}
+    restart: unless-stopped
     environment:
-      PORT: "3003"
-      DB_PATH: /data/transito.db
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=thermal_inversion;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Alerts__MinInversionGradientC: ${THERMAL_MIN_INVERSION_GRADIENT_C:-0}
     ports:
-      - "${API3_HOST_PORT:-3003}:3003"
-    volumes:
-      - api3-data:/data
+      - "${THERMAL_INVERSION_API_PORT:-5003}:8080"
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3003/health/ready"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/health/live"]
       interval: 10s
       timeout: 3s
       retries: 3
       start_period: 15s
 
-  api4:
-    build:
-      context: ./api4/api
-    image: aps-inversao-termica:1.0.0
+  # Gerador de carga — NÃO sobe com "docker compose up" (está no profile "load").
+  # Rodar:  docker compose run --rm load-generator --rate 100 --duration 60
+  load-generator:
+    build: ./tools/load-generator
+    image: aps-sd/load-generator:${APP_VERSION:-1.0.0}
+    profiles: ["load"]
     environment:
-      PORT: "3004"
-      DB_PATH: /data/inversao_termica.db
-    ports:
-      - "${API4_HOST_PORT:-3004}:3004"
-    volumes:
-      - api4-data:/data
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:3004/health/ready"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      start_period: 15s
+      # Dentro da rede do Compose, as APIs são achadas pelo nome do serviço, na porta interna 8080
+      AIR_QUALITY_API_URL: http://air-quality-api:8080
+      FLOODING_API_URL: http://flooding-api:8080
+      THERMAL_INVERSION_API_URL: http://thermal-inversion-api:8080
+    command: ["--rate", "50", "--duration", "60"]
+    networks:
+      - backend
+    depends_on:
+      air-quality-api:
+        condition: service_healthy
+      flooding-api:
+        condition: service_healthy
+      thermal-inversion-api:
+        condition: service_healthy
+
+networks:
+  backend:
 
 volumes:
-  api1-data:
-  api2-data:
-  api3-data:
-  api4-data:
+  postgres-data:

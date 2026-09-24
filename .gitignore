@@ -1,22 +1,17 @@
-# Bancos SQLite: gerados/localmente e nunca versionados
-api*/data/*.db
-api*/data/*.db-*
-
-# Artefatos de compilação
-api*/api/*.exe
-api*/api/bin/
-api*/api/obj/
-api*/api/target/
-
-# Ferramentas baixadas localmente
-tools/
-
-# Configuração local do Docker
+# Variáveis de ambiente reais (contêm senha) — só o .env.example é versionado
 .env
 
-# Estrutura anterior, mantida apenas como cópia local durante a migração
-/data/
-/database/
-/jsons/
-/services/
-/simulator/
+# Artefatos de build do .NET
+bin/
+obj/
+*.user
+*.suo
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+
+# Python (gerador de carga, etapas futuras)
+__pycache__/
+.venv/

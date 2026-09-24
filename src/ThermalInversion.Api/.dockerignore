@@ -1,0 +1,12 @@
+# Não enviar para o contexto do build: artefatos locais, git e arquivos de IDE
+bin/
+obj/
+.git
+.gitignore
+.vs/
+.vscode/
+.idea/
+*.user
+*.md
+Dockerfile
+.dockerignore
