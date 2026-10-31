@@ -1,0 +1,7 @@
+air-quality-api-68cd867567-p89mz         0/1   Running   1 (31m ago)    22h
+flooding-api-64c64bf-rq55w               0/1   Running   13 (31m ago)   21d
+postgres-0                               1/1   Running   2 (31m ago)    15d
+rabbitmq-0                               1/1   Running   11 (31m ago)   21d
+redis-86f665b87d-jfrtr                   1/1   Running   11 (31m ago)   21d
+thermal-inversion-api-7467c478df-5879z   0/1   Running   11 (31m ago)   20d
+web-client-7447b58975-tlqqf              1/1   Running   1 (31m ago)    22h
