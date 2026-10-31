@@ -3,6 +3,7 @@ using Flooding.Api.Options;
 using Flooding.Api.Services;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,7 +32,29 @@ var app = builder.Build();
 
 await DatabaseInitializer.InitializeAsync(app.Services, app.Logger);
 
-app.UseSwagger();
+// Prefixo do gateway: o Ingress encaminha /<prefixo>/... para este serviço (PATH_BASE vem do manifesto).
+// O UsePathBase remove o prefixo antes de o roteamento escolher a rota.
+var pathBase = Environment.GetEnvironmentVariable("PATH_BASE");
+if (!string.IsNullOrEmpty(pathBase))
+    app.UsePathBase(pathBase);
+app.UseRouting();
+
+// Evidência do balanceamento: toda resposta informa qual pod a atendeu e a versão da imagem.
+var podName = Environment.MachineName;
+var appVersion = Environment.GetEnvironmentVariable("APP_VERSION") ?? "dev";
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Pod"] = podName;
+    context.Response.Headers["X-Versao"] = appVersion;
+    await next();
+});
+
+// Atrás do gateway, o Swagger precisa saber o prefixo para o "Try it out" chamar a URL certa.
+app.UseSwagger(options => options.PreSerializeFilters.Add((document, request) =>
+{
+    if (request.PathBase.HasValue)
+        document.Servers = [new OpenApiServer { Url = request.PathBase.Value }];
+}));
 app.UseSwaggerUI();
 
 app.MapControllers();
@@ -43,5 +66,15 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => fa
 // Readiness: "estou apto a receber tráfego?" — verifica o banco.
 // Se falhar, o orquestrador TIRA do balanceamento, sem reiniciar.
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
+
+// Gasta CPU de propósito (n iterações), para acionar o HPA nos experimentos de escala.
+app.MapGet("/processar", (int n = 1_000_000) =>
+{
+    n = Math.Clamp(n, 1, 50_000_000);
+    double total = 0;
+    for (var i = 1; i <= n; i++)
+        total += Math.Sqrt(i);
+    return Results.Ok(new { n, total, instancia = podName });
+});
 
 app.Run();

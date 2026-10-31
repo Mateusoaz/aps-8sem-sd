@@ -8,7 +8,7 @@ public static class DatabaseInitializer
     /// Cria o banco e as tabelas se ainda não existirem.
     /// Tenta várias vezes com espera: se o Postgres demorar a subir, a API espera em vez de morrer.
     /// </summary>
-    public static async Task InitializeAsync(IServiceProvider services, ILogger logger, int maxAttempts = 10)
+    public static async Task InitializeAsync(IServiceProvider services, ILogger logger, int maxAttempts = 30)
     {
         for (var attempt = 1; ; attempt++)
         {

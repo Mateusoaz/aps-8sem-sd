@@ -1,0 +1,34 @@
+# Ingress: o gateway único do cluster. Tudo entra pela porta 8081 do PC (mapeada no "k3d cluster create")
+# e é roteado POR CAMINHO para o Service certo. O k3d já vem com o Traefik fazendo esse papel.
+# O prefixo chega inteiro na API; o UsePathBase (PATH_BASE) o remove antes do roteamento.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway
+  namespace: aps
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: /air-quality
+            pathType: Prefix
+            backend:
+              service:
+                name: air-quality-api
+                port:
+                  number: 80
+          - path: /flooding
+            pathType: Prefix
+            backend:
+              service:
+                name: flooding-api
+                port:
+                  number: 80
+          - path: /thermal-inversion
+            pathType: Prefix
+            backend:
+              service:
+                name: thermal-inversion-api
+                port:
+                  number: 80

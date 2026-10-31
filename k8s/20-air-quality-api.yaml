@@ -1,0 +1,85 @@
+# API de qualidade do ar: serviço SEM estado (os dados ficam no banco) -> Deployment + Service.
+# Deployment: "quero sempre N cópias (réplicas) deste pod". Se uma morrer, ele cria outra.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: air-quality-api
+  namespace: aps
+spec:
+  replicas: 2                # 2 cópias: se uma cair, a outra continua atendendo
+  selector:
+    matchLabels:
+      app: air-quality-api   # o Deployment "é dono" dos pods com este rótulo
+  strategy:
+    type: RollingUpdate      # versão nova entra aos poucos, sem derrubar o serviço
+    rollingUpdate:
+      maxSurge: 1            # até 1 pod a mais durante a troca
+      maxUnavailable: 0      # nunca fica com menos pods prontos que o pedido
+  template:                  # o "molde" de cada pod
+    metadata:
+      labels:
+        app: air-quality-api
+    spec:
+      # Espalha as réplicas por nós diferentes: se um nó (máquina) cair, sobra réplica no outro.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: air-quality-api
+      containers:
+        - name: api
+          image: aps-sd/air-quality-api:1.1.0     # tag fixa; importada no cluster com "k3d image import"
+          imagePullPolicy: IfNotPresent           # usa a imagem importada, não tenta baixar da internet
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: aps-config                  # BANCO_HOST e regras de alerta
+          env:
+            - name: PATH_BASE                     # prefixo que o gateway (Ingress) usa para esta API
+              value: "/air-quality"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef: { name: banco-credenciais, key: POSTGRES_USER }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: banco-credenciais, key: POSTGRES_PASSWORD }
+            # $(VAR) é trocado pelo Kubernetes pelo valor de uma variável definida ANTES
+            - name: ConnectionStrings__Default
+              value: "Host=$(BANCO_HOST);Port=5432;Database=air_quality;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD)"
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }   # sem requests de CPU o HPA não consegue calcular o uso
+            limits:   { cpu: 500m, memory: 320Mi }
+          # Startup: dá até 5 min (100 x 3 s) para a API criar o banco e abrir a porta.
+          # Enquanto ela não passa, a liveness não vale (não reinicia a API que só está demorando).
+          startupProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 3
+            failureThreshold: 100
+          # Liveness: "o processo está vivo?". Não olha o banco. 3 falhas -> REINICIA o contêiner.
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            failureThreshold: 3
+          # Readiness: "pode receber tráfego?". Consulta o banco. 2 falhas -> SAI do Service, sem reiniciar.
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+---
+# Service: um nome DNS e IP fixos ("air-quality-api") na frente dos pods, que mudam de IP a cada recriação.
+# Ele balanceia entre os pods prontos (os que passam na readiness).
+apiVersion: v1
+kind: Service
+metadata:
+  name: air-quality-api
+  namespace: aps
+spec:
+  selector:
+    app: air-quality-api
+  ports:
+    - port: 80             # porta do Service
+      targetPort: 8080     # porta do contêiner

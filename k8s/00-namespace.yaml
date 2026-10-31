@@ -1,0 +1,6 @@
+# Namespace: uma "pasta" dentro do cluster. Tudo da APS fica em "aps",
+# e "kubectl delete namespace aps" apaga a aplicação inteira de uma vez.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aps

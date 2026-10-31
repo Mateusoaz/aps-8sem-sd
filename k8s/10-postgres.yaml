@@ -1,0 +1,77 @@
+# Banco PostgreSQL: serviço COM estado -> StatefulSet + disco próprio.
+# Diferença para o Deployment: o pod tem nome fixo (postgres-0) e o MESMO disco volta
+# para ele quando é recriado. Por isso os dados sobrevivem a um pod apagado.
+#
+# Service headless (clusterIP: None): não balanceia, só dá o nome DNS "postgres".
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: aps
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: aps
+spec:
+  serviceName: postgres
+  replicas: 1                     # banco não se escala só aumentando réplicas (cada uma teria dados próprios)
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef: { name: banco-credenciais, key: POSTGRES_USER }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: banco-credenciais, key: POSTGRES_PASSWORD }
+            # Subpasta dentro do disco: alguns discos já vêm com "lost+found" na raiz,
+            # e o Postgres se recusa a iniciar numa pasta que não está vazia.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }   # o mínimo reservado no nó
+            limits:   { cpu: "1", memory: 512Mi }    # o teto: passou da memória, o contêiner é morto
+          volumeMounts:
+            - name: dados
+              mountPath: /var/lib/postgresql/data
+          # Liveness: só "o processo está de pé?" (porta aberta). 3 falhas -> reinicia o contêiner.
+          livenessProbe:
+            tcpSocket: { port: 5432 }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 3
+          # Readiness: "já aceita conexões?". Se falhar, sai do Service, sem reiniciar.
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\""]
+            periodSeconds: 5
+            failureThreshold: 3
+  # Um disco (PersistentVolumeClaim) por pod: dados-postgres-0, de 1 GiB.
+  # No k3d quem cria o disco é o "local-path", uma pasta dentro do nó.
+  volumeClaimTemplates:
+    - metadata:
+        name: dados
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

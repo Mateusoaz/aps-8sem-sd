@@ -1,0 +1,14 @@
+# ConfigMap: configuração que NÃO é segredo. Vira variável de ambiente nos pods (envFrom).
+# "__" é o separador de seção do .NET: Alerts__Pm25Limit = Alerts:Pm25Limit no appsettings.
+# Senhas ficam no Secret "banco-credenciais", criado a partir do .env.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aps-config
+  namespace: aps
+data:
+  BANCO_HOST: "postgres"                    # nome do Service do banco (o DNS do cluster resolve)
+  Alerts__Pm25Limit: "25"                   # qualidade do ar
+  Alerts__Pm25ConsecutiveReadings: "3"
+  Alerts__OverflowLevelCm: "300"            # alagamento
+  Alerts__MinInversionGradientC: "0"        # inversão térmica

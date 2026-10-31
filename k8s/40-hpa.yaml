@@ -1,0 +1,22 @@
+# HPA (autoescalonador horizontal): ajusta sozinho o número de réplicas pela CPU.
+# Uso médio acima de 50% do "requests" -> cria pods (até 10); carga baixa -> volta para 2.
+# Quem mede a CPU é o metrics-server, que já vem no k3d.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: air-quality-api
+  namespace: aps
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: air-quality-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50

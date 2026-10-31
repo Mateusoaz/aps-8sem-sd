@@ -7,6 +7,9 @@ obj/
 *.user
 *.suo
 
+# Executáveis baixados à mão (ex.: k8s/k3d.exe)
+*.exe
+
 # IDEs
 .vs/
 .vscode/

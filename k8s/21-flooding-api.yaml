@@ -1,0 +1,77 @@
+# API de alagamento: igual à de qualidade do ar (veja os comentários em 20-air-quality-api.yaml).
+# Muda só o nome, a imagem, o PATH_BASE e o banco.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flooding-api
+  namespace: aps
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flooding-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: flooding-api
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: flooding-api
+      containers:
+        - name: api
+          image: aps-sd/flooding-api:1.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: aps-config
+          env:
+            - name: PATH_BASE
+              value: "/flooding"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef: { name: banco-credenciais, key: POSTGRES_USER }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: banco-credenciais, key: POSTGRES_PASSWORD }
+            - name: ConnectionStrings__Default
+              value: "Host=$(BANCO_HOST);Port=5432;Database=flooding;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD)"
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 320Mi }
+          startupProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 3
+            failureThreshold: 100
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flooding-api
+  namespace: aps
+spec:
+  selector:
+    app: flooding-api
+  ports:
+    - port: 80
+      targetPort: 8080
