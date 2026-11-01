@@ -1,0 +1,40 @@
+{
+  "nome": "51g-r8-exec3",
+  "parametros": {
+    "trabalhadores": 64,
+    "duracao_s": 60,
+    "aquecimento_s": 10,
+    "rampa_s": null,
+    "processos_gerador": 4,
+    "url": "http://localhost:8081/air-quality/api/v1/air-quality/areas/CENTRO/average?hours=24",
+    "replicas": 8,
+    "pool_conexoes": 8
+  },
+  "inicio": "2026-11-01T12:31:41",
+  "inicio_epoch": 1793547101.2133777,
+  "eventos": [],
+  "requisicoes": 88675,
+  "falhas": 0,
+  "taxa_erro_pct": 0.0,
+  "vazao_req_s": 1773.5,
+  "latencia_media_ms": 36.1,
+  "p50_ms": 8.66,
+  "p95_ms": 45.96,
+  "p99_ms": 905.44,
+  "little_trabalhadores": 64.0,
+  "por_pod": {
+    "air-quality-api-f8944cd8c-vnbwk": 11085,
+    "air-quality-api-f8944cd8c-kdmqp": 11086,
+    "air-quality-api-f8944cd8c-8fcxb": 11086,
+    "air-quality-api-f8944cd8c-5547s": 11082,
+    "air-quality-api-f8944cd8c-6kfsn": 11084,
+    "air-quality-api-f8944cd8c-hhfn5": 11084,
+    "air-quality-api-f8944cd8c-vcggb": 11084,
+    "air-quality-api-f8944cd8c-9rzl5": 11084
+  },
+  "por_versao": {
+    "1.1.0": 88675
+  },
+  "por_erro": {},
+  "requisicoes_no_aquecimento": 24081
+}

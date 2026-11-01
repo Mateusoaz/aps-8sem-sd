@@ -1,0 +1,45 @@
+{
+  "nome": "53-pod-exec3",
+  "parametros": {
+    "trabalhadores": 16,
+    "duracao_s": 60,
+    "aquecimento_s": 10,
+    "rampa_s": null,
+    "processos_gerador": 4,
+    "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate",
+    "replicas": 2
+  },
+  "inicio": "2026-11-01T04:35:41",
+  "inicio_epoch": 1793518541.244853,
+  "eventos": [
+    {
+      "evento": "kubectl delete pod air-quality-api-68cd867567-j5z84",
+      "epoch": 1793518566.336229,
+      "hora": "04:36:06",
+      "decorrido_s": 25.1
+    }
+  ],
+  "requisicoes": 22566,
+  "falhas": 10,
+  "taxa_erro_pct": 0.044,
+  "vazao_req_s": 451.1,
+  "latencia_media_ms": 35.42,
+  "p50_ms": 25.78,
+  "p95_ms": 93.41,
+  "p99_ms": 104.56,
+  "little_trabalhadores": 16.0,
+  "por_pod": {
+    "air-quality-api-68cd867567-j5z84": 4337,
+    "air-quality-api-68cd867567-mfmms": 12271,
+    "(sem X-Pod)": 10,
+    "air-quality-api-68cd867567-d7c8x": 5948
+  },
+  "por_versao": {
+    "1.1.0": 22556,
+    "(sem)": 10
+  },
+  "por_erro": {
+    "http_502": 10
+  },
+  "requisicoes_no_aquecimento": 5734
+}

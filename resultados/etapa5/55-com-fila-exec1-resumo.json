@@ -1,0 +1,33 @@
+{
+  "nome": "55-com-fila-exec1",
+  "parametros": {
+    "trabalhadores": 32,
+    "duracao_s": 60,
+    "aquecimento_s": 10,
+    "rampa_s": null,
+    "processos_gerador": 4,
+    "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate",
+    "cenario": "com-fila",
+    "replicas": 1
+  },
+  "inicio": "2026-11-01T05:03:36",
+  "inicio_epoch": 1793520216.8557403,
+  "eventos": [],
+  "requisicoes": 17573,
+  "falhas": 0,
+  "taxa_erro_pct": 0.0,
+  "vazao_req_s": 351.5,
+  "latencia_media_ms": 90.97,
+  "p50_ms": 97.75,
+  "p95_ms": 189.8,
+  "p99_ms": 196.1,
+  "little_trabalhadores": 32.0,
+  "por_pod": {
+    "air-quality-api-68cd867567-5bzzx": 17573
+  },
+  "por_versao": {
+    "1.1.0": 17573
+  },
+  "por_erro": {},
+  "requisicoes_no_aquecimento": 2881
+}

@@ -23,6 +23,10 @@ spec:
         - name: api
           image: aps-sd/thermal-inversion-api:1.1.0       # tag fixa; importada com k3d image import
           imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:                       # espera o gateway parar de enviar tráfego antes do encerramento
+              exec:
+                command: ["sleep", "5"]
           ports:
             - containerPort: 8080
           envFrom:
@@ -44,7 +48,7 @@ spec:
               valueFrom:
                 secretKeyRef: { name: banco-credenciais, key: RABBITMQ_PASSWORD }
             - name: ConnectionStrings__Default
-              value: "Host=$(BANCO_HOST);Port=5432;Database=thermal_inversion;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD)"
+              value: "Host=$(BANCO_HOST);Port=5432;Database=thermal_inversion;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD);Maximum Pool Size=8"
             - name: ConnectionStrings__Redis
               value: "$(CACHE_HOST):6379,abortConnect=false,connectTimeout=1000,syncTimeout=1000"
             - name: ConnectionStrings__RabbitMq

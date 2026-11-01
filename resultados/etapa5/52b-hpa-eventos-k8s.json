@@ -1,0 +1,164 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "v1",
+            "count": 1,
+            "eventTime": null,
+            "firstTimestamp": "2026-11-01T15:35:14Z",
+            "involvedObject": {
+                "apiVersion": "autoscaling/v2",
+                "kind": "HorizontalPodAutoscaler",
+                "name": "air-quality-api",
+                "namespace": "aps",
+                "resourceVersion": "67096",
+                "uid": "c2a738ff-0075-4a92-91f3-ee26fc68f42f"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-11-01T15:35:14Z",
+            "message": "New size: 4; reason: cpu resource utilization (percentage of request) above target",
+            "metadata": {
+                "creationTimestamp": "2026-11-01T15:35:14Z",
+                "name": "air-quality-api.18e3f5c7c31575d2",
+                "namespace": "aps",
+                "resourceVersion": "67115",
+                "uid": "9897fc8c-5ab8-499e-a602-11cebce5ae7a"
+            },
+            "reason": "SuccessfulRescale",
+            "reportingComponent": "horizontal-pod-autoscaler",
+            "reportingInstance": "",
+            "source": {
+                "component": "horizontal-pod-autoscaler"
+            },
+            "type": "Normal"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 1,
+            "eventTime": null,
+            "firstTimestamp": "2026-11-01T15:35:29Z",
+            "involvedObject": {
+                "apiVersion": "autoscaling/v2",
+                "kind": "HorizontalPodAutoscaler",
+                "name": "air-quality-api",
+                "namespace": "aps",
+                "resourceVersion": "67114",
+                "uid": "c2a738ff-0075-4a92-91f3-ee26fc68f42f"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-11-01T15:35:29Z",
+            "message": "New size: 8; reason: cpu resource utilization (percentage of request) above target",
+            "metadata": {
+                "creationTimestamp": "2026-11-01T15:35:29Z",
+                "name": "air-quality-api.18e3f5cb4209e834",
+                "namespace": "aps",
+                "resourceVersion": "67168",
+                "uid": "a1e42490-3ba5-4864-aa1b-cb368270089d"
+            },
+            "reason": "SuccessfulRescale",
+            "reportingComponent": "horizontal-pod-autoscaler",
+            "reportingInstance": "",
+            "source": {
+                "component": "horizontal-pod-autoscaler"
+            },
+            "type": "Normal"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 1,
+            "eventTime": null,
+            "firstTimestamp": "2026-11-01T15:35:44Z",
+            "involvedObject": {
+                "apiVersion": "autoscaling/v2",
+                "kind": "HorizontalPodAutoscaler",
+                "name": "air-quality-api",
+                "namespace": "aps",
+                "resourceVersion": "67167",
+                "uid": "c2a738ff-0075-4a92-91f3-ee26fc68f42f"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-11-01T15:35:44Z",
+            "message": "New size: 10; reason: cpu resource utilization (percentage of request) above target",
+            "metadata": {
+                "creationTimestamp": "2026-11-01T15:35:44Z",
+                "name": "air-quality-api.18e3f5cec1ca75ff",
+                "namespace": "aps",
+                "resourceVersion": "67249",
+                "uid": "5603e37e-d639-432e-b2a4-58667182c11e"
+            },
+            "reason": "SuccessfulRescale",
+            "reportingComponent": "horizontal-pod-autoscaler",
+            "reportingInstance": "",
+            "source": {
+                "component": "horizontal-pod-autoscaler"
+            },
+            "type": "Normal"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 1,
+            "eventTime": null,
+            "firstTimestamp": "2026-11-01T15:46:00Z",
+            "involvedObject": {
+                "apiVersion": "autoscaling/v2",
+                "kind": "HorizontalPodAutoscaler",
+                "name": "air-quality-api",
+                "namespace": "aps",
+                "resourceVersion": "67523",
+                "uid": "c2a738ff-0075-4a92-91f3-ee26fc68f42f"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-11-01T15:46:00Z",
+            "message": "New size: 4; reason: All metrics below target",
+            "metadata": {
+                "creationTimestamp": "2026-11-01T15:46:00Z",
+                "name": "air-quality-api.18e3f65e1088122d",
+                "namespace": "aps",
+                "resourceVersion": "67729",
+                "uid": "7d984b93-0fc0-4759-867b-1d864d11bbac"
+            },
+            "reason": "SuccessfulRescale",
+            "reportingComponent": "horizontal-pod-autoscaler",
+            "reportingInstance": "",
+            "source": {
+                "component": "horizontal-pod-autoscaler"
+            },
+            "type": "Normal"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 1,
+            "eventTime": null,
+            "firstTimestamp": "2026-11-01T15:46:15Z",
+            "involvedObject": {
+                "apiVersion": "autoscaling/v2",
+                "kind": "HorizontalPodAutoscaler",
+                "name": "air-quality-api",
+                "namespace": "aps",
+                "resourceVersion": "67731",
+                "uid": "c2a738ff-0075-4a92-91f3-ee26fc68f42f"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-11-01T15:46:15Z",
+            "message": "New size: 2; reason: All metrics below target",
+            "metadata": {
+                "creationTimestamp": "2026-11-01T15:46:15Z",
+                "name": "air-quality-api.18e3f6618f8ed7a0",
+                "namespace": "aps",
+                "resourceVersion": "67806",
+                "uid": "e4ee0e6b-4f57-4c76-9414-a077524283a9"
+            },
+            "reason": "SuccessfulRescale",
+            "reportingComponent": "horizontal-pod-autoscaler",
+            "reportingInstance": "",
+            "source": {
+                "component": "horizontal-pod-autoscaler"
+            },
+            "type": "Normal"
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}

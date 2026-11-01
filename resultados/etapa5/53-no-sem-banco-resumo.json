@@ -1,0 +1,47 @@
+{
+  "nome": "53-no-sem-banco",
+  "parametros": {
+    "trabalhadores": 16,
+    "duracao_s": 120,
+    "aquecimento_s": 10,
+    "rampa_s": null,
+    "processos_gerador": 4,
+    "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate",
+    "replicas": 3,
+    "no": "k3d-aps-server-0"
+  },
+  "inicio": "2026-11-01T04:37:26",
+  "inicio_epoch": 1793518646.9659302,
+  "eventos": [
+    {
+      "evento": "kubectl drain k3d-aps-server-0",
+      "epoch": 1793518671.9666944,
+      "hora": "04:37:51",
+      "decorrido_s": 25.0
+    }
+  ],
+  "requisicoes": 52112,
+  "falhas": 6,
+  "taxa_erro_pct": 0.012,
+  "vazao_req_s": 473.7,
+  "latencia_media_ms": 33.73,
+  "p50_ms": 14.53,
+  "p95_ms": 89.2,
+  "p99_ms": 311.37,
+  "little_trabalhadores": 16.0,
+  "por_pod": {
+    "air-quality-api-68cd867567-d7c8x": 3066,
+    "air-quality-api-68cd867567-mfmms": 17730,
+    "air-quality-api-68cd867567-h42px": 17730,
+    "(sem X-Pod)": 6,
+    "air-quality-api-68cd867567-kbrkk": 13580
+  },
+  "por_versao": {
+    "1.1.0": 52106,
+    "(sem)": 6
+  },
+  "por_erro": {
+    "http_502": 6
+  },
+  "requisicoes_no_aquecimento": 4601
+}

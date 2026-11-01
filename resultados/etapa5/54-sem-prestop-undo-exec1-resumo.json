@@ -1,0 +1,57 @@
+{
+  "nome": "54-sem-prestop-undo-exec1",
+  "parametros": {
+    "trabalhadores": 16,
+    "duracao_s": 70,
+    "aquecimento_s": 10,
+    "rampa_s": null,
+    "processos_gerador": 4,
+    "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate",
+    "replicas": 3,
+    "prestop": "sem-prestop"
+  },
+  "inicio": "2026-11-01T04:44:51",
+  "inicio_epoch": 1793519091.4563985,
+  "eventos": [
+    {
+      "evento": "kubectl rollout undo",
+      "epoch": 1793519111.4567623,
+      "hora": "04:45:11",
+      "decorrido_s": 20.0
+    },
+    {
+      "evento": "rollout concluído",
+      "epoch": 1793519124.684942,
+      "hora": "04:45:24",
+      "decorrido_s": 33.2
+    }
+  ],
+  "requisicoes": 22289,
+  "falhas": 43,
+  "taxa_erro_pct": 0.193,
+  "vazao_req_s": 370.8,
+  "latencia_media_ms": 43.04,
+  "p50_ms": 26.87,
+  "p95_ms": 79.76,
+  "p99_ms": 95.26,
+  "little_trabalhadores": 16.0,
+  "por_pod": {
+    "air-quality-api-fd99c84d6-rrpr2": 2689,
+    "air-quality-api-fd99c84d6-gg4qd": 2732,
+    "air-quality-api-fd99c84d6-4z5b7": 2731,
+    "(sem X-Pod)": 43,
+    "air-quality-api-68cd867567-vnh8w": 4718,
+    "air-quality-api-68cd867567-lb77v": 4688,
+    "air-quality-api-68cd867567-2pkr6": 4688
+  },
+  "por_versao": {
+    "1.2.0": 8152,
+    "(sem)": 43,
+    "1.1.0": 14094
+  },
+  "por_erro": {
+    "http_502": 27,
+    "timeout": 16
+  },
+  "requisicoes_no_aquecimento": 5132
+}
