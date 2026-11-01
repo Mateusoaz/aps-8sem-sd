@@ -174,6 +174,20 @@ SIMULATORS = {"air": AirQualityStation, "flooding": FloodingPoint, "thermal": Th
 
 # ================================ Envio HTTP ================================
 
+class ConexaoUmEnvio(http.client.HTTPConnection):
+    """Envia cabeçalho e corpo no mesmo pacote.
+
+    A http.client normal envia os dois separados, e isso somava cerca de 45 ms a todo POST
+    neste projeto (3 ms medidos com curl viravam 48 ms), mesmo com o corpo em bytes.
+    """
+
+    def _send_output(self, message_body=None, encode_chunked=False):
+        self._buffer.extend((b"", b""))
+        mensagem = b"\r\n".join(self._buffer)
+        del self._buffer[:]
+        self.send(mensagem + (message_body or b""))
+
+
 class HttpSender:
     """
     Envia POSTs reaproveitando a conexão TCP (keep-alive): uma conexão por thread e por API.
@@ -187,7 +201,7 @@ class HttpSender:
     def _connection(self, host: str, port: int) -> http.client.HTTPConnection:
         pool = self._local.__dict__.setdefault("pool", {})
         if (host, port) not in pool:
-            pool[(host, port)] = http.client.HTTPConnection(host, port, timeout=self.timeout)
+            pool[(host, port)] = ConexaoUmEnvio(host, port, timeout=self.timeout)
         return pool[(host, port)]
 
     def post(self, url: str, payload: dict) -> tuple[bool, float, str | None]:
@@ -196,8 +210,6 @@ class HttpSender:
         conn = self._connection(parts.hostname, parts.port or 80)
         start = time.perf_counter()
         try:
-            # Corpo em bytes: o http.client envia cabeçalho + corpo num único pacote TCP.
-            # Com str ele manda em dois, e o Nagle + delayed ACK somam ~40 ms a cada requisição.
             conn.request("POST", parts.path, body=json.dumps(payload).encode(),
                          headers={"Content-Type": "application/json"})
             response = conn.getresponse()

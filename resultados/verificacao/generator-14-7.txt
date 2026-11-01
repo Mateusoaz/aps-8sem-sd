@@ -1,0 +1,30 @@
+Gerador de carga: 100 leituras/s, 20s, 15 estações/pontos (qualidade do ar, alagamento, inversão térmica)
+Aguardando as APIs ficarem prontas...
+  [ok] qualidade do ar pronta (http://localhost:8081/air-quality)
+  [ok] alagamento pronta (http://localhost:8081/flooding)
+  [ok] inversão térmica pronta (http://localhost:8081/thermal-inversion)
+[     5s] enviadas     500 | ok     500 | erros     0 |   99.9/s | latência média  65.6 ms, p95 442.2 ms | qualidade do ar 168 · alagamento 179 · inversão térmica 153
+[    10s] enviadas    1002 | ok    1002 | erros     0 |  100.0/s | latência média   5.3 ms, p95   5.9 ms | qualidade do ar 342 · alagamento 347 · inversão térmica 313
+[    15s] enviadas    1503 | ok    1503 | erros     0 |  100.0/s | latência média   5.4 ms, p95   6.0 ms | qualidade do ar 515 · alagamento 526 · inversão térmica 462
+[    20s] enviadas    2000 | ok    2000 | erros     0 |  100.0/s | latência média   4.9 ms, p95   5.4 ms | qualidade do ar 678 · alagamento 693 · inversão térmica 629
+Fim: 2000 leituras enviadas, 2000 com sucesso, 0 com erro. Latência média geral: 20.3 ms.
+Gerador de carga: 100 leituras/s, 20s, 15 estações/pontos (qualidade do ar, alagamento, inversão térmica)
+Aguardando as APIs ficarem prontas...
+  [ok] qualidade do ar pronta (http://localhost:8081/air-quality)
+  [ok] alagamento pronta (http://localhost:8081/flooding)
+  [ok] inversão térmica pronta (http://localhost:8081/thermal-inversion)
+[     5s] enviadas     500 | ok     500 | erros     0 |   99.9/s | latência média   6.6 ms, p95  25.1 ms | qualidade do ar 159 · alagamento 182 · inversão térmica 159
+[    10s] enviadas    1001 | ok    1001 | erros     0 |  100.0/s | latência média  11.3 ms, p95   6.4 ms | qualidade do ar 313 · alagamento 351 · inversão térmica 337
+[    15s] enviadas    1501 | ok    1501 | erros     0 |  100.0/s | latência média   5.9 ms, p95   5.6 ms | qualidade do ar 480 · alagamento 529 · inversão térmica 492
+[    20s] enviadas    2000 | ok    2000 | erros     0 |  100.0/s | latência média   4.1 ms, p95   5.4 ms | qualidade do ar 647 · alagamento 687 · inversão térmica 666
+Fim: 2000 leituras enviadas, 2000 com sucesso, 0 com erro. Latência média geral: 7.0 ms.
+Gerador de carga: 100 leituras/s, 20s, 15 estações/pontos (qualidade do ar, alagamento, inversão térmica)
+Aguardando as APIs ficarem prontas...
+  [ok] qualidade do ar pronta (http://localhost:8081/air-quality)
+  [ok] alagamento pronta (http://localhost:8081/flooding)
+  [ok] inversão térmica pronta (http://localhost:8081/thermal-inversion)
+[     5s] enviadas     500 | ok     500 | erros     0 |   99.9/s | latência média  13.7 ms, p95   6.1 ms | qualidade do ar 179 · alagamento 157 · inversão térmica 164
+[    10s] enviadas    1001 | ok    1001 | erros     0 |  100.0/s | latência média   4.8 ms, p95   5.7 ms | qualidade do ar 348 · alagamento 311 · inversão térmica 342
+[    15s] enviadas    1501 | ok    1501 | erros     0 |  100.0/s | latência média   4.6 ms, p95   5.3 ms | qualidade do ar 516 · alagamento 467 · inversão térmica 518
+[    20s] enviadas    2000 | ok    2000 | erros     0 |  100.0/s | latência média   4.1 ms, p95   4.8 ms | qualidade do ar 684 · alagamento 623 · inversão térmica 693
+Fim: 2000 leituras enviadas, 2000 com sucesso, 0 com erro. Latência média geral: 6.8 ms.
