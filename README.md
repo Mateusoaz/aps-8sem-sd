@@ -159,7 +159,7 @@ python tools/load-generator/generator.py --rate 100 --duration 60 \
 | `k8s/10-postgres.yaml` | Service headless + StatefulSet do PostgreSQL, com volume de 1 GiB |
 | `k8s/11-redis.yaml` | Deployment + Service do Redis (cache, sem volume) |
 | `k8s/12-rabbitmq.yaml` | Service headless + StatefulSet do RabbitMQ, com volume de 1 GiB |
-| `k8s/20…22-*-api.yaml` | Deployment (2 réplicas, rolling update, probes, requests/limits) + Service de cada API |
+| `k8s/20…22-*-api.yaml` | Deployment (2 réplicas, rolling update, probes, `preStop`, requests/limits) + Service de cada API |
 | `k8s/23-web-client.yaml` | Deployment (2 réplicas) + Service do cliente web |
 | `k8s/30-ingress.yaml` | gateway: os três prefixos das APIs e `/` para o cliente |
 | `k8s/40-hpa.yaml` | HPA da API de qualidade do ar (2 a 10 réplicas, CPU a 50%) |
@@ -189,13 +189,69 @@ A resposta leva o cabeçalho `X-Cache`: `HIT` (veio do cache), `MISS` (veio do b
 
 Por isso o `/health/ready` verifica **só o banco**: sem cache ou sem fila a API continua atendendo, só que de forma degradada.
 
+## Gerador de carga e linha de base (Etapa 4)
+
+`carga/loadgen.py` é o gerador usado nas medições. Diferente do `tools/load-generator/generator.py`, que simula sensores a uma taxa fixa, ele trabalha em **laço fechado**: cada trabalhador envia uma requisição, espera a resposta, anota e só então envia a próxima. Usa só a biblioteca padrão do Python e aceita apenas alvos em `localhost`.
+
+```bash
+# 8 trabalhadores por 20 s, em uma rota de consulta
+python carga/loadgen.py http://localhost:8081/flooding/health/live -c 8 -d 20
+
+# ingestão: uma leitura diferente a cada POST
+python carga/loadgen.py http://localhost:8081/air-quality/api/v1/air-quality/particulate --payload ar -c 8 -d 20
+
+# degraus de carga, 30 s cada, descartando 5 s de aquecimento
+python carga/loadgen.py http://localhost:8081/air-quality/api/v1/air-quality/particulate   --payload ar --degraus 1,2,4,8,16,32,64 -d 30 --aquecimento 5 --prefixo base/teste
+```
+
+Cada execução grava em `resultados/` um CSV por requisição, um CSV por segundo e um JSON com o resumo.
+
+Para repetir a linha de base, deixe 1 réplica de cada serviço e remova o HPA. No fim, `kubectl apply -f k8s/` restaura o cluster.
+
+```bash
+kubectl delete hpa air-quality-api -n aps
+kubectl scale deployment air-quality-api flooding-api thermal-inversion-api web-client -n aps --replicas=1
+bash carga/linha_base.sh
+python carga/analisa_base.py
+```
+
+**Resultado:** com 1 réplica e limite de 500m de CPU, a ingestão chegou a **832 req/s com p95 de 108 ms** em 64 trabalhadores, sem erros. Em 128 trabalhadores, 96% das requisições receberam `503`. O recurso que saturou foi a CPU do pod. Esse valor não é sustentável, porque a fila de alertas acumulou 56 mil mensagens; ela só acompanhou até cerca de 240 req/s. Análise completa em [`docs/etapa4/`](docs/etapa4/README.md).
+
+## Experimentos de escalabilidade e resiliência (Etapa 5)
+
+`carga/experimentos.py` executa os cenários e grava tudo em `resultados/etapa5/`. Ele usa 4 processos do gerador e pula o que já terminou, então pode ser retomado. O rolling update precisa da imagem `1.2.0` no cluster.
+
+```bash
+docker build --build-arg APP_VERSION=1.2.0 -t aps-sd/air-quality-api:1.2.0 ./src/AirQuality.Api
+k3d image import aps-sd/air-quality-api:1.2.0 -c aps
+
+python carga/experimentos.py 5.3 5.4 5.5 5.1b 5.1g 5.2b   # cenários com o pool corrigido, sem as rodadas antigas
+python carga/analisa_etapa5.py                            # tabelas e gráficos
+```
+
+| Experimento | Resultado |
+|---|---|
+| Escala manual (POST, 64 trabalhadores) | 616 req/s com 1 réplica e 1.378 com 4, ganho de 2,24×; o banco chegou ao limite de CPU |
+| HPA | De 2 para 10 réplicas em 59 s, 0 falhas em 244.835 requisições |
+| Pod apagado | 0 a 29 falhas, substituto pronto em 4 a 5 s |
+| Nó drenado sem banco | 6 falhas em 56.713 requisições |
+| Nó drenado com banco | Cerca de 53 s fora do ar, porque o volume está preso ao nó |
+| Rolling update | 0 falhas com `preStop`; 24 a 47 sem ele |
+| Fila × síncrono | Com fila o p50 é menor, mas o trabalho só é adiado (cerca de 34 mil mensagens pendentes) |
+
+Os testes revelaram um defeito: cada pod podia abrir até 100 conexões, e as réplicas esgotavam as 100 vagas do PostgreSQL, derrubando todos os pods ao mesmo tempo. Por isso os manifestos das APIs usam `Maximum Pool Size=8`, e também um `preStop` de 5 s, que elimina as falhas na troca de versão.
+
+Hipóteses em [`docs/etapa5/hipoteses.md`](docs/etapa5/hipoteses.md) e análise em [`docs/etapa5/`](docs/etapa5/README.md). Os CSVs por requisição estão compactados (`.csv.gz`).
+
 ## Estrutura do repositório
 
 ```
 aps-8sem-sd/
 ├── docker-compose.yml          # sobe a pilha inteira
-├── k8s/                        # manifestos do Kubernetes (Etapa 3)
-├── docs/etapa3/                # evidências dos experimentos e diagrama de implantação
+├── k8s/                        # manifestos do Kubernetes
+├── docs/                       # evidências e análises das Etapas 3, 4 e 5
+├── carga/                      # gerador de carga, linha de base e experimentos
+├── resultados/                 # dados brutos das Etapas 4 e 5
 ├── secret.example.yaml         # modelo do Secret (o real vem do .env)
 ├── .env.example                # modelo das variáveis (o .env real não vai pro git)
 ├── ApsSd.sln                   # abre as 3 APIs juntas no Visual Studio/Rider
@@ -317,7 +373,7 @@ A regra roda **fora do POST**: a leitura é publicada numa fila e um consumidor 
 | JSON | camelCase | `waterLevelCm`, `monitoringPointId` |
 | C# (classes, propriedades) | PascalCase | `WaterLevelReading.WaterLevelCm` |
 | Projetos .NET | `Dominio.Api` | `Flooding.Api` |
-| Serviços do Compose / imagens | kebab-case | `flooding-api`, `aps-sd/flooding-api:1.0.0` |
+| Serviços do Compose / imagens | kebab-case | `flooding-api`, `aps-sd/flooding-api:1.1.0` |
 | Banco (tabelas, colunas) | snake_case | `water_level_readings.monitoring_point_id` |
 | Variáveis de ambiente | MAIÚSCULAS_COM_UNDERSCORE | `FLOODING_OVERFLOW_LEVEL_CM` |
 | Config .NET via env | seção + `__` + chave | `ConnectionStrings__Default`, `Alerts__OverflowLevelCm` |
@@ -350,7 +406,7 @@ A regra roda **fora do POST**: a leitura é publicada numa fila e um consumidor 
 | 2 | Multi-stage | dois `FROM` em cada Dockerfile (`build` e `final`) |
 | 3 | Imagem final enxuta, sem SDK/fonte | `docker images` → 171 MB (SDK: 1,23 GB) |
 | 4 | Usuário não-root | `docker compose exec flooding-api id` → `uid=1654(app)` |
-| 5 | Imagens versionadas por tag | `docker images` → `aps-sd/*:1.0.0` (`APP_VERSION` no `.env`) |
+| 5 | Imagens versionadas por tag | `docker images` → `aps-sd/*:1.1.0` (`APP_VERSION` no `.env`) |
 | 6 | `.dockerignore` | `src/*/.dockerignore` (exclui `bin/`, `obj/`, `.git`) |
 | 7 | Compose sobe a pilha completa | `docker compose up -d` |
 | 8 | Comunicação por nome | `Host=postgres` no `docker-compose.yml` |
@@ -358,9 +414,11 @@ A regra roda **fora do POST**: a leitura é publicada numa fila e um consumidor 
 | 10 | Config por variáveis de ambiente | `.env.example` versionado, `.env` no `.gitignore` |
 | 11 | Nenhuma credencial no código | senha só no `.env` |
 | 12 | Liveness e readiness distintos | `curl localhost:5002/health/live` e `/health/ready` |
-| 13 | Cliente leve consumindo a API | Swagger UI (`/swagger`); um cliente dedicado pode ser adicionado |
+| 13 | Cliente leve consumindo a API | Cliente web em `src/WebClient/` e Swagger UI (`/swagger`) |
 
 ### Dados para a ficha (seções 5 e 6)
+
+Tamanhos medidos na Etapa 2, com as imagens `1.0.0`. A versão atual é a `1.1.0`.
 
 | Serviço | Linguagem/runtime | Imagem:tag | Tamanho | Imagem base do runtime |
 |---|---|---|---|---|
