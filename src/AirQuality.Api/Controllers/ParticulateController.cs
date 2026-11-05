@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AirQuality.Api.Controllers;
 
+// Controller recebe JSON HTTP e delega persistência/regra de negócio às dependências injetadas.
 [ApiController]
 [Route(ApiRoutes.Base + "/particulate")]
 public class ParticulateController(AirQualityDbContext db, AlertService alerts) : ControllerBase
@@ -15,6 +16,7 @@ public class ParticulateController(AirQualityDbContext db, AlertService alerts) 
     [HttpPost]
     public async Task<ActionResult<ParticulateReading>> Create(CreateParticulateReadingRequest request, CancellationToken ct)
     {
+        // Converte o contrato de entrada (DTO) em entidade de banco e normaliza horário para UTC.
         var reading = new ParticulateReading
         {
             StationId = request.StationId,
@@ -25,10 +27,13 @@ public class ParticulateController(AirQualityDbContext db, AlertService alerts) 
             Timestamp = request.Timestamp?.ToUniversalTime() ?? DateTimeOffset.UtcNow,
         };
 
+        // Primeiro persiste a leitura, para que a avaliação do alerta possa consultá-la no histórico.
         db.ParticulateReadings.Add(reading);
         await db.SaveChangesAsync(ct);
+        // A regra roda dentro do próprio POST; por isso o cliente espera essa avaliação terminar.
         await alerts.EvaluateParticulateAsync(reading, ct);
 
+        // 201 Created inclui o recurso criado e a URL que permite consultá-lo pelo ID.
         return CreatedAtAction(nameof(GetById), new { id = reading.Id }, reading);
     }
 
@@ -38,11 +43,13 @@ public class ParticulateController(AirQualityDbContext db, AlertService alerts) 
         [FromQuery] string? stationId, [FromQuery] string? sensorId, [FromQuery] string? areaId,
         [FromQuery] PeriodQuery period, CancellationToken ct)
     {
+        // AsNoTracking economiza trabalho em consultas que não vão alterar entidades.
         var query = db.ParticulateReadings.AsNoTracking();
         if (stationId is not null) query = query.Where(r => r.StationId == stationId);
         if (sensorId is not null) query = query.Where(r => r.SensorId == sensorId);
         if (areaId is not null) query = query.Where(r => r.AreaId == areaId);
 
+        // Os filtros são compostos em LINQ e executados pelo PostgreSQL quando materializados.
         return await query.InPeriod(period).ToListAsync(ct);
     }
 

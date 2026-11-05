@@ -8,6 +8,7 @@ namespace Flooding.Api.Models;
 [Index(nameof(SensorId), nameof(Timestamp))]
 public class WaterLevelReading : IReading
 {
+    // Id é a chave gerada pelo banco; ponto e sensor localizam a origem da medida.
     public long Id { get; set; }
 
     [MaxLength(50)]

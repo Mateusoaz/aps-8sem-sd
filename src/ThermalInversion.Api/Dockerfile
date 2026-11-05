@@ -13,6 +13,8 @@ RUN dotnet publish -c Release -o /app/publish --no-restore /p:UseAppHost=false
 
 # ============ Estágio 2: runtime (só o necessário para RODAR, ~110 MB) ============
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS final
+ARG APP_VERSION=1.0.0
+ENV APP_VERSION=$APP_VERSION
 WORKDIR /app
 
 # Do estágio de build só levamos as DLLs publicadas — nada de SDK nem código-fonte

@@ -21,6 +21,8 @@ Três APIs REST em **.NET 8 (C#)**, cada uma cuidando de um domínio ambiental, 
       └──────── portas publicadas no seu computador (localhost) ────────┘
 ```
 
+O desenho destaca as conexões de persistência; a pilha atual também inclui Redis (`redis:6379`) como backend do cache de respostas. A fila de mensagens ainda não foi integrada: as regras de alerta continuam síncronas.
+
 ## Como rodar (máquina limpa)
 
 Só precisa de **Docker** instalado. O .NET SDK não é necessário na máquina: o build acontece dentro do contêiner.
@@ -223,7 +225,7 @@ Por enquanto a regra roda dentro do próprio POST. Numa etapa futura ela vai par
 
 ## Como funciona — conceitos
 
-**Compose não é "contêiner dentro de contêiner".** O `docker-compose.yml` descreve 4 contêineres **irmãos** (postgres + 3 APIs) e o Compose sobe todos juntos, com um comando. Eles ficam numa rede virtual própria (`backend`) com DNS interno. Por isso a API encontra o banco pelo nome `postgres` (`Host=postgres`), sem IP fixo e sem `localhost`. Dentro de um contêiner, `localhost` é o **próprio** contêiner.
+**Compose não é "contêiner dentro de contêiner".** O `docker-compose.yml` descreve 5 serviços normais (PostgreSQL, Redis e 3 APIs); o gerador de dados fica no profile `load` e o gerador de medição é executado à parte. Eles ficam numa rede virtual própria (`backend`) com DNS interno. Por isso as APIs encontram o banco pelo nome `postgres` e o cache pelo nome `redis`, sem IP fixo e sem `localhost`. Dentro de um contêiner, `localhost` é o **próprio** contêiner.
 
 **`depends_on` + `healthcheck`.** As APIs só iniciam depois que o Postgres responde ao `pg_isready`. Mesmo assim, a API tem sua própria lógica de nova tentativa (`DatabaseInitializer`), porque no Kubernetes (etapa 3) não existe `depends_on`.
 
@@ -245,7 +247,7 @@ Por enquanto a regra roda dentro do próprio POST. Numa etapa futura ela vai par
 |---|---|---|
 | 1 | Um Dockerfile por serviço (mín. 3) | `src/*/Dockerfile` |
 | 2 | Multi-stage | dois `FROM` em cada Dockerfile (`build` e `final`) |
-| 3 | Imagem final enxuta, sem SDK/fonte | `docker images` → 171 MB (SDK: 1,23 GB) |
+| 3 | Imagem final enxuta, sem SDK/fonte | confira o tamanho medido no build atual com `docker images` (a imagem mudou com o suporte ao cache Redis) |
 | 4 | Usuário não-root | `docker compose exec flooding-api id` → `uid=1654(app)` |
 | 5 | Imagens versionadas por tag | `docker images` → `aps-sd/*:1.0.0` (`APP_VERSION` no `.env`) |
 | 6 | `.dockerignore` | `src/*/.dockerignore` (exclui `bin/`, `obj/`, `.git`) |
@@ -261,10 +263,77 @@ Por enquanto a regra roda dentro do próprio POST. Numa etapa futura ela vai par
 
 | Serviço | Linguagem/runtime | Imagem:tag | Tamanho | Imagem base do runtime |
 |---|---|---|---|---|
-| air-quality-api | C# / .NET 8 | `aps-sd/air-quality-api:1.0.0` | 171 MB | `aspnet:8.0-alpine` (158 MB) |
-| flooding-api | C# / .NET 8 | `aps-sd/flooding-api:1.0.0` | 171 MB | `aspnet:8.0-alpine` (158 MB) |
-| thermal-inversion-api | C# / .NET 8 | `aps-sd/thermal-inversion-api:1.0.0` | 171 MB | `aspnet:8.0-alpine` (158 MB) |
+| air-quality-api | C# / .NET 8 | `aps-sd/air-quality-api:1.0.0` | medir após o build atual | `aspnet:8.0-alpine` |
+| flooding-api | C# / .NET 8 | `aps-sd/flooding-api:1.0.0` | medir após o build atual | `aspnet:8.0-alpine` |
+| thermal-inversion-api | C# / .NET 8 | `aps-sd/thermal-inversion-api:1.0.0` | medir após o build atual | `aspnet:8.0-alpine` |
 
 | Componente | Imagem | Volume | Observação |
 |---|---|---|---|
 | Banco de dados | `postgres:16-alpine` | `postgres-data` | 1 instância, 1 banco por API |
+
+## Evolução da APS — etapas 1 a 5
+
+Este repositório foi ampliado a partir da entrega Docker/Compose. As etapas 1 a 3 descrevem a aplicação e sua implantação; as etapas 4 e 5 acrescentam medição e protocolos repetíveis. **Os arquivos de resultados só devem ser preenchidos com medições executadas pelo grupo.**
+
+| Etapa | O que está no projeto |
+|---|---|
+| 1 — serviços | Três APIs REST por domínio, contratos JSON, regras de alerta e persistência PostgreSQL. |
+| 2 — contêineres | Dockerfiles multi-stage, imagens versionadas, Compose, configuração externa e health checks. |
+| 3 — Kubernetes | `k8s/`: StatefulSet/PVC PostgreSQL, Redis, Deployments, Services, Ingress, probes, limites, HPA e PDB. |
+| 4 — carga e linha de base | `carga/loadgen.py`: concorrência configurável, rampa/degraus, latência individual, percentis, erros, pod/versão e arquivos CSV/JSON. |
+| 5 — escalabilidade e resiliência | `experimentos/README.md`: procedimentos para escala manual, HPA, falha de pod, drenagem, rolling update/undo e cache Redis. Output Cache de 15 s configurável para consultas agregadas. |
+
+Os procedimentos estão prontos, mas esta cópia ainda precisa ser executada no cluster para produzir os valores e gráficos do grupo. Não use valores ilustrativos das fichas como resultado experimental.
+
+## Kubernetes local
+
+Requisitos: Docker Desktop em execução, `kubectl`, `k3d` e o SDK do .NET não é necessário para compilar as imagens (o build ocorre no Docker). No PowerShell, a partir da raiz do repositório:
+
+```powershell
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+# Edite .env e use uma senha alfanumérica própria do grupo.
+k3d cluster create aps --agents 2 -p "8081:80@loadbalancer"
+kubectl get nodes
+docker build --build-arg APP_VERSION=1.0.0 -t aps-sd/air-quality-api:1.0.0 ./src/AirQuality.Api
+docker build --build-arg APP_VERSION=1.0.0 -t aps-sd/flooding-api:1.0.0 ./src/Flooding.Api
+docker build --build-arg APP_VERSION=1.0.0 -t aps-sd/thermal-inversion-api:1.0.0 ./src/ThermalInversion.Api
+k3d image import aps-sd/air-quality-api:1.0.0 aps-sd/flooding-api:1.0.0 aps-sd/thermal-inversion-api:1.0.0 -c aps
+kubectl apply -f k8s/00-namespace.yaml
+.\scripts\create-k8s-secret.ps1
+kubectl apply -f k8s/
+kubectl get all,ingress,pvc,hpa -n aps -o wide
+```
+
+As APIs ficam acessíveis pelo Ingress em `http://127.0.0.1:8081/api/v1/...`. PostgreSQL usa um PVC local do cluster; o banco tem uma réplica, portanto o armazenamento persiste à recriação do pod, mas não oferece alta disponibilidade. A credencial real fica em `.env` e no Secret do cluster, nunca nos manifestos versionados.
+
+Exemplo de escrita e prova do pod/versão que respondeu:
+
+```powershell
+curl.exe -i -X POST http://127.0.0.1:8081/api/v1/flooding/water-level -H "Content-Type: application/json" --data '{"monitoringPointId":"PT-DEMO","sensorId":"SEN-DEMO","waterLevelCm":120}'
+```
+
+HPA e PDB aparecem junto dos demais manifestos. Na linha de base desative o HPA e fixe uma réplica antes de iniciar a carga: `kubectl delete hpa flooding-api -n aps` e `kubectl scale deployment/flooding-api -n aps --replicas=1`.
+
+## Gerador autoral e arquivos de medição
+
+O gerador anterior (`tools/load-generator/generator.py`) continua disponível para gerar leituras sintéticas. Para os experimentos controlados, use `carga/loadgen.py` com Python 3.10 ou superior, apontando para o Ingress:
+
+```powershell
+python carga/loadgen.py http://127.0.0.1:8081/api/v1/flooding/water-level -c 8 -d 20 --warmup 5
+python carga/loadgen.py http://127.0.0.1:8081/api/v1/flooding/water-level -c 64 -d 30 --degraus 1,2,4,8,16,32,64 --warmup 5
+python carga/loadgen.py http://127.0.0.1:8081/api/v1/flooding/water-level -c 32 -d 120 --rampa --warmup 0
+```
+
+Cada execução grava `*-requisicoes.csv`, `*-serie.csv` e `*-resumo.json` em `resultados/`. O CSV individual inclui status, latência, tipo de erro, `X-Pod` e `X-Versao`; o JSON calcula p50/p95/p99, vazão bem-sucedida, taxa de erro e distribuição por pod/versão. Veja `experimentos/README.md` para procedimentos, variáveis controladas e tabelas a preencher.
+
+## Cache experimental
+
+Output Cache com Redis compartilhado e expiração de 15 s está habilitado nas consultas agregadas de qualidade do ar e perfil térmico. Configure `CACHE_ENABLED=true` para ativá-lo. No Compose, ajuste `.env` e recrie a API; no cluster, ajuste `k8s/03-config.yaml`, aplique o ConfigMap e reinicie o Deployment. Pode servir dados até 15 s antigos; Redis é uma instância sem persistência/alta disponibilidade para esta APS, e a comparação precisa manter a mesma rota, carga e quantidade de réplicas. Referência: [documentação oficial do Output Cache em ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/performance/caching/output?view=aspnetcore-8.0).
+
+## Limites conhecidos desta versão
+
+- A medição no cluster, repetições e gráficos ainda precisam ser produzidos pelo grupo; os diretórios não inventam resultados.
+- O PostgreSQL usa uma instância e PVC local; a drenagem de nó deve evitar o nó do banco e pode revelar a limitação de armazenamento local.
+- Redis é uma instância única sem autenticação e sem persistência, adequada ao cluster local da APS, mas sem as garantias de uma implantação de produção.
+- A etapa de cache mede uma consulta agregada GET; a ingestão continua síncrona no PostgreSQL.
+- A fila de mensagens e o processamento assíncrono de alertas ainda não foram implementados; o experimento comparativo da Etapa 5 usa a alternativa de cache.

@@ -5,6 +5,7 @@ namespace Flooding.Api.Dtos;
 // Corpo dos POSTs. "required" faz o JSON sem o campo ser rejeitado com 400;
 // [Range] rejeita valores fisicamente impossíveis. Timestamp é opcional (padrão: agora, UTC).
 
+// DTOs são os contratos HTTP: [ApiController] aplica estas validações e responde 400 se falharem.
 public record CreateWaterLevelReadingRequest
 {
     [Required, MaxLength(50)] public required string MonitoringPointId { get; init; }

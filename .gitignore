@@ -15,3 +15,6 @@ obj/
 # Python (gerador de carga, etapas futuras)
 __pycache__/
 .venv/
+
+# Materiais locais do semestre (não enviar ao repositório)
+/MATERIAIS_DO_SEMESTRE/

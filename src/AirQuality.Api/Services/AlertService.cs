@@ -15,6 +15,7 @@ public class AlertService(AirQualityDbContext db, IOptions<AlertOptions> options
 {
     public async Task EvaluateParticulateAsync(ParticulateReading reading, CancellationToken ct)
     {
+        // A regra sai imediatamente quando o valor atual já está dentro do limite.
         var limit = options.Value.Pm25Limit;
         var required = options.Value.Pm25ConsecutiveReadings;
 
@@ -22,6 +23,8 @@ public class AlertService(AirQualityDbContext db, IOptions<AlertOptions> options
             return;
 
         // As N+1 leituras mais recentes da estação (a atual inclusa)
+        // Lê N+1 valores: os N mais novos provam a sequência; o extra mostra se ela já vinha
+        // de antes (e portanto se já foi emitido um alerta para o mesmo episódio).
         var recent = await db.ParticulateReadings
             .AsNoTracking()
             .Where(r => r.StationId == reading.StationId && r.Timestamp <= reading.Timestamp)
@@ -30,14 +33,16 @@ public class AlertService(AirQualityDbContext db, IOptions<AlertOptions> options
             .Take(required + 1)
             .ToListAsync(ct);
 
+        // Ordenação por timestamp e ID torna a sequência determinística quando tempos empatam.
         var lastN = recent.Take(required).ToList();
         var sequenceComplete = lastN.Count == required && lastN.All(v => v > limit);
-        // Se a leitura anterior à sequência também estava acima, o alerta deste episódio já foi emitido
+        // Se a leitura imediatamente anterior também passou do limite, já estamos no mesmo episódio.
         var alreadyAlerted = recent.Count > required && recent[required] > limit;
 
         if (!sequenceComplete || alreadyAlerted)
             return;
 
+        // O alerta só é criado no início do episódio; novas leituras altas não geram duplicatas.
         db.Alerts.Add(new Alert
         {
             Type = Alert.Pm25AboveLimit,

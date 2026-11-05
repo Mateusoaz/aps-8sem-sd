@@ -10,10 +10,12 @@ public static class DatabaseInitializer
     /// </summary>
     public static async Task InitializeAsync(IServiceProvider services, ILogger logger, int maxAttempts = 10)
     {
+        // Compose/Kubernetes podem iniciar a API antes do PostgreSQL aceitar conexões.
         for (var attempt = 1; ; attempt++)
         {
             try
             {
+                // DbContext é scoped; cria-se um escopo temporário para a inicialização.
                 using var scope = services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<FloodingDbContext>();
                 await db.Database.EnsureCreatedAsync();
@@ -22,6 +24,7 @@ public static class DatabaseInitializer
             }
             catch (Exception ex) when (attempt < maxAttempts)
             {
+                // Espera progressivamente, com teto de 10 s; a última exceção encerra a partida.
                 var delay = TimeSpan.FromSeconds(Math.Min(2 * attempt, 10));
                 logger.LogWarning(ex, "Banco indisponível (tentativa {Attempt}/{MaxAttempts}). Nova tentativa em {Delay}s.",
                     attempt, maxAttempts, delay.TotalSeconds);

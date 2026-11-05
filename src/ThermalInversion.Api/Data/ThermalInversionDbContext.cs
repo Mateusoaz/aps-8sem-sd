@@ -7,6 +7,7 @@ namespace ThermalInversion.Api.Data;
 // TemperatureProfiles -> temperature_profiles, SurfaceTemperatureC -> surface_temperature_c
 public class ThermalInversionDbContext(DbContextOptions<ThermalInversionDbContext> options) : DbContext(options)
 {
+    // Cada DbSet representa uma tabela que o EF Core consulta/grava neste banco lógico.
     public DbSet<TemperatureProfileReading> TemperatureProfiles => Set<TemperatureProfileReading>();
     public DbSet<SoilMoistureReading> SoilMoistureReadings => Set<SoilMoistureReading>();
     public DbSet<AirHumidityReading> AirHumidityReadings => Set<AirHumidityReading>();

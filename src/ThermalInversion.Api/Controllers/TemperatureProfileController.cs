@@ -7,6 +7,7 @@ using ThermalInversion.Api.Services;
 
 namespace ThermalInversion.Api.Controllers;
 
+// Controller recebe JSON HTTP e delega persistência/regra de negócio às dependências injetadas.
 [ApiController]
 [Route(ApiRoutes.Base + "/temperature-profile")]
 public class TemperatureProfileController(ThermalInversionDbContext db, AlertService alerts) : ControllerBase
@@ -15,6 +16,7 @@ public class TemperatureProfileController(ThermalInversionDbContext db, AlertSer
     [HttpPost]
     public async Task<ActionResult<TemperatureProfileReading>> Create(CreateTemperatureProfileReadingRequest request, CancellationToken ct)
     {
+        // Converte o contrato de entrada (DTO) em entidade de banco e normaliza horário para UTC.
         var reading = new TemperatureProfileReading
         {
             StationId = request.StationId,
@@ -26,10 +28,13 @@ public class TemperatureProfileController(ThermalInversionDbContext db, AlertSer
             Timestamp = request.Timestamp?.ToUniversalTime() ?? DateTimeOffset.UtcNow,
         };
 
+        // A gravação precede a regra para que ela encontre esta leitura ao consultar o histórico.
         db.TemperatureProfiles.Add(reading);
         await db.SaveChangesAsync(ct);
+        // Avaliação síncrona: o POST espera a comparação com o perfil anterior da estação.
         await alerts.EvaluateTemperatureProfileAsync(reading, ct);
 
+        // 201 Created inclui o recurso criado e a URL que permite consultá-lo pelo ID.
         return CreatedAtAction(nameof(GetById), new { id = reading.Id }, reading);
     }
 
@@ -39,11 +44,13 @@ public class TemperatureProfileController(ThermalInversionDbContext db, AlertSer
         [FromQuery] string? stationId, [FromQuery] string? areaId, [FromQuery] string? sensorId,
         [FromQuery] PeriodQuery period, CancellationToken ct)
     {
+        // AsNoTracking economiza trabalho em consultas que não vão alterar entidades.
         var query = db.TemperatureProfiles.AsNoTracking();
         if (stationId is not null) query = query.Where(r => r.StationId == stationId);
         if (areaId is not null) query = query.Where(r => r.AreaId == areaId);
         if (sensorId is not null) query = query.Where(r => r.SurfaceSensorId == sensorId || r.UpperSensorId == sensorId);
 
+        // Os filtros são compostos em LINQ e executados pelo PostgreSQL quando materializados.
         return await query.InPeriod(period).ToListAsync(ct);
     }
 

@@ -9,6 +9,7 @@ namespace AirQuality.Api.Models;
 [Index(nameof(AreaId), nameof(Timestamp))]
 public class ParticulateReading : IReading
 {
+    // Id é a chave gerada pelo banco; os demais campos identificam sensor, estação e medida.
     public long Id { get; set; }
 
     [MaxLength(50)]

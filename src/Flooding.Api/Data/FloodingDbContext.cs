@@ -7,6 +7,7 @@ namespace Flooding.Api.Data;
 // WaterLevelReadings -> water_level_readings, MonitoringPointId -> monitoring_point_id
 public class FloodingDbContext(DbContextOptions<FloodingDbContext> options) : DbContext(options)
 {
+    // Cada DbSet representa uma tabela que o EF Core consulta/grava neste banco lógico.
     public DbSet<WaterLevelReading> WaterLevelReadings => Set<WaterLevelReading>();
     public DbSet<RainfallReading> RainfallReadings => Set<RainfallReading>();
     public DbSet<FlowRateReading> FlowRateReadings => Set<FlowRateReading>();

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using ThermalInversion.Api.Data;
@@ -13,8 +14,9 @@ namespace ThermalInversion.Api.Controllers;
 public class AreasController(ThermalInversionDbContext db, IOptions<AlertOptions> options) : ControllerBase
 {
     // GET /api/v1/thermal-inversion/areas/CENTRO/thermal-profile?hours=24
-    // Consulta agregada "perfil térmico por região" — candidata a cache nas próximas etapas.
+    // Consulta agregada de custo maior que uma leitura simples; Output Cache guarda a resposta por 15 s.
     [HttpGet("{areaId}/thermal-profile")]
+    [OutputCache(Duration = 15)]
     public async Task<ThermalProfileResponse> GetThermalProfile(string areaId, [FromQuery, Range(1, 720)] int hours = 24, CancellationToken ct = default)
     {
         var minGradient = options.Value.MinInversionGradientC;

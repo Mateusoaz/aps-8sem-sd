@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using AirQuality.Api.Data;
 using AirQuality.Api.Dtos;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 
 namespace AirQuality.Api.Controllers;
@@ -11,8 +12,9 @@ namespace AirQuality.Api.Controllers;
 public class AreasController(AirQualityDbContext db) : ControllerBase
 {
     // GET /api/v1/air-quality/areas/CENTRO/average?hours=24
-    // Consulta agregada "média por região/período" — candidata a cache nas próximas etapas.
+    // Consulta agregada de custo maior que uma leitura simples; Output Cache guarda a resposta por 15 s.
     [HttpGet("{areaId}/average")]
+    [OutputCache(Duration = 15)]
     public async Task<AreaAverageResponse> GetAverage(string areaId, [FromQuery, Range(1, 720)] int hours = 24, CancellationToken ct = default)
     {
         var to = DateTimeOffset.UtcNow;

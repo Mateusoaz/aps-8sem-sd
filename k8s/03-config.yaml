@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aps-config
+  namespace: aps
+data:
+  CACHE_ENABLED: "false"

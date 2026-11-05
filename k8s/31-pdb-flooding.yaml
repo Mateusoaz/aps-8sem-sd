@@ -1,0 +1,11 @@
+# PDB limita interrupções voluntárias (como drain); não impede falhas inesperadas de nó.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: flooding-api
+  namespace: aps
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: flooding-api

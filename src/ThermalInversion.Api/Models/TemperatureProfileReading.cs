@@ -8,6 +8,7 @@ namespace ThermalInversion.Api.Models;
 [Index(nameof(AreaId), nameof(Timestamp))]
 public class TemperatureProfileReading : IReading
 {
+    // Id é a chave gerada pelo banco; os dois sensores medem o perfil na mesma estação.
     public long Id { get; set; }
 
     [MaxLength(50)]

@@ -15,12 +15,14 @@ public class AlertService(ThermalInversionDbContext db, IOptions<AlertOptions> o
 {
     public async Task EvaluateTemperatureProfileAsync(TemperatureProfileReading reading, CancellationToken ct)
     {
+        // Gradiente positivo suficiente significa que a camada superior está mais quente.
         var minGradient = options.Value.MinInversionGradientC;
         var gradient = reading.UpperTemperatureC - reading.SurfaceTemperatureC;
 
         if (gradient <= minGradient)
             return;
 
+        // Busca o último perfil anterior da estação para distinguir início de continuação.
         var previousGradient = await db.TemperatureProfiles
             .AsNoTracking()
             .Where(r => r.StationId == reading.StationId && r.Id != reading.Id && r.Timestamp <= reading.Timestamp)
@@ -29,9 +31,11 @@ public class AlertService(ThermalInversionDbContext db, IOptions<AlertOptions> o
             .FirstOrDefaultAsync(ct);
 
         // A inversão já estava em curso: o alerta deste episódio já foi emitido
+        // Se o perfil anterior já era uma inversão, não duplica o alerta do mesmo episódio.
         if (previousGradient > minGradient)
             return;
 
+        // Guarda o gradiente medido e o limite usado, para a resposta ser auditável depois.
         db.Alerts.Add(new Alert
         {
             Type = Alert.InversionDetected,

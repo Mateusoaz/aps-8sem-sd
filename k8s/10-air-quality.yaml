@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: air-quality-api
+  namespace: aps
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: air-quality-api
+  template:
+    metadata:
+      labels:
+        app: air-quality-api
+    spec:
+      containers:
+        - name: api
+          image: aps-sd/air-quality-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: CACHE_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: aps-config
+                  key: CACHE_ENABLED
+            - name: ConnectionStrings__Redis
+              value: redis:6379
+            - name: ConnectionStrings__Default
+              valueFrom:
+                secretKeyRef:
+                  name: aps-db
+                  key: CONNECTION_AIR
+            - name: Alerts__Pm25Limit
+              value: "25"
+            - name: Alerts__Pm25ConsecutiveReadings
+              value: "3"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 3
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: air-quality-api
+  namespace: aps
+spec:
+  selector:
+    app: air-quality-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
