@@ -1,0 +1,5 @@
+# A "pasta" da aplicação no cluster. "kubectl delete namespace aps" apaga tudo de uma vez (inclusive os volumes).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aps

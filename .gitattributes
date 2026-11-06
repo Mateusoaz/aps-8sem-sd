@@ -1,2 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Sempre LF, mesmo no Windows: o bash não roda script com CRLF, e o
+# "kubectl create secret --from-env-file" grudaria um \r no fim de cada valor.
+*.sh         text eol=lf
+.env.example text eol=lf
+*.yaml       text eol=lf

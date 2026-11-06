@@ -1,0 +1,65 @@
+# Autoescalonadores: um por API, porque as três recebem ingestão (POST de leituras dos sensores).
+# O HPA mede a CPU (metrics-server, que já vem no k3s) e muda o número de réplicas do Deployment.
+# Sobe rápido e desce devagar: espera 5 min de calma antes de reduzir.
+#
+# ATENÇÃO nos experimentos: o HPA desfaz "kubectl scale". Para a linha de base (1 réplica) e a
+# escala manual (1, 2, 4, 8), remova antes:  kubectl delete hpa --all -n aps
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: air-quality-api
+  namespace: aps
+spec:
+  scaleTargetRef:                # QUEM ele escala (Qualidade do ar)
+    apiVersion: apps/v1
+    kind: Deployment
+    name: air-quality-api
+  minReplicas: 2                 # nunca menos que 2 (uma pode cair sem derrubar o serviço)
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50 # meta: 50% do requests de CPU (100m), em média entre as réplicas
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: flooding-api
+  namespace: aps
+spec:
+  scaleTargetRef:                # QUEM ele escala (Alagamento)
+    apiVersion: apps/v1
+    kind: Deployment
+    name: flooding-api
+  minReplicas: 2                 # nunca menos que 2 (uma pode cair sem derrubar o serviço)
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50 # meta: 50% do requests de CPU (100m), em média entre as réplicas
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: thermal-inversion-api
+  namespace: aps
+spec:
+  scaleTargetRef:                # QUEM ele escala (Inversão térmica)
+    apiVersion: apps/v1
+    kind: Deployment
+    name: thermal-inversion-api
+  minReplicas: 2                 # nunca menos que 2 (uma pode cair sem derrubar o serviço)
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50 # meta: 50% do requests de CPU (100m), em média entre as réplicas

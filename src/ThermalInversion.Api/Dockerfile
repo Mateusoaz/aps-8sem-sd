@@ -21,6 +21,11 @@ COPY --from=build /app/publish ./
 # Usuário não-root que já vem na imagem oficial do .NET 8 (UID 1654)
 USER $APP_UID
 
+# Versão da imagem, devolvida no cabeçalho X-Versao. O script de build passa a mesma tag da imagem:
+#   docker build --build-arg APP_VERSION=1.1.0 -t aps-sd/thermal-inversion-api:1.1.0 .
+ARG APP_VERSION=dev
+ENV APP_VERSION=$APP_VERSION
+
 # As imagens .NET 8 escutam na porta 8080 por padrão
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "ThermalInversion.Api.dll"]

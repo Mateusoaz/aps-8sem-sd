@@ -1,0 +1,86 @@
+# Fila (RabbitMQ): cada POST de leitura publica o id na fila "<serviço>.alert-evaluation", e os
+# consumidores (dentro das réplicas das APIs) avaliam a regra de alerta de forma assíncrona.
+#
+# Serviço COM estado -> StatefulSet + volume: fila durável e mensagens persistentes sobrevivem ao pod.
+# O nome fixo do pod (rabbitmq-0) importa: o RabbitMQ guarda os dados numa pasta com o nome do nó.
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: aps
+  labels:
+    app: rabbitmq
+spec:
+  clusterIP: None
+  selector:
+    app: rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+    - name: painel            # kubectl port-forward -n aps svc/rabbitmq 15672  ->  http://localhost:15672
+      port: 15672
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rabbitmq
+  namespace: aps
+spec:
+  serviceName: rabbitmq
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+        tier: dados
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:4.1-management-alpine
+          ports:
+            - name: amqp
+              containerPort: 5672
+            - name: painel
+              containerPort: 15672
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef: { name: aps-credenciais, key: RABBITMQ_USER }
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef: { name: aps-credenciais, key: RABBITMQ_PASSWORD }
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { cpu: "1",  memory: 512Mi }
+          volumeMounts:
+            - name: dados
+              mountPath: /var/lib/rabbitmq
+          # O RabbitMQ demora a subir: a startup dá até 3 min antes de as outras probes valerem.
+          # A porta AMQP só abre no fim da partida, então "porta aberta" já quer dizer "broker no ar".
+          startupProbe:
+            tcpSocket: { port: 5672 }
+            periodSeconds: 5
+            failureThreshold: 36
+          # Liveness: o nó Erlang responde? (mais pesado, por isso a cada 60 s)
+          livenessProbe:
+            exec:
+              command: ["rabbitmq-diagnostics", "-q", "ping"]
+            periodSeconds: 60
+            timeoutSeconds: 20
+            failureThreshold: 3
+          # Readiness: aceita conexões AMQP?
+          readinessProbe:
+            tcpSocket: { port: 5672 }
+            periodSeconds: 5
+            failureThreshold: 2
+  volumeClaimTemplates:          # PVC dados-rabbitmq-0
+    - metadata:
+        name: dados
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

@@ -1,0 +1,111 @@
+# API Qualidade do ar: serviço SEM estado -> Deployment (2 réplicas) + Service.
+# Escala horizontal pelo HPA (40-hpa.yaml) ou à mão: kubectl scale deployment air-quality-api -n aps --replicas=4
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: air-quality-api
+  namespace: aps
+  labels:
+    app: air-quality-api
+    tier: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: air-quality-api             # tem que bater com template.metadata.labels
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1             # durante a troca de versão, até 1 pod a mais que o pedido
+      maxUnavailable: 0       # e nunca menos pods prontos que o pedido
+  template:
+    metadata:
+      labels:
+        app: air-quality-api
+        tier: api
+    spec:
+      # Espalha as réplicas pelos nós: se um nó cair (ou for drenado), as outras continuam atendendo.
+      # "ScheduleAnyway" = preferência; com mais réplicas que nós, o scheduler repete nós.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: air-quality-api
+      # Tempo máximo entre o SIGTERM e o SIGKILL: as requisições em andamento terminam dentro dele
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: api
+          image: aps-sd/air-quality-api:1.1.0        # tag fixa; levada ao cluster com "k3d image import"
+          imagePullPolicy: IfNotPresent     # usa a imagem importada, sem tentar baixar da internet
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: aps-config            # hosts, pool, cache, fila e regras de alerta
+          env:
+            # Credenciais: uma a uma do Secret (o .env inteiro está lá, mas a API só recebe o que usa)
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef: { name: aps-credenciais, key: POSTGRES_USER }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: aps-credenciais, key: POSTGRES_PASSWORD }
+            - name: RABBITMQ_USER
+              valueFrom:
+                secretKeyRef: { name: aps-credenciais, key: RABBITMQ_USER }
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: aps-credenciais, key: RABBITMQ_PASSWORD }
+            # $(VAR) monta o valor a partir de variáveis já definidas acima (ConfigMap + Secret)
+            - name: ConnectionStrings__Default
+              value: "Host=$(BANCO_HOST);Port=5432;Database=air_quality;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD);Maximum Pool Size=$(BANCO_POOL_MAXIMO)"
+            - name: ConnectionStrings__Redis
+              value: "$(CACHE_HOST):6379"
+            - name: ConnectionStrings__RabbitMq
+              value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASSWORD)@$(FILA_HOST):5672"
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }   # reserva; o HPA calcula a % de CPU sobre este valor
+            limits:   { cpu: 500m, memory: 384Mi }   # teto: CPU acima disso é estrangulada; memória acima, OOMKilled
+          # Startup: segura a liveness enquanto o .NET sobe (até 60 s)
+          startupProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 2
+            failureThreshold: 30
+          # Liveness: só o processo, sem dependências. 3 falhas seguidas -> reinicia o contêiner.
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          # Readiness: banco, cache e fila verificados A CADA chamada. Banco fora -> 503 -> 2 falhas
+          # seguidas -> o pod sai do Service (sem reiniciar). Cache/fila fora -> continua pronto.
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          # Encerramento gracioso: ao receber a ordem de parar, o pod espera 5 s antes do SIGTERM.
+          # Nesse tempo o Service e o gateway tiram o pod da lista de destinos, e nenhuma requisição
+          # nova chega a um processo que está fechando (o 504 do rolling update da Aula Prática 3).
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: air-quality-api
+  namespace: aps
+  labels:
+    app: air-quality-api
+spec:
+  selector:
+    app: air-quality-api               # manda tráfego para todo pod com este rótulo que esteja PRONTO
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

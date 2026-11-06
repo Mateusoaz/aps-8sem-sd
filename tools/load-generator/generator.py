@@ -31,6 +31,8 @@ from datetime import datetime, timezone
 AREAS = ["CENTRO", "MOOCA", "PINHEIROS", "SANTANA", "ITAQUERA", "BUTANTA"]
 
 API_NAMES = {"air": "qualidade do ar", "flooding": "alagamento", "thermal": "inversão térmica"}
+# Prefixo de cada API. A readiness também existe sob o prefixo, então funciona direto na API ou pelo gateway.
+API_PREFIXES = {"air": "/api/v1/air-quality", "flooding": "/api/v1/flooding", "thermal": "/api/v1/thermal-inversion"}
 
 
 def now_iso() -> str:
@@ -218,7 +220,7 @@ def wait_until_ready(urls: dict[str, str], timeout_s: float) -> bool:
     while pending and time.monotonic() < deadline:
         for api, base in list(pending.items()):
             try:
-                with urllib.request.urlopen(f"{base}/health/ready", timeout=3) as resp:
+                with urllib.request.urlopen(f"{base}{API_PREFIXES[api]}/health/ready", timeout=3) as resp:
                     if resp.status == 200:
                         print(f"  [ok] {API_NAMES[api]} pronta ({base})")
                         del pending[api]
@@ -227,7 +229,7 @@ def wait_until_ready(urls: dict[str, str], timeout_s: float) -> bool:
         if pending:
             time.sleep(2)
     for api, base in pending.items():
-        print(f"  [falhou] {API_NAMES[api]} não respondeu em {base}/health/ready")
+        print(f"  [falhou] {API_NAMES[api]} não respondeu em {base}{API_PREFIXES[api]}/health/ready")
     return not pending
 
 
@@ -292,6 +294,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--air-url", default=os.getenv("AIR_QUALITY_API_URL", "http://127.0.0.1:5001"))
     parser.add_argument("--flooding-url", default=os.getenv("FLOODING_API_URL", "http://127.0.0.1:5002"))
     parser.add_argument("--thermal-url", default=os.getenv("THERMAL_INVERSION_API_URL", "http://127.0.0.1:5003"))
+    # Kubernetes: as três APIs atrás do mesmo Ingress. Sobrescreve as três URLs acima.
+    parser.add_argument("--gateway", metavar="URL", help="endereço do gateway, ex.: http://127.0.0.1:8081 (Kubernetes)")
     args = parser.parse_args()
 
     args.apis = [api.strip() for api in args.apis.split(",") if api.strip()]
@@ -309,6 +313,8 @@ def main():
         random.seed(args.seed)
 
     urls = {"air": args.air_url, "flooding": args.flooding_url, "thermal": args.thermal_url}
+    if args.gateway:
+        urls = dict.fromkeys(urls, args.gateway)
     urls = {api: urls[api].rstrip("/") for api in args.apis}
     entities = [SIMULATORS[api](i) for api in args.apis for i in range(1, args.entities + 1)]
 

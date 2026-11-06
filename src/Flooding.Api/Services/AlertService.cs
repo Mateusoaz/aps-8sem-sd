@@ -9,10 +9,22 @@ namespace Flooding.Api.Services;
 /// <summary>
 /// Regra: nível da água acima da cota de transbordamento.
 /// O alerta é gerado quando o nível CRUZA a cota (leitura anterior abaixo ou inexistente), não a cada leitura.
-/// Por enquanto roda de forma síncrona dentro do POST; numa etapa futura vira um consumidor de fila.
+/// Roda no consumidor da fila (AlertConsumer); se a fila estiver desligada ou fora do ar, dentro do próprio POST.
 /// </summary>
 public class AlertService(FloodingDbContext db, IOptions<AlertOptions> options, ILogger<AlertService> logger)
 {
+    /// <summary>Chamado pelo consumidor da fila: a mensagem traz só o id da leitura.</summary>
+    public async Task EvaluateByIdAsync(long readingId, CancellationToken ct)
+    {
+        var reading = await db.WaterLevelReadings.AsNoTracking().FirstOrDefaultAsync(r => r.Id == readingId, ct);
+        if (reading is null)
+        {
+            logger.LogWarning("Leitura {ReadingId} não encontrada: mensagem descartada.", readingId);
+            return;
+        }
+        await EvaluateWaterLevelAsync(reading, ct);
+    }
+
     public async Task EvaluateWaterLevelAsync(WaterLevelReading reading, CancellationToken ct)
     {
         var limit = options.Value.OverflowLevelCm;
@@ -29,6 +41,11 @@ public class AlertService(FloodingDbContext db, IOptions<AlertOptions> options, 
 
         // Já estava acima da cota: o alerta deste episódio já foi emitido
         if (previousLevel > limit)
+            return;
+
+        // Idempotência: a fila entrega "pelo menos uma vez", então a mesma leitura pode ser avaliada duas vezes
+        if (await db.Alerts.AnyAsync(a => a.Type == Alert.WaterLevelAboveOverflow && a.MonitoringPointId == reading.MonitoringPointId
+                                          && a.Timestamp == reading.Timestamp, ct))
             return;
 
         db.Alerts.Add(new Alert

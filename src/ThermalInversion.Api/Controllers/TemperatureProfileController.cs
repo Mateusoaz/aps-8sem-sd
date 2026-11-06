@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThermalInversion.Api.Data;
 using ThermalInversion.Api.Dtos;
+using ThermalInversion.Api.Infrastructure;
 using ThermalInversion.Api.Models;
 using ThermalInversion.Api.Services;
 
@@ -9,7 +10,7 @@ namespace ThermalInversion.Api.Controllers;
 
 [ApiController]
 [Route(ApiRoutes.Base + "/temperature-profile")]
-public class TemperatureProfileController(ThermalInversionDbContext db, AlertService alerts) : ControllerBase
+public class TemperatureProfileController(ThermalInversionDbContext db, AlertService alerts, ReadingQueue queue) : ControllerBase
 {
     // POST /api/v1/thermal-inversion/temperature-profile
     [HttpPost]
@@ -28,7 +29,13 @@ public class TemperatureProfileController(ThermalInversionDbContext db, AlertSer
 
         db.TemperatureProfiles.Add(reading);
         await db.SaveChangesAsync(ct);
-        await alerts.EvaluateTemperatureProfileAsync(reading, ct);
+
+        // Alerta assíncrono: publica o id na fila e responde sem esperar a avaliação.
+        // Fila desligada ou fora do ar: avalia aqui mesmo (o POST fica mais lento, mas nenhum alerta se perde).
+        var queued = queue.TryPublish(reading.Id);
+        if (!queued)
+            await alerts.EvaluateTemperatureProfileAsync(reading, ct);
+        Response.Headers["X-Alerta"] = queued ? "fila" : "sincrono";
 
         return CreatedAtAction(nameof(GetById), new { id = reading.Id }, reading);
     }

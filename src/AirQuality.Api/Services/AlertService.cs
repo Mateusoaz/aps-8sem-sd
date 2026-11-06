@@ -9,10 +9,22 @@ namespace AirQuality.Api.Services;
 /// <summary>
 /// Regra: PM2.5 acima do limite por N leituras seguidas da mesma estação.
 /// O alerta é gerado uma vez por episódio (quando a sequência completa N), não a cada leitura.
-/// Por enquanto roda de forma síncrona dentro do POST; numa etapa futura vira um consumidor de fila.
+/// Roda no consumidor da fila (AlertConsumer); se a fila estiver desligada ou fora do ar, dentro do próprio POST.
 /// </summary>
 public class AlertService(AirQualityDbContext db, IOptions<AlertOptions> options, ILogger<AlertService> logger)
 {
+    /// <summary>Chamado pelo consumidor da fila: a mensagem traz só o id da leitura.</summary>
+    public async Task EvaluateByIdAsync(long readingId, CancellationToken ct)
+    {
+        var reading = await db.ParticulateReadings.AsNoTracking().FirstOrDefaultAsync(r => r.Id == readingId, ct);
+        if (reading is null)
+        {
+            logger.LogWarning("Leitura {ReadingId} não encontrada: mensagem descartada.", readingId);
+            return;
+        }
+        await EvaluateParticulateAsync(reading, ct);
+    }
+
     public async Task EvaluateParticulateAsync(ParticulateReading reading, CancellationToken ct)
     {
         var limit = options.Value.Pm25Limit;
@@ -36,6 +48,11 @@ public class AlertService(AirQualityDbContext db, IOptions<AlertOptions> options
         var alreadyAlerted = recent.Count > required && recent[required] > limit;
 
         if (!sequenceComplete || alreadyAlerted)
+            return;
+
+        // Idempotência: a fila entrega "pelo menos uma vez", então a mesma leitura pode ser avaliada duas vezes
+        if (await db.Alerts.AnyAsync(a => a.Type == Alert.Pm25AboveLimit && a.StationId == reading.StationId
+                                          && a.Timestamp == reading.Timestamp, ct))
             return;
 
         db.Alerts.Add(new Alert

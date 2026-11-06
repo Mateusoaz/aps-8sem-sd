@@ -1,0 +1,31 @@
+# Configuração comum, sem nada sensível (usuários e senhas ficam no Secret "aps-credenciais").
+# Todas as chaves viram variáveis de ambiente das APIs (envFrom). "__" é o separador de seção do .NET:
+# Cache__TtlSeconds chega na aplicação como Cache:TtlSeconds.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aps-config
+  namespace: aps
+data:
+  # Nomes dos Services: o DNS do cluster resolve cada um para o pod certo
+  BANCO_HOST: "postgres"
+  CACHE_HOST: "redis"
+  FILA_HOST: "rabbitmq"
+
+  # Conexões que cada réplica pode abrir com o Postgres. 3 APIs x até 10 réplicas x 8 = 240,
+  # abaixo do max_connections=300 do banco (10-postgres.yaml).
+  BANCO_POOL_MAXIMO: "8"
+
+  # Cache: "false" desliga sem recompilar (experimento com x sem cache da Etapa 5)
+  Cache__Enabled: "true"
+  Cache__TtlSeconds: "10"
+
+  # Fila: "false" faz o alerta ser avaliado dentro do POST (síncrono x assíncrono)
+  Queue__Enabled: "true"
+  Queue__Prefetch: "20"
+
+  # Regras de alerta
+  Alerts__Pm25Limit: "25"
+  Alerts__Pm25ConsecutiveReadings: "3"
+  Alerts__OverflowLevelCm: "300"
+  Alerts__MinInversionGradientC: "0"

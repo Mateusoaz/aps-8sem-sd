@@ -1,0 +1,86 @@
+# Banco PostgreSQL: serviço COM estado -> StatefulSet + volume próprio.
+# Um único servidor com três bancos (air_quality, flooding, thermal_inversion), um por API.
+# As APIs criam o próprio banco e as tabelas ao subir (DatabaseInitializer).
+#
+# Service headless (clusterIP: None): nome DNS fixo "postgres", sem balanceamento. É o mesmo nome
+# usado no Compose, então a string de conexão não muda entre os dois ambientes.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: aps
+  labels:
+    app: postgres
+spec:
+  clusterIP: None
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: aps
+spec:
+  serviceName: postgres
+  replicas: 1                      # banco não escala com "kubectl scale": exigiria replicação do próprio Postgres
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        tier: dados
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          # Mais conexões que o padrão (100): cada réplica das APIs mantém o seu pool (01-configmap.yaml)
+          args: ["-c", "max_connections=300"]
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef: { name: aps-credenciais, key: POSTGRES_USER }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: aps-credenciais, key: POSTGRES_PASSWORD }
+          resources:
+            requests: { cpu: 250m, memory: 256Mi }
+            limits:   { cpu: "2",  memory: 1Gi }
+          volumeMounts:
+            - name: dados
+              mountPath: /var/lib/postgresql/data
+          # Na primeira vez o initdb demora: a startup segura as outras probes por até 2 min
+          startupProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\""]
+            periodSeconds: 2
+            failureThreshold: 60
+          # Liveness: só "o processo está de pé?" (porta aberta). 3 falhas -> reinicia o contêiner.
+          livenessProbe:
+            tcpSocket: { port: 5432 }
+            periodSeconds: 10
+            failureThreshold: 3
+          # Readiness: "já aceita conexões?". Falhou -> sai do Service, sem reiniciar.
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\""]
+            periodSeconds: 5
+            failureThreshold: 2
+  # "Um disco de 1 GiB para cada pod": cria o PVC dados-postgres-0, que sobrevive à exclusão do pod.
+  # No k3d o disco é uma pasta no nó, criada pelo provisionador local-path.
+  volumeClaimTemplates:
+    - metadata:
+        name: dados
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
