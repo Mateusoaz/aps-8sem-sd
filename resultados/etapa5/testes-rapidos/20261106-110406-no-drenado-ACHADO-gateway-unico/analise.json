@@ -1,0 +1,28 @@
+{
+  "requisicoes": 107081,
+  "falhas": 93614,
+  "por_erro": {
+    "conexao_encerrada": 93614
+  },
+  "versoes": {
+    "1.1.0": 13467
+  },
+  "acao": "nó drenado: k3d-aps-agent-0",
+  "t_acao_s": 10.0,
+  "falhas_apos_acao": 93614,
+  "vazao_normal": 1030.0,
+  "p95_normal": 70.845,
+  "tempo_ate_substituto_pronto_s": 15.6,
+  "tempo_ate_todos_substitutos_s": 15.6,
+  "tempo_ate_patamar_normal_s": null,
+  "pods_retirados": [
+    "air-quality-api-7c846d4dd8-28d5p (k3d-aps-agent-0, 11:05:25)",
+    "flooding-api-75f75d59d5-w44ct (k3d-aps-agent-0, 11:05:25)",
+    "rabbitmq-0 (k3d-aps-agent-0, 11:05:25)",
+    "thermal-inversion-api-79f68869c9-94xmb (k3d-aps-agent-0, 11:05:25)",
+    "web-client-78787d6459-7bxqc (k3d-aps-agent-0, 11:05:25)"
+  ],
+  "pods_criados": [
+    "air-quality-api-7c846d4dd8-tz89f -> k3d-aps-agent-1 pronto às 11:05:39"
+  ]
+}

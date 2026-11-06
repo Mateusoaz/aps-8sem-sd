@@ -1,0 +1,58 @@
+epoch,hora,segundo,tipo,objeto,no,versao,detalhe
+1793974574.223,11:16:14,4.4,pod_removido,air-quality-api-5f4667d77d-fxp8d,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793974574.224,11:16:14,4.4,pod_removido,flooding-api-75f75d59d5-t2nss,k3d-aps-agent-1,1.1.0,app=flooding-api
+1793974574.224,11:16:14,4.4,pod_removido,thermal-inversion-api-79f68869c9-k47mb,k3d-aps-server-0,1.1.0,app=thermal-inversion-api
+1793974586.211,11:16:26,16.4,preparado,air-quality-api,,,"2 réplica(s), HPA removido"
+1793974587.22,11:16:27,17.4,pod_criado,air-quality-api-79557f74c9-c85nx,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793974587.22,11:16:27,17.4,pod_agendado,air-quality-api-79557f74c9-c85nx,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793974592.224,11:16:32,22.4,pod_pronto,air-quality-api-79557f74c9-c85nx,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793974592.225,11:16:32,22.4,pod_terminando,air-quality-api-7cffd4ffdb-snm87,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974593.221,11:16:33,23.4,pod_criado,air-quality-api-79557f74c9-6wrlk,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974593.221,11:16:33,23.4,pod_agendado,air-quality-api-79557f74c9-6wrlk,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974597.223,11:16:37,27.4,pod_pronto,air-quality-api-79557f74c9-6wrlk,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974597.223,11:16:37,27.4,pod_terminando,air-quality-api-7cffd4ffdb-2zkhh,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793974597.223,11:16:37,27.4,pod_removido,air-quality-api-7cffd4ffdb-snm87,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974603.059,11:16:43,33.2,pod_removido,air-quality-api-7cffd4ffdb-2zkhh,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793974613.521,11:16:53,43.7,configmap,aps-config,,,Queue__Enabled=true (pods reiniciados)
+1793974654.548,11:17:34,84.7,fila_vazia,rabbitmq,,,"6272 mensagens pendentes ao fim da carga, 19 s para esvaziar"
+1793974664.587,11:17:44,94.7,carga_inicio,,,,fila (assíncrono): 32 trabalhadores
+1793974686.003,11:18:06,116.1,carga_fim,,,,fila (assíncrono)
+1793974708.501,11:18:28,138.6,fila_vazia,rabbitmq,,,"11396 mensagens pendentes ao fim da carga, 22 s para esvaziar"
+1793974719.242,11:18:39,149.4,pod_criado,air-quality-api-7f54c84944-7wbtw,,1.1.0,app=air-quality-api
+1793974720.238,11:18:40,150.4,pod_agendado,air-quality-api-7f54c84944-7wbtw,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793974724.223,11:18:44,154.4,pod_pronto,air-quality-api-7f54c84944-7wbtw,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793974725.838,11:18:45,156.0,pod_terminando,air-quality-api-79557f74c9-6wrlk,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974725.838,11:18:45,156.0,pod_criado,air-quality-api-7f54c84944-sfcrt,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974725.838,11:18:45,156.0,pod_agendado,air-quality-api-7f54c84944-sfcrt,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974729.191,11:18:49,159.3,pod_terminando,air-quality-api-79557f74c9-c85nx,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793974729.191,11:18:49,159.3,pod_pronto,air-quality-api-7f54c84944-sfcrt,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974731.177,11:18:51,161.3,pod_removido,air-quality-api-79557f74c9-6wrlk,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974736.177,11:18:56,166.3,pod_removido,air-quality-api-79557f74c9-c85nx,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793974748.014,11:19:08,178.2,configmap,aps-config,,,Queue__Enabled=false (pods reiniciados)
+1793974771.051,11:19:31,201.2,fila_vazia,rabbitmq,,,"0 mensagens pendentes ao fim da carga, 1 s para esvaziar"
+1793974781.107,11:19:41,211.2,carga_inicio,,,,sem fila (síncrono): 32 trabalhadores
+1793974802.589,11:20:02,232.7,carga_fim,,,,sem fila (síncrono)
+1793974803.823,11:20:03,234.0,fila_vazia,rabbitmq,,,"0 mensagens pendentes ao fim da carga, 1 s para esvaziar"
+1793974816.683,11:20:16,246.8,pod_criado,air-quality-api-56554d84f6-248jl,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793974816.683,11:20:16,246.8,pod_agendado,air-quality-api-56554d84f6-248jl,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793974816.683,11:20:16,246.8,pod_criado,flooding-api-5d857877db-cw7dv,k3d-aps-agent-1,1.1.0,app=flooding-api
+1793974816.683,11:20:16,246.8,pod_agendado,flooding-api-5d857877db-cw7dv,k3d-aps-agent-1,1.1.0,app=flooding-api
+1793974816.683,11:20:16,246.8,pod_criado,thermal-inversion-api-78f959d969-zbg87,k3d-aps-server-0,1.1.0,app=thermal-inversion-api
+1793974816.684,11:20:16,246.8,pod_agendado,thermal-inversion-api-78f959d969-zbg87,k3d-aps-server-0,1.1.0,app=thermal-inversion-api
+1793974819.529,11:20:19,249.7,pod_pronto,air-quality-api-56554d84f6-248jl,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793974819.529,11:20:19,249.7,pod_terminando,air-quality-api-7f54c84944-7wbtw,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793974819.529,11:20:19,249.7,pod_terminando,flooding-api-546d4db5d8-9h77f,k3d-aps-agent-0,1.1.0,app=flooding-api
+1793974819.529,11:20:19,249.7,pod_pronto,flooding-api-5d857877db-cw7dv,k3d-aps-agent-1,1.1.0,app=flooding-api
+1793974819.529,11:20:19,249.7,pod_criado,flooding-api-5d857877db-txg4t,k3d-aps-agent-0,1.1.0,app=flooding-api
+1793974819.529,11:20:19,249.7,pod_agendado,flooding-api-5d857877db-txg4t,k3d-aps-agent-0,1.1.0,app=flooding-api
+1793974819.529,11:20:19,249.7,pod_terminando,thermal-inversion-api-588776bb56-pngjj,k3d-aps-agent-1,1.1.0,app=thermal-inversion-api
+1793974819.529,11:20:19,249.7,pod_criado,thermal-inversion-api-78f959d969-jmtkj,k3d-aps-agent-1,1.1.0,app=thermal-inversion-api
+1793974819.529,11:20:19,249.7,pod_agendado,thermal-inversion-api-78f959d969-jmtkj,k3d-aps-agent-1,1.1.0,app=thermal-inversion-api
+1793974819.529,11:20:19,249.7,pod_pronto,thermal-inversion-api-78f959d969-zbg87,k3d-aps-server-0,1.1.0,app=thermal-inversion-api
+1793974820.53,11:20:20,250.7,pod_criado,air-quality-api-56554d84f6-mprvl,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793974820.53,11:20:20,250.7,pod_agendado,air-quality-api-56554d84f6-mprvl,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793974823.217,11:20:23,253.4,pod_pronto,air-quality-api-56554d84f6-mprvl,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793974823.217,11:20:23,253.4,pod_terminando,air-quality-api-7f54c84944-sfcrt,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793974823.217,11:20:23,253.4,pod_terminando,flooding-api-546d4db5d8-684sk,k3d-aps-server-0,1.1.0,app=flooding-api
+1793974823.217,11:20:23,253.4,pod_pronto,flooding-api-5d857877db-txg4t,k3d-aps-agent-0,1.1.0,app=flooding-api
+1793974823.973,11:20:23,254.1,restaurado,,,,manifestos de k8s/ reaplicados

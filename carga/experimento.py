@@ -17,6 +17,9 @@ Uso (PowerShell, Git Bash ou terminal):
   python carga/experimento.py cache                consulta agregada com cache x sem cache
   python carga/experimento.py fila                 ingestão com fila (assíncrono) x sem fila (síncrono)
   python carga/experimento.py todos                todos acima, em sequência (~50 min)
+  python carga/experimento.py demo                 DEMONSTRAÇÃO AO VIVO: liga a carga e a janela e espera você
+                                                   digitar os kubectl em outro terminal (escalar, apagar pod,
+                                                   nova versão...); Ctrl+C encerra, e saem tabela e gráficos
 
 Opções: --rapido (versão curta, para conferir o fluxo), --sem-janela, --gateway URL.
 Resultados em resultados/etapa5/<data-hora>-<experimento>/.
@@ -392,10 +395,25 @@ class Experimento:
                 break
             acao()
 
-        for p in processos:
-            p.wait()
+        interrompido = False
+        while True:
+            try:
+                for p in processos:
+                    p.wait()
+                break
+            except KeyboardInterrupt:
+                # No Windows o Ctrl+C chega também aos geradores, que gravam o que mediram e saem
+                if not interrompido:
+                    interrompido = True
+                    print("\n>> Ctrl+C: encerrando a carga e gravando o que foi medido (aguarde, não aperte de novo)...")
+                    if os.name != "nt":
+                        for p in processos:
+                            if p.poll() is None:
+                                p.send_signal(2)   # SIGINT
         for log in logs:
             log.close()
+        if interrompido:
+            duracao = max(1.0, min(duracao, time.time() - inicio))
         self.reg.evento("carga_fim", detalhe=rotulo)
         mesclador.parar.set()
         mesclador.join()
@@ -409,12 +427,19 @@ class Experimento:
             print(f"   ATENÇÃO: gerador terminou com erro, veja {prefixos[0]}.log")
         return execucao
 
-    def aquecer(self, url_rota: str, metodo: str = "GET", corpo: str | None = None, segundos: float = 15):
-        """Carga curta DESCARTADA: o .NET compila os caminhos quentes e os pools de conexão abrem."""
+    def aquecer(self, url_rota: str, metodo: str = "GET", corpo: str | None = None, segundos: float = 20):
+        """
+        Carga DESCARTADA antes de medir. Um pod recém-criado é lento: o .NET ainda compila o código em camadas
+        (o JIT só otimiza um método depois de muitas chamadas) e os pools de conexão estão vazios. Como o gateway
+        reparte as requisições igualmente, uma réplica fria atrasa todos os trabalhadores que caem nela (no
+        teste, 2 réplicas com uma fria renderam MENOS que 1 aquecida). Por isso: 16 trabalhadores POR RÉPLICA,
+        por 20 s, sem encurtar no modo rápido.
+        """
         pasta = os.path.join(self.reg.pasta, "descartado")
         os.makedirs(pasta, exist_ok=True)
-        cmd = [sys.executable, os.path.join(AQUI, "loadgen.py"), self.gw + url_rota, "-X", metodo, "-c", "8",
-               "-d", str(self.d(segundos)), "--aquecimento", "0", "--saida", os.path.join(pasta, f"aquecimento-{int(time.time())}")]
+        replicas = max(1, len(self.pods_prontos()))
+        cmd = [sys.executable, os.path.join(AQUI, "loadgen.py"), self.gw + url_rota, "-X", metodo, "-c", str(16 * replicas),
+               "-d", str(segundos), "--aquecimento", "0", "--saida", os.path.join(pasta, f"aquecimento-{int(time.time())}")]
         if corpo:
             cmd += ["--corpo", corpo]
         subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=RAIZ,
@@ -533,26 +558,35 @@ class Experimento:
         self.esperar_fila()
 
     def escolher_no(self) -> str:
-        """Um agente (não o plano de controle) com réplica da API e SEM o Postgres/RabbitMQ (volumes presos ao nó)."""
+        """
+        Um agente (nunca o plano de controle) que tenha uma réplica da API e NÃO tenha o Postgres nem o
+        RabbitMQ: o volume deles é uma pasta naquele nó, então despejados eles ficariam Pending até o uncordon
+        e o experimento mediria a queda do banco, não a do nó. Se nenhum agente serve, recria a réplica da API
+        que está num nó ruim para o scheduler colocá-la em outro, e tenta de novo.
+        """
         nos = kjson("get", "nodes")["items"]
         controle = {n["metadata"]["name"] for n in nos if "node-role.kubernetes.io/control-plane" in n["metadata"].get("labels", {})}
-        pods = kjson("get", "pods", "-n", NS)["items"]
-        com_estado = {p["spec"].get("nodeName") for p in pods if p["metadata"]["name"] in ("postgres-0", "rabbitmq-0")}
-        for tentativa in range(3):
+        agentes = {n["metadata"]["name"] for n in nos} - controle
+        for tentativa in range(4):
+            pods = kjson("get", "pods", "-n", NS)["items"]
+            com_estado = {p["spec"].get("nodeName") for p in pods if p["metadata"]["name"] in ("postgres-0", "rabbitmq-0")}
+            bons = agentes - com_estado
             com_api = {p["no"] for p in self.pods_prontos()}
-            candidatos = sorted(com_api - controle - com_estado) or sorted(com_api - controle)
+            candidatos = sorted(com_api & bons)
             if candidatos:
                 escolhido = candidatos[0]
-                if escolhido in com_estado:
-                    print(f"   aviso: {escolhido} também tem um serviço com volume local; ele ficará Pending até o uncordon")
-                self.reg.evento("no_escolhido", escolhido, escolhido, detalhe=f"réplicas da API em: {sorted(com_api)}")
+                self.reg.evento("no_escolhido", escolhido, escolhido,
+                                detalhe=f"réplicas da API em: {sorted(com_api)}; Postgres/RabbitMQ em: {sorted(com_estado)}")
                 return escolhido
-            # As duas réplicas caíram no plano de controle: recria uma para o scheduler espalhar
-            pod = next(p for p in self.pods_prontos() if p["no"] in controle)
+            if not bons:
+                break
+            pod = next(p for p in self.pods_prontos() if p["no"] not in bons)
+            print(f"   movendo {pod['nome']} (está em {pod['no']}) para uma réplica cair num agente sem volume local")
             kubectl("delete", "pod", pod["nome"], "-n", NS)
             kubectl("rollout", "status", "deployment", APP, "-n", NS, "--timeout=120s")
-            time.sleep(5)
-        raise RuntimeError("nenhum nó agente com réplica da API para drenar")
+            self.esperar_sem_terminando()
+            time.sleep(3)
+        raise RuntimeError("nenhum agente com réplica da API e sem Postgres/RabbitMQ para drenar")
 
     def rolling(self, com_prestop: bool = True):
         """3 réplicas, carga constante; set image 1.1.0 -> 1.2.0, espera concluir, 30 s depois rollout undo."""
@@ -610,6 +644,49 @@ class Experimento:
             self.aquecer(ROTA_AGREGADA)
             self.gerar("com cache" if ligado else "sem cache", ROTA_AGREGADA, 32, 2, self.d(60), 10)
 
+    def demo(self):
+        """
+        Demonstração ao vivo (verificação da seção 6 da ficha): prepara, liga a carga e a janela, registra tudo
+        o que o Kubernetes fizer e ESPERA. Os comandos são digitados à mão, em outro terminal.
+        """
+        a = self.args
+        self.reg.meta["tipo"] = "linha_do_tempo"
+        self.reg.meta["demo"] = True
+        self.garantir_imagem("1.2.0")          # para o "publicar nova versão" funcionar na hora
+        if a.com_hpa:
+            kubectl("apply", "-f", os.path.join(RAIZ, "k8s", "40-hpa.yaml"))
+            kubectl("scale", "deployment", APP, "-n", NS, f"--replicas={max(2, a.replicas)}")
+            kubectl("rollout", "status", "deployment", APP, "-n", NS, "--timeout=240s")
+            self.reg.evento("preparado", APP, detalhe="HPA ligado")
+        else:
+            self.preparar(a.replicas)
+        if a.rota == "consulta":
+            rota, metodo, corpo = "/api/v1/air-quality/stations/{{escolha:EST-01|EST-02|EST-03|EST-04|EST-05}}/latest", "GET", None
+        else:
+            rota, metodo, corpo = ROTA_POST, "POST", "ar"
+        self.aquecer(rota, metodo, corpo)
+        if metodo == "POST":
+            self.esperar_fila()
+        restaura = "o cluster volta ao normal" if not a.sem_restaurar else "o cluster fica como está (--sem-restaurar)"
+        print(f"""
+=====================================================================================
+ DEMONSTRAÇÃO AO VIVO: {a.trabalhadores} trabalhadores em {metodo} {rota.split("{{")[0]}..., por até {a.duracao / 60:.0f} min
+ {a.replicas} réplica(s) da {APP}, HPA {"ligado" if a.com_hpa else "removido"}.
+ A janela de gráficos marca tudo o que o Kubernetes fizer. Em OUTRO terminal:
+
+   Acompanhar os pods:  kubectl get pods -n {NS} -l app={APP} -o wide -w
+   1) Escalar:          kubectl scale deployment {APP} -n {NS} --replicas=4
+   2) Apagar um pod:    kubectl delete pod -n {NS} <nome de um pod da lista>
+   3) Nova versão:      kubectl set image deployment/{APP} -n {NS} api=aps-sd/{APP}:1.2.0
+                        (a imagem 1.2.0 já foi construída e importada)
+   4) Voltar versão:    kubectl rollout undo deployment/{APP} -n {NS}
+
+ Para encerrar antes: Ctrl+C AQUI (uma vez). No fim, {restaura},
+ e saem a tabela e os gráficos da demonstração.
+=====================================================================================
+""", flush=True)
+        self.gerar("demonstração", rota, a.trabalhadores, 2, a.duracao, 5, metodo, corpo, com_hpa=a.com_hpa)
+
     def fila(self):
         """Ingestão: alerta pela fila (assíncrono) x dentro do POST (síncrono), mesma carga, 2 réplicas."""
         self.reg.meta["tipo"] = "comparacao"
@@ -636,10 +713,13 @@ def rodar(nome: str, args) -> str:
     try:
         {"escala": exp.escala, "hpa": exp.hpa, "pod-apagado": exp.pod_apagado, "no-drenado": exp.no_drenado,
          "rolling": lambda: exp.rolling(True), "rolling-sem-prestop": lambda: exp.rolling(False),
-         "cache": exp.cache, "fila": exp.fila}[nome]()
+         "cache": exp.cache, "fila": exp.fila, "demo": exp.demo}[nome]()
     finally:
         try:
-            exp.restaurar()
+            if getattr(args, "sem_restaurar", False):
+                print(">> --sem-restaurar: o cluster fica como está")
+            else:
+                exp.restaurar()
         finally:
             obs.parar.set()
             obs.join(timeout=10)
@@ -656,16 +736,25 @@ def rodar(nome: str, args) -> str:
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[1], formatter_class=argparse.RawDescriptionHelpFormatter,
                                 epilog=__doc__.split("Uso")[1] if "Uso" in __doc__ else None)
-    p.add_argument("experimento", choices=EXPERIMENTOS + ["todos"])
+    p.add_argument("experimento", choices=EXPERIMENTOS + ["todos", "demo"])
     p.add_argument("--rapido", action="store_true", help="versão curta (durações / 3), para conferir o fluxo")
     p.add_argument("--sem-janela", action="store_true", help="não abre a janela com os gráficos ao vivo")
     p.add_argument("--gateway", default="http://127.0.0.1:8081")
+    d = p.add_argument_group("demo")
+    d.add_argument("--replicas", type=int, default=1, help="réplicas no início da demo (padrão: 1)")
+    d.add_argument("--trabalhadores", type=int, default=64, help="trabalhadores da carga da demo (padrão: 64)")
+    d.add_argument("--duracao", type=float, default=900, help="duração máxima da demo em segundos (padrão: 900)")
+    d.add_argument("--rota", choices=["ingestao", "consulta"], default="ingestao", help="rota da carga da demo")
+    d.add_argument("--com-hpa", action="store_true", help="deixa o HPA ligado na demo")
+    d.add_argument("--sem-restaurar", action="store_true", help="no fim, não devolve o cluster ao normal")
     args = p.parse_args()
 
     if not args.sem_janela:
         os.makedirs(os.path.join(RAIZ, "resultados", "etapa5"), exist_ok=True)
+        # Grupo de processos próprio: o Ctrl+C que encerra a demo não fecha a janela de gráficos
         subprocess.Popen([sys.executable, os.path.join(AQUI, "ao_vivo.py"), os.path.join(RAIZ, "resultados", "etapa5")],
-                         cwd=RAIZ, env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+                         cwd=RAIZ, env=dict(os.environ, PYTHONIOENCODING="utf-8"),
+                         creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
 
     nomes = EXPERIMENTOS if args.experimento == "todos" else [args.experimento]
     pastas = [rodar(n, args) for n in nomes]

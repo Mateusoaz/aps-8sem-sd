@@ -181,6 +181,11 @@ def trabalhador(wid: int, fase: Fase, alvo, args, estado: Estado, partida: float
                 erro = classificar_erro(ex)
                 conexao.close()
                 conexao = None
+                # Erro de conexão volta na hora: sem uma pausa, o laço fechado viraria milhares de tentativas
+                # por segundo (inflando a contagem de falhas e a CPU do gerador). Um cliente real espera um pouco
+                # antes de reconectar. Timeout não precisa: ele já esperou --timeout segundos.
+                if erro != "timeout":
+                    estado.parar.wait(0.05)
             latencia = (time.perf_counter() - t0) * 1000
 
             with estado.trava:

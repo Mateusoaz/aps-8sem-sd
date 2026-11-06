@@ -1,0 +1,32 @@
+Alvo: GET http://127.0.0.1:8081/api/v1/air-quality/areas/CENTRO/average?hours=24
+Modo: constante, 16 trabalhadores | duração total ~20 s | timeout 5 s | aquecimento 10 s
+hora       fase  trab   req/s  erros   p50 ms   p95 ms  pods
+11:15:34   1/1     16       0      0      0.0      0.0  0
+11:15:35   1/1     16       0      0      0.0      0.0  0
+11:15:36   1/1     16       0      0      0.0      0.0  0
+11:15:37   1/1     16      14      0   3448.3   3644.9  2
+11:15:38   1/1     16       1      0   4026.4   4026.4  1
+11:15:39   1/1     16       3      1   2421.2   5009.2  1
+11:15:40   1/1     16       4      0   2524.7   2602.1  1
+11:15:41   1/1     16       3      0   1895.2   3633.7  1
+11:15:42   1/1     16       4      6   5000.1   5000.8  2
+11:15:43   1/1     16       2      0   1094.1   1416.0  1
+11:15:44   1/1     16       6      2   4495.2   5002.5  2
+11:15:45   1/1     16       5      0   1481.9   2004.8  1
+11:15:46   1/1     16       6      0   4098.9   4514.3  2
+11:15:47   1/1     16       4      0   1298.7   4717.4  2
+11:15:48   1/1     16      10      0   2202.2   4912.3  2
+11:15:49   1/1     16       5      0   1800.4   4394.1  2
+11:15:50   1/1     16       4      0   1494.8   4499.6  2
+11:15:51   1/1     16       6      1   1703.9   5000.3  2
+11:15:52   1/1     16       2      0   1503.7   3999.1  2
+11:15:53   1/1     16       8      0   3998.2   4719.8  2
+11:15:54   1/1      9       7      0   3577.5   4900.5  2
+
+trab      req     req/s      p50      p95      p99  erros %  CPU média por serviço (kubectl top)
+  16       59       5.8   1800.1   4912.3   5000.3     1.70  postgres 1925m, air-quality-api 187m
+
+Por pod: {'air-quality-api-5f4667d77d-p8zp2': 31, 'air-quality-api-5f4667d77d-fxp8d': 27, '(sem X-Pod)': 1}
+Erros: {'timeout': 1}
+CPU do próprio gerador: 1.0% de um núcleo (perto de 100%, o gargalo pode ser o gerador)
+Arquivos: C:\Users\thelu\Documents\GitHub\aps-8sem-sd\resultados\etapa5\20261106-111214-cache\r2-sem-cache-g1-resumo.json (+ -requisicoes.csv.gz, -segundos.csv, -top.csv)

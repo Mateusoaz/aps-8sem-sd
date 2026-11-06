@@ -1,7 +1,0 @@
-hora,segundo,fase,fases,trabalhadores,ok_s,erros_s,p50_ms,p95_ms,p99_ms,pods,cpu_api_m,cpu_banco_m,servico,rota,epoch,versoes
-23:41:37,1,1,1,8,8,0,27.68,918.79,918.79,1,,,air-quality-api,POST /api/v1/air-quality/particulate,1793932897.386,1.1.0:8
-23:41:38,2,1,1,8,127,0,39.49,491.79,1348.86,2,,,air-quality-api,POST /api/v1/air-quality/particulate,1793932898.387,1.1.0:127
-23:41:39,3,1,1,8,236,0,14.87,88.06,91.01,2,,,air-quality-api,POST /api/v1/air-quality/particulate,1793932899.387,1.1.0:236
-23:41:40,4,1,1,8,247,0,16.19,83.04,92.06,2,,,air-quality-api,POST /api/v1/air-quality/particulate,1793932900.387,1.1.0:247
-23:41:41,5,1,1,8,248,0,15.73,83.6,90.07,2,,,air-quality-api,POST /api/v1/air-quality/particulate,1793932901.387,1.1.0:248
-23:41:42,6,1,1,8,235,0,22.51,85.05,90.22,2,,,air-quality-api,POST /api/v1/air-quality/particulate,1793932902.387,1.1.0:235

@@ -1,0 +1,232 @@
+{
+  "comando": "'C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\carga\\loadgen.py' http://127.0.0.1:8081/api/v1/air-quality/particulate -X POST -c 16 -d 40 --aquecimento 5 --timeout 5 --saida 'C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-113220-no-drenado\\r1-n-drenado-g1' --corpo ar --top --top-intervalo 3 --top-atraso 0",
+  "alvo": {
+    "metodo": "POST",
+    "url": "http://127.0.0.1:8081/api/v1/air-quality/particulate",
+    "corpo": "ar"
+  },
+  "modo": "constante",
+  "parametros": {
+    "trabalhadores": 16,
+    "duracao_s": 40.0,
+    "degraus": null,
+    "duracao_degrau_s": 25,
+    "rampa_s": 0,
+    "aquecimento_s": 5.0,
+    "timeout_s": 5.0,
+    "semente": null
+  },
+  "inicio": "2026-11-06T11:33:26",
+  "fim": "2026-11-06T11:34:06",
+  "ambiente": {
+    "sistema": "Windows 11",
+    "cpu": "AMD Ryzen 9 5900X 12-Core Processor",
+    "nucleos_logicos": 24,
+    "ram_gb": 31.9,
+    "python": "3.13.14",
+    "maquina": "MateuszPC"
+  },
+  "cpu_gerador_pct_de_um_nucleo": 14.0,
+  "geral": {
+    "trabalhadores": 16,
+    "janela_medida_s": 35.0,
+    "requisicoes": 6637,
+    "ok": 6637,
+    "erros": 0,
+    "taxa_erro_pct": 0.0,
+    "vazao_req_s": 189.63,
+    "latencia_ms": {
+      "p50": 85.96,
+      "p95": 169.17,
+      "p99": 201.46,
+      "media": 84.31,
+      "max": 587.11
+    },
+    "latencia_ok_ms": {
+      "p50": 85.96,
+      "p95": 169.17,
+      "p99": 201.46
+    },
+    "por_pod": {
+      "air-quality-api-54f5f47fb-wrb8w": 3812,
+      "air-quality-api-54f5f47fb-wz222": 2124,
+      "air-quality-api-54f5f47fb-6vnd9": 701
+    },
+    "por_status": {
+      "201": 6637
+    },
+    "por_erro": {},
+    "por_versao": {
+      "1.1.0": 6637
+    },
+    "por_cache": {},
+    "lei_de_little": {
+      "latencia_media_medida_ms": 84.31,
+      "latencia_media_prevista_ms": 84.38
+    },
+    "cpu_top_m": {
+      "air-quality-api-54f5f47fb-6vnd9": {
+        "media": 326,
+        "max": 499
+      },
+      "air-quality-api-54f5f47fb-wrb8w": {
+        "media": 402,
+        "max": 494
+      },
+      "air-quality-api-54f5f47fb-wz222": {
+        "media": 497,
+        "max": 497
+      },
+      "flooding-api-68c88dcb6b-kh26w": {
+        "media": 12,
+        "max": 15
+      },
+      "flooding-api-68c88dcb6b-n9knt": {
+        "media": 11,
+        "max": 15
+      },
+      "flooding-api-68c88dcb6b-snx64": {
+        "media": 141,
+        "max": 141
+      },
+      "postgres-0": {
+        "media": 233,
+        "max": 342
+      },
+      "rabbitmq-0": {
+        "media": 216,
+        "max": 358
+      },
+      "redis-55d4876657-7gvjm": {
+        "media": 7,
+        "max": 9
+      },
+      "thermal-inversion-api-7dd5b5855b-ldmcv": {
+        "media": 11,
+        "max": 11
+      },
+      "thermal-inversion-api-7dd5b5855b-njtds": {
+        "media": 10,
+        "max": 17
+      },
+      "thermal-inversion-api-7dd5b5855b-xtnhz": {
+        "media": 156,
+        "max": 156
+      },
+      "web-client-78787d6459-c68vs": {
+        "media": 1,
+        "max": 1
+      },
+      "web-client-78787d6459-tv9k4": {
+        "media": 1,
+        "max": 1
+      }
+    }
+  },
+  "por_fase": [
+    {
+      "trabalhadores": 16,
+      "janela_medida_s": 35.0,
+      "requisicoes": 6637,
+      "ok": 6637,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 189.63,
+      "latencia_ms": {
+        "p50": 85.96,
+        "p95": 169.17,
+        "p99": 201.46,
+        "media": 84.31,
+        "max": 587.11
+      },
+      "latencia_ok_ms": {
+        "p50": 85.96,
+        "p95": 169.17,
+        "p99": 201.46
+      },
+      "por_pod": {
+        "air-quality-api-54f5f47fb-wrb8w": 3812,
+        "air-quality-api-54f5f47fb-wz222": 2124,
+        "air-quality-api-54f5f47fb-6vnd9": 701
+      },
+      "por_status": {
+        "201": 6637
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 6637
+      },
+      "por_cache": {},
+      "lei_de_little": {
+        "latencia_media_medida_ms": 84.31,
+        "latencia_media_prevista_ms": 84.38
+      },
+      "cpu_top_m": {
+        "air-quality-api-54f5f47fb-6vnd9": {
+          "media": 239,
+          "max": 239
+        },
+        "air-quality-api-54f5f47fb-wrb8w": {
+          "media": 385,
+          "max": 491
+        },
+        "air-quality-api-54f5f47fb-wz222": {
+          "media": 497,
+          "max": 497
+        },
+        "flooding-api-68c88dcb6b-kh26w": {
+          "media": 11,
+          "max": 11
+        },
+        "flooding-api-68c88dcb6b-n9knt": {
+          "media": 11,
+          "max": 15
+        },
+        "flooding-api-68c88dcb6b-snx64": {
+          "media": 141,
+          "max": 141
+        },
+        "postgres-0": {
+          "media": 226,
+          "max": 342
+        },
+        "rabbitmq-0": {
+          "media": 203,
+          "max": 358
+        },
+        "redis-55d4876657-7gvjm": {
+          "media": 7,
+          "max": 9
+        },
+        "thermal-inversion-api-7dd5b5855b-ldmcv": {
+          "media": 11,
+          "max": 11
+        },
+        "thermal-inversion-api-7dd5b5855b-njtds": {
+          "media": 11,
+          "max": 17
+        },
+        "thermal-inversion-api-7dd5b5855b-xtnhz": {
+          "media": 156,
+          "max": 156
+        },
+        "web-client-78787d6459-c68vs": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-tv9k4": {
+          "media": 1,
+          "max": 1
+        }
+      },
+      "fase": 0,
+      "inicio": "2026-11-06T11:33:26"
+    }
+  ],
+  "arquivos": {
+    "requisicoes": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-113220-no-drenado\\r1-n-drenado-g1-requisicoes.csv.gz",
+    "segundos": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-113220-no-drenado\\r1-n-drenado-g1-segundos.csv",
+    "top": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-113220-no-drenado\\r1-n-drenado-g1-top.csv",
+    "resumo": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-113220-no-drenado\\r1-n-drenado-g1-resumo.json"
+  }
+}

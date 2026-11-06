@@ -1,0 +1,248 @@
+{
+  "comando": "'C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\carga\\loadgen.py' http://127.0.0.1:8081/api/v1/air-quality/particulate -X POST -c 16 -d 40 --aquecimento 5 --timeout 5 --saida 'C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-112810-no-drenado\\r1-n-drenado-g1' --corpo ar --top --top-intervalo 3 --top-atraso 0",
+  "alvo": {
+    "metodo": "POST",
+    "url": "http://127.0.0.1:8081/api/v1/air-quality/particulate",
+    "corpo": "ar"
+  },
+  "modo": "constante",
+  "parametros": {
+    "trabalhadores": 16,
+    "duracao_s": 40.0,
+    "degraus": null,
+    "duracao_degrau_s": 25,
+    "rampa_s": 0,
+    "aquecimento_s": 5.0,
+    "timeout_s": 5.0,
+    "semente": null
+  },
+  "inicio": "2026-11-06T11:29:19",
+  "fim": "2026-11-06T11:29:59",
+  "ambiente": {
+    "sistema": "Windows 11",
+    "cpu": "AMD Ryzen 9 5900X 12-Core Processor",
+    "nucleos_logicos": 24,
+    "ram_gb": 31.9,
+    "python": "3.13.14",
+    "maquina": "MateuszPC"
+  },
+  "cpu_gerador_pct_de_um_nucleo": 51.2,
+  "geral": {
+    "trabalhadores": 16,
+    "janela_medida_s": 35.0,
+    "requisicoes": 38381,
+    "ok": 3763,
+    "erros": 34618,
+    "taxa_erro_pct": 90.196,
+    "vazao_req_s": 107.51,
+    "latencia_ms": {
+      "p50": 5.01,
+      "p95": 55.26,
+      "p99": 196.54,
+      "media": 14.54,
+      "max": 2957.83
+    },
+    "latencia_ok_ms": {
+      "p50": 56.34,
+      "p95": 218.71,
+      "p99": 965.71
+    },
+    "por_pod": {
+      "(sem X-Pod)": 34618,
+      "air-quality-api-56554d84f6-brw5k": 2301,
+      "air-quality-api-56554d84f6-248jl": 1046,
+      "air-quality-api-56554d84f6-4qh59": 416
+    },
+    "por_status": {
+      "201": 3763,
+      "503": 34618
+    },
+    "por_erro": {
+      "http_503": 34618
+    },
+    "por_versao": {
+      "1.1.0": 3763
+    },
+    "por_cache": {},
+    "lei_de_little": {
+      "latencia_media_medida_ms": 14.54,
+      "latencia_media_prevista_ms": 14.59
+    },
+    "cpu_top_m": {
+      "air-quality-api-56554d84f6-248jl": {
+        "media": 475,
+        "max": 475
+      },
+      "air-quality-api-56554d84f6-4qh59": {
+        "media": 119,
+        "max": 119
+      },
+      "air-quality-api-56554d84f6-brw5k": {
+        "media": 234,
+        "max": 466
+      },
+      "flooding-api-5d857877db-br2pg": {
+        "media": 122,
+        "max": 122
+      },
+      "flooding-api-5d857877db-cw7dv": {
+        "media": 3,
+        "max": 3
+      },
+      "flooding-api-5d857877db-txg4t": {
+        "media": 3,
+        "max": 3
+      },
+      "postgres-0": {
+        "media": 332,
+        "max": 465
+      },
+      "rabbitmq-0": {
+        "media": 348,
+        "max": 557
+      },
+      "redis-55d4876657-lh28r": {
+        "media": 6,
+        "max": 7
+      },
+      "thermal-inversion-api-78f959d969-8sb44": {
+        "media": 139,
+        "max": 139
+      },
+      "thermal-inversion-api-78f959d969-jmtkj": {
+        "media": 3,
+        "max": 3
+      },
+      "thermal-inversion-api-78f959d969-zbg87": {
+        "media": 3,
+        "max": 3
+      },
+      "web-client-78787d6459-c68vs": {
+        "media": 1,
+        "max": 1
+      },
+      "web-client-78787d6459-m2gwg": {
+        "media": 1,
+        "max": 1
+      },
+      "web-client-78787d6459-tv9k4": {
+        "media": 7,
+        "max": 7
+      }
+    }
+  },
+  "por_fase": [
+    {
+      "trabalhadores": 16,
+      "janela_medida_s": 35.0,
+      "requisicoes": 38381,
+      "ok": 3763,
+      "erros": 34618,
+      "taxa_erro_pct": 90.196,
+      "vazao_req_s": 107.51,
+      "latencia_ms": {
+        "p50": 5.01,
+        "p95": 55.26,
+        "p99": 196.54,
+        "media": 14.54,
+        "max": 2957.83
+      },
+      "latencia_ok_ms": {
+        "p50": 56.34,
+        "p95": 218.71,
+        "p99": 965.71
+      },
+      "por_pod": {
+        "(sem X-Pod)": 34618,
+        "air-quality-api-56554d84f6-brw5k": 2301,
+        "air-quality-api-56554d84f6-248jl": 1046,
+        "air-quality-api-56554d84f6-4qh59": 416
+      },
+      "por_status": {
+        "201": 3763,
+        "503": 34618
+      },
+      "por_erro": {
+        "http_503": 34618
+      },
+      "por_versao": {
+        "1.1.0": 3763
+      },
+      "por_cache": {},
+      "lei_de_little": {
+        "latencia_media_medida_ms": 14.54,
+        "latencia_media_prevista_ms": 14.59
+      },
+      "cpu_top_m": {
+        "air-quality-api-56554d84f6-248jl": {
+          "media": 475,
+          "max": 475
+        },
+        "air-quality-api-56554d84f6-4qh59": {
+          "media": 119,
+          "max": 119
+        },
+        "air-quality-api-56554d84f6-brw5k": {
+          "media": 3,
+          "max": 3
+        },
+        "flooding-api-5d857877db-br2pg": {
+          "media": 122,
+          "max": 122
+        },
+        "flooding-api-5d857877db-cw7dv": {
+          "media": 3,
+          "max": 3
+        },
+        "flooding-api-5d857877db-txg4t": {
+          "media": 3,
+          "max": 3
+        },
+        "postgres-0": {
+          "media": 200,
+          "max": 200
+        },
+        "rabbitmq-0": {
+          "media": 140,
+          "max": 140
+        },
+        "redis-55d4876657-lh28r": {
+          "media": 6,
+          "max": 6
+        },
+        "thermal-inversion-api-78f959d969-8sb44": {
+          "media": 139,
+          "max": 139
+        },
+        "thermal-inversion-api-78f959d969-jmtkj": {
+          "media": 3,
+          "max": 3
+        },
+        "thermal-inversion-api-78f959d969-zbg87": {
+          "media": 3,
+          "max": 3
+        },
+        "web-client-78787d6459-c68vs": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-m2gwg": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-tv9k4": {
+          "media": 7,
+          "max": 7
+        }
+      },
+      "fase": 0,
+      "inicio": "2026-11-06T11:29:19"
+    }
+  ],
+  "arquivos": {
+    "requisicoes": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-112810-no-drenado\\r1-n-drenado-g1-requisicoes.csv.gz",
+    "segundos": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-112810-no-drenado\\r1-n-drenado-g1-segundos.csv",
+    "top": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-112810-no-drenado\\r1-n-drenado-g1-top.csv",
+    "resumo": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-112810-no-drenado\\r1-n-drenado-g1-resumo.json"
+  }
+}

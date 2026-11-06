@@ -1,0 +1,52 @@
+{
+  "experimento": "cache",
+  "inicio": "2026-11-06T11:12:14",
+  "t0": 1793974334.749252,
+  "comando": "carga/experimento.py cache --rapido --sem-janela",
+  "rapido": true,
+  "tipo": "comparacao",
+  "parametro": "cache",
+  "execucoes": [
+    {
+      "rotulo": "com cache",
+      "slug": "r1-com-cache",
+      "inicio": 1793974458.3585973,
+      "fim": 1793974483.5875573,
+      "prefixos": [
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-111214-cache\\r1-com-cache-g1",
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-111214-cache\\r1-com-cache-g2"
+      ],
+      "rota": "GET /api/v1/air-quality/areas/CENTRO/average?hours=24",
+      "trabalhadores": 32,
+      "geradores": 2,
+      "duracao_s": 20,
+      "aquecimento_s": 10,
+      "rampa_s": 0,
+      "codigos_saida": [
+        0,
+        0
+      ]
+    },
+    {
+      "rotulo": "sem cache",
+      "slug": "r2-sem-cache",
+      "inicio": 1793974533.0485132,
+      "fim": 1793974555.6816325,
+      "prefixos": [
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-111214-cache\\r2-sem-cache-g1",
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-111214-cache\\r2-sem-cache-g2"
+      ],
+      "rota": "GET /api/v1/air-quality/areas/CENTRO/average?hours=24",
+      "trabalhadores": 32,
+      "geradores": 2,
+      "duracao_s": 20,
+      "aquecimento_s": 10,
+      "rampa_s": 0,
+      "codigos_saida": [
+        0,
+        0
+      ]
+    }
+  ],
+  "fim": "2026-11-06T11:16:08"
+}

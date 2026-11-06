@@ -1,0 +1,51 @@
+{
+  "requisicoes": 85832,
+  "falhas": 0,
+  "por_erro": {},
+  "versoes": {
+    "1.1.0": 85832
+  },
+  "linha_do_tempo": [
+    {
+      "evento": "Início da carga (rampa)",
+      "t_s": 0,
+      "hora": "11:20:56",
+      "replicas": "2",
+      "obs": "CPU 21%"
+    },
+    {
+      "evento": "Primeira decisão de escala (SuccessfulRescale)",
+      "t_s": 34.0,
+      "hora": "11:21:30",
+      "replicas": "2",
+      "obs": "2 -> 4 réplicas (CPU 431%)"
+    },
+    {
+      "evento": "Novos pods prontos (1/1)",
+      "t_s": 40.4,
+      "hora": "11:21:36",
+      "replicas": "2",
+      "obs": "p95 1.460,3 ms"
+    },
+    {
+      "evento": "Latência p95 de volta ao patamar aceitável (≤ 100 ms por 10 s)",
+      "t_s": null,
+      "hora": null,
+      "replicas": null,
+      "obs": ""
+    },
+    {
+      "evento": "Fim da carga / início da redução",
+      "t_s": 102.0,
+      "hora": "11:22:38",
+      "replicas": "10",
+      "obs": "redução não observada"
+    }
+  ],
+  "replicas_maximas": 10,
+  "decisoes": [
+    "11:21:30 2 -> 4 réplicas (CPU 431%)",
+    "11:21:46 4 -> 8 réplicas (CPU 479%)",
+    "11:22:02 8 -> 10 réplicas (CPU 495%)"
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "comando": "'C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\carga\\loadgen.py' http://127.0.0.1:8081/api/v1/air-quality/particulate -X POST -c 16 -d 80.0 --aquecimento 5 --timeout 5 --saida 'C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-114450-demo\\r1-demonstra-o-g2' --corpo ar",
+  "alvo": {
+    "metodo": "POST",
+    "url": "http://127.0.0.1:8081/api/v1/air-quality/particulate",
+    "corpo": "ar"
+  },
+  "modo": "constante",
+  "parametros": {
+    "trabalhadores": 16,
+    "duracao_s": 80.0,
+    "degraus": null,
+    "duracao_degrau_s": 25,
+    "rampa_s": 0,
+    "aquecimento_s": 5.0,
+    "timeout_s": 5.0,
+    "semente": null
+  },
+  "inicio": "2026-11-06T11:46:19",
+  "fim": "2026-11-06T11:47:39",
+  "ambiente": {
+    "sistema": "Windows 11",
+    "cpu": "AMD Ryzen 9 5900X 12-Core Processor",
+    "nucleos_logicos": 24,
+    "ram_gb": 31.9,
+    "python": "3.13.14",
+    "maquina": "MateuszPC"
+  },
+  "cpu_gerador_pct_de_um_nucleo": 13.4,
+  "geral": {
+    "trabalhadores": 16,
+    "janela_medida_s": 75.0,
+    "requisicoes": 18744,
+    "ok": 18744,
+    "erros": 0,
+    "taxa_erro_pct": 0.0,
+    "vazao_req_s": 249.92,
+    "latencia_ms": {
+      "p50": 59.37,
+      "p95": 118.54,
+      "p99": 184.72,
+      "media": 63.97,
+      "max": 2358.27
+    },
+    "latencia_ok_ms": {
+      "p50": 59.37,
+      "p95": 118.54,
+      "p99": 184.72
+    },
+    "por_pod": {
+      "air-quality-api-54f5f47fb-wrb8w": 5207,
+      "air-quality-api-54f5f47fb-wtkq6": 3634,
+      "air-quality-api-54f5f47fb-wwmzm": 2929,
+      "air-quality-api-c77676687-jx9gr": 2102,
+      "air-quality-api-54f5f47fb-5cplk": 1782,
+      "air-quality-api-c77676687-ljhm9": 1727,
+      "air-quality-api-c77676687-8zxvz": 1363
+    },
+    "por_status": {
+      "201": 18744
+    },
+    "por_erro": {},
+    "por_versao": {
+      "1.1.0": 13552,
+      "1.2.0": 5192
+    },
+    "por_cache": {},
+    "lei_de_little": {
+      "latencia_media_medida_ms": 63.97,
+      "latencia_media_prevista_ms": 64.02
+    }
+  },
+  "por_fase": [
+    {
+      "trabalhadores": 16,
+      "janela_medida_s": 75.0,
+      "requisicoes": 18744,
+      "ok": 18744,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 249.92,
+      "latencia_ms": {
+        "p50": 59.37,
+        "p95": 118.54,
+        "p99": 184.72,
+        "media": 63.97,
+        "max": 2358.27
+      },
+      "latencia_ok_ms": {
+        "p50": 59.37,
+        "p95": 118.54,
+        "p99": 184.72
+      },
+      "por_pod": {
+        "air-quality-api-54f5f47fb-wrb8w": 5207,
+        "air-quality-api-54f5f47fb-wtkq6": 3634,
+        "air-quality-api-54f5f47fb-wwmzm": 2929,
+        "air-quality-api-c77676687-jx9gr": 2102,
+        "air-quality-api-54f5f47fb-5cplk": 1782,
+        "air-quality-api-c77676687-ljhm9": 1727,
+        "air-quality-api-c77676687-8zxvz": 1363
+      },
+      "por_status": {
+        "201": 18744
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 13552,
+        "1.2.0": 5192
+      },
+      "por_cache": {},
+      "lei_de_little": {
+        "latencia_media_medida_ms": 63.97,
+        "latencia_media_prevista_ms": 64.02
+      },
+      "fase": 0,
+      "inicio": "2026-11-06T11:46:19"
+    }
+  ],
+  "arquivos": {
+    "requisicoes": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-114450-demo\\r1-demonstra-o-g2-requisicoes.csv.gz",
+    "segundos": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-114450-demo\\r1-demonstra-o-g2-segundos.csv",
+    "top": null,
+    "resumo": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-114450-demo\\r1-demonstra-o-g2-resumo.json"
+  }
+}

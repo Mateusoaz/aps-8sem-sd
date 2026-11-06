@@ -1,0 +1,37 @@
+{
+  "experimento": "no-drenado",
+  "inicio": "2026-11-06T11:28:10",
+  "t0": 1793975290.145335,
+  "comando": "carga/experimento.py no-drenado --rapido --sem-janela",
+  "rapido": true,
+  "tipo": "linha_do_tempo",
+  "acao": {
+    "epoch": 1793975369.5891798,
+    "descricao": "nó drenado: k3d-aps-agent-1",
+    "no": "k3d-aps-agent-1"
+  },
+  "execucoes": [
+    {
+      "rotulo": "nó drenado",
+      "slug": "r1-n-drenado",
+      "inicio": 1793975359.5888383,
+      "fim": 1793975402.9533684,
+      "prefixos": [
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-112810-no-drenado\\r1-n-drenado-g1",
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261106-112810-no-drenado\\r1-n-drenado-g2"
+      ],
+      "rota": "POST /api/v1/air-quality/particulate",
+      "trabalhadores": 32,
+      "geradores": 2,
+      "duracao_s": 40,
+      "aquecimento_s": 5,
+      "rampa_s": 0,
+      "codigos_saida": [
+        0,
+        0
+      ],
+      "no_drenado": "k3d-aps-agent-1"
+    }
+  ],
+  "fim": "2026-11-06T11:30:37"
+}

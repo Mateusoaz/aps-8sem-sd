@@ -160,11 +160,20 @@ def grafico_tempo(caminho, titulo, subtitulo, x, y, unidade, marcas, tipo="linha
         ax.annotate(limite[1], (px[0], limite[0]), xytext=(2, 4), textcoords="offset points", fontsize=8, color=TINTA_2)
         topo = max(topo, limite[0])
     ax.set_ylim(0, topo * 1.25 if topo else 1)
-    # Eventos: linha vertical fina + rótulo no alto, em 3 alturas para não encavalar
-    for i, (s, rot) in enumerate(sorted(marcas)):
+    # Eventos: linha vertical fina + rótulo no alto. Eventos a menos de 2 s um do outro viram UM rótulo
+    # ("pod criado ×2 · pod pronto"), e rótulos vizinhos alternam em 3 alturas para não encavalar.
+    grupos: list[list] = []
+    for s, rot in sorted(marcas):
+        if grupos and s - grupos[-1][0] < 2:
+            grupos[-1][1].append(rot)
+        else:
+            grupos.append([s, [rot]])
+    for i, (s, rotulos) in enumerate(grupos):
+        contagem = Counter(rotulos)
+        texto = " · ".join(f"{r} ×{n}" if n > 1 else r for r, n in contagem.items())
         ax.axvline(s, color=TINTA_2, linewidth=1, linestyle=":", zorder=2)
-        ax.annotate(rot, (s, 1), xycoords=("data", "axes fraction"), xytext=(3, -10 - 11 * (i % 3)),
-                    textcoords="offset points", fontsize=8, color=TINTA, ha="left")
+        ax.annotate(texto, (s, 1), xycoords=("data", "axes fraction"), xytext=(3, -10 - 11 * (i % 3)),
+                    textcoords="offset points", fontsize=7.5, color=TINTA, ha="left")
     ax.set_xlim(min(px[0], *(m[0] for m in marcas)) if marcas else px[0], max(px[-1], *(m[0] for m in marcas)) + 1 if marcas else px[-1] + 1)
     ax.set_ylabel(unidade, color=TINTA_2, fontsize=10)
     ax.set_xlabel("segundos desde o início da carga", color=TINTA_2, fontsize=10)
@@ -242,7 +251,8 @@ def analisar_comparacao(pasta, meta, eventos):
             l["ganho_medido"] = round(ganho, 2)
             l["ganho_ideal"] = n
             # Lei de Amdahl: G(N) = 1 / (s + (1 - s)/N)  ->  s = (N/G - 1) / (N - 1)
-            l["s_estimado"] = round((n / ganho - 1) / (n - 1), 3) if n > 1 and ganho > 0 else None
+            # Só faz sentido com ganho real (1 < G <= N); sem ganho, a fórmula daria s >= 1
+            l["s_estimado"] = round((n / ganho - 1) / (n - 1), 3) if n > 1 and 1 < ganho <= n else None
         estimativas = [l["s_estimado"] for l in linhas if l["s_estimado"] is not None]
         resultado["s_amdahl"] = round(statistics.fmean(estimativas), 3) if estimativas else None
         grafico_barras(os.path.join(destino, "vazao.png"), "Vazão por número de réplicas", sub, rotulos,
@@ -264,12 +274,18 @@ def analisar_comparacao(pasta, meta, eventos):
     return resultado
 
 
-def marcas_de(eventos, inicio, fim, extra=()):
+def marcas_de(eventos, inicio, fim, extra=(), com_pods=False):
     marcas = []
     for e in eventos:
         ep = float(e["epoch"])
         if not (inicio - 1 <= ep <= fim + 1):
             continue
+        if com_pods and "app=" + APP in e.get("detalhe", ""):
+            # Demo: as ações são digitadas à mão, então marcamos o que o Kubernetes fez com os pods
+            rot = {"pod_criado": "+pod", "pod_pronto": "pronto", "pod_terminando": "saindo"}.get(e["tipo"])
+            if rot:
+                marcas.append((ep - inicio, f"{rot} {e['versao']}" if e["tipo"] == "pod_criado" else rot))
+                continue
         if e["tipo"] in ROTULOS_EVENTO:
             marcas.append((ep - inicio, ROTULOS_EVENTO[e["tipo"]]))
         elif e["tipo"] == "hpa_decisao":
@@ -306,7 +322,9 @@ def analisar_linha_do_tempo(pasta, meta, eventos, p95_aceitavel):
     duracao = int(ex["duracao_s"]) - 1
     serie = serie_por_segundo(regs, duracao)
     cpu = cpu_por_segundo(ex["prefixos"][0], inicio)
-    replicas = [(float(r["epoch"]) - inicio, int(r["prontas"])) for r in ler_csv(os.path.join(pasta, "replicas.csv"))]
+    # Réplicas a partir de 5 s antes da carga (a preparação antes disso só aperta o gráfico)
+    replicas = [(float(r["epoch"]) - inicio, int(r["prontas"])) for r in ler_csv(os.path.join(pasta, "replicas.csv"))
+                if float(r["epoch"]) - inicio >= -5]
     hpa = [(float(r["epoch"]) - inicio, r) for r in ler_csv(os.path.join(pasta, "hpa.csv"))]
     fim_obs = meta.get("observacao_fim", fim)
     ev = lambda tipo: [e for e in eventos if e["tipo"] == tipo]  # noqa: E731
@@ -333,6 +351,9 @@ def analisar_linha_do_tempo(pasta, meta, eventos, p95_aceitavel):
         resultado.update({
             "acao": acao["descricao"], "t_acao_s": round(t_acao, 1),
             "falhas_apos_acao": sum(1 for r in regs if r[9] and r[0] >= acao["epoch"]),
+            # Mede a indisponibilidade melhor que a contagem: quantos segundos tiveram pelo menos uma falha
+            "segundos_com_erro": sum(1 for l in serie if l["erros"]),
+            "segundos_sem_resposta_ok": sum(1 for l in serie if l["s"] >= t_acao and l["ok"] == 0),
             "vazao_normal": vaz_normal, "p95_normal": p95_normal,
             "tempo_ate_substituto_pronto_s": round(substituto - t_acao, 1) if substituto is not None else None,
             "tempo_ate_todos_substitutos_s": round(todos - t_acao, 1) if todos is not None else None,
@@ -414,7 +435,17 @@ def analisar_linha_do_tempo(pasta, meta, eventos, p95_aceitavel):
     # ---------------- gráficos: um por medida ----------------
     destino = os.path.join(pasta, "graficos")
     os.makedirs(destino, exist_ok=True)
-    marcas = marcas_de(eventos, inicio, fim_obs, marcas_extra)
+    if meta.get("demo"):
+        prontas = [n for s, n in replicas if 0 <= s <= duracao]
+        resultado.update({
+            "segundos_com_erro": sum(1 for l in serie if l["erros"]),
+            "segundos_sem_resposta_ok": sum(1 for l in serie if l["ok"] == 0),
+            "replicas_prontas_min": min(prontas, default=None), "replicas_prontas_max": max(prontas, default=None),
+            "eventos_pods": [f"{e['hora']} {e['tipo'].replace('_', ' ')}: {e['objeto']} ({e['no']}, versão {e['versao']})"
+                             for e in eventos if "app=" + APP in e.get("detalhe", "") and inicio - 1 <= float(e["epoch"]) <= fim + 1
+                             and e["tipo"] in ("pod_criado", "pod_pronto", "pod_terminando", "pod_removido", "pod_nao_pronto")],
+        })
+    marcas = marcas_de(eventos, inicio, fim_obs, marcas_extra, com_pods=bool(meta.get("demo")))
     marcas_carga = [m for m in marcas if m[0] <= duracao + 1]
     sub = f"{ex['rota']} · {ex['trabalhadores']} trabalhadores" + (f" (rampa de {ex['rampa_s']:g} s)" if ex.get("rampa_s") else "")
     x = [l["s"] for l in serie]
@@ -434,7 +465,7 @@ def analisar_linha_do_tempo(pasta, meta, eventos, p95_aceitavel):
         grafico_tempo(os.path.join(destino, "hpa-cpu.png"), f"CPU média medida pelo HPA — {nome}", sub,
                       [s for s, _ in hpa], [int(r["cpu_pct"]) if r["cpu_pct"] else None for _, r in hpa], "% do requests",
                       marcas, limite=(50, "meta 50%"))
-    if tipo.startswith("rolling"):
+    if tipo.startswith("rolling") or len(resultado["versoes"]) > 1:
         novas = []
         for l in serie:
             tot = sum(l["versoes"].values())
@@ -470,6 +501,8 @@ HIPOTESES = {
              "banco fica perto de zero. Sem cache, o banco vira o gargalo.",
     "fila": "Com a fila, o POST só grava e publica: responde mais rápido. Sem a fila, cada POST também avalia a regra "
             "de alerta no banco: latência maior e vazão menor, mas sem atraso nos alertas.",
+    "demo": "Demonstração ao vivo: ao escalar, a vazão sobe depois que os pods novos passam na readiness; ao apagar "
+            "um pod, o ReplicaSet recria outro e quase nada falha; na troca de versão, as duas versões atendem juntas.",
 }
 
 
@@ -511,6 +544,15 @@ def tabela_md(pasta, meta, analise, p95_aceitavel) -> str:
                 linhas.append(f"| {l['rotulo']} | {fmt(r['vazao_req_s'])} | {fmt(r['latencia_ms']['p50'])} | {fmt(r['latencia_ms']['p95'])} | "
                               f"{fmt(r['taxa_erro_pct'], 2)} | {fmt(r['cpu_banco_m'], 0)} | {fmt(r['cpu_api_m'], 0)} | "
                               f"{fmt(r['pct_cache_hit'])} | {l['fila'] or '—'} |")
+    elif meta.get("demo"):
+        linhas += ["### Demonstração ao vivo (seção 6 da ficha)", "",
+                   "| Requisições | Falhas | Segundos com falha | Segundos sem resposta OK | Réplicas prontas (mín.–máx.) | Versões que responderam |",
+                   "|---:|---:|---:|---:|---|---|",
+                   f"| {analise['requisicoes']} | {analise['falhas']} | {analise['segundos_com_erro']} | {analise['segundos_sem_resposta_ok']} | "
+                   f"{analise['replicas_prontas_min']}–{analise['replicas_prontas_max']} | "
+                   f"{', '.join(f'{v} ({n})' for v, n in analise['versoes'].items()) or '—'} |",
+                   "", f"Erros por tipo: {analise['por_erro'] or 'nenhum'}", "",
+                   "O que o Kubernetes fez com os pods da API, com horário:", ""] + [f"- {e}" for e in analise["eventos_pods"]]
     elif nome == "hpa":
         linhas += ["### 5.2 HPA — linha do tempo", "", "| Evento | Hora | t (s) | Réplicas | Observação |", "|---|---|---:|---:|---|"]
         for l in analise["linha_do_tempo"]:
@@ -531,6 +573,8 @@ def tabela_md(pasta, meta, analise, p95_aceitavel) -> str:
         if analise.get("acao"):
             linhas += ["", f"Vazão normal antes da ação: {fmt(analise['vazao_normal'], 0)} req/s · p95 normal: {fmt(analise['p95_normal'])} ms · "
                            f"falhas depois da ação: {analise['falhas_apos_acao']} · erros por tipo: {analise['por_erro'] or 'nenhum'}",
+                       f"Segundos com pelo menos uma falha: {analise['segundos_com_erro']} · "
+                       f"segundos sem nenhuma resposta OK (serviço fora do ar): {analise['segundos_sem_resposta_ok']}",
                        f"Todos os substitutos prontos em: {fmt(analise['tempo_ate_todos_substitutos_s'], 1, ' s')}", "",
                        "Pods retirados:", ""] + [f"- {p}" for p in analise["pods_retirados"]] + ["", "Pods criados:", ""] + \
                       [f"- {p}" for p in analise["pods_criados"]]

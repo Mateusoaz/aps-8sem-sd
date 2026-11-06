@@ -18,3 +18,6 @@ obj/
 # Python (gerador de carga, etapas futuras)
 __pycache__/
 .venv/
+
+# Carga de aquecimento dos testes: descartada de propósito, não entra nas medições
+resultados/**/descartado/

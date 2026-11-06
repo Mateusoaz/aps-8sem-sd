@@ -1,0 +1,33 @@
+Alvo: GET http://127.0.0.1:8081/api/v1/air-quality/areas/CENTRO/average?hours=24
+Modo: constante, 16 trabalhadores | duração total ~20 s | timeout 5 s | aquecimento 10 s
+hora       fase  trab   req/s  erros   p50 ms   p95 ms  pods
+11:14:19   1/1     16     561      0      5.4     93.4  2
+11:14:20   1/1     16     618      0      5.2     90.9  2
+11:14:21   1/1     16     565      0      5.2     92.6  2
+11:14:22   1/1     16     527      0      5.0     94.8  2
+11:14:23   1/1     16     507      0      5.9     93.1  2
+11:14:24   1/1     16     520      0      5.7     93.2  2
+11:14:25   1/1     16     223      0      5.9     90.0  2
+11:14:26   1/1     16       0      0      0.0      0.0  0
+11:14:27   1/1     16      95      0      2.2     55.0  2
+11:14:28   1/1     16     448      0      3.0     80.1  2
+11:14:29   1/1     16     802      0      6.1     63.7  2
+11:14:30   1/1     16     854      0      7.9     62.3  2
+11:14:31   1/1     16     635      0     11.1     87.0  2
+11:14:32   1/1     16     637      0      7.2     87.7  2
+11:14:33   1/1     16     782      0      6.2     84.4  2
+11:14:34   1/1     16     661      0      7.5     86.4  2
+11:14:35   1/1     16     678      0      4.8     90.8  2
+11:14:36   1/1     16     668      0      5.2     89.8  2
+11:14:37   1/1     16     605      0      6.3     89.4  2
+11:14:38   1/1     16     555      0      7.0     89.5  2
+11:14:39   1/1     16       0      0      0.0      0.0  0
+11:14:40   1/1     16       0      0      0.0      0.0  0
+11:14:41   1/1     10       6      0   2754.1   2755.4  1
+
+trab      req     req/s      p50      p95      p99  erros %  CPU média por serviço (kubectl top)
+  16     6888     688.8      6.2     88.0     93.8     0.00  air-quality-api 821m, postgres 420m, redis 43m
+
+Por pod: {'air-quality-api-7dcd4b69f5-nnc2k': 3446, 'air-quality-api-7dcd4b69f5-7w45c': 3442}
+CPU do próprio gerador: 16.9% de um núcleo (perto de 100%, o gargalo pode ser o gerador)
+Arquivos: C:\Users\thelu\Documents\GitHub\aps-8sem-sd\resultados\etapa5\20261106-111214-cache\r1-com-cache-g1-resumo.json (+ -requisicoes.csv.gz, -segundos.csv, -top.csv)

@@ -1,0 +1,21 @@
+hora,segundo,fase,fases,trabalhadores,ok_s,erros_s,p50_ms,p95_ms,p99_ms,pods,cpu_api_m,cpu_banco_m,servico,rota,epoch,versoes
+11:17:45,1,1,1,16,489,0,23.84,69.83,83.78,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974665.698,1.1.0:489
+11:17:46,2,1,1,16,493,0,28.15,68.7,75.79,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974666.699,1.1.0:493
+11:17:47,3,1,1,16,491,0,26.59,66.9,75.14,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974667.698,1.1.0:491
+11:17:48,4,1,1,16,493,0,28.17,66.02,77.63,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974668.698,1.1.0:493
+11:17:49,5,1,1,16,338,0,38.22,94.22,121.81,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974669.701,1.1.0:338
+11:17:50,6,1,1,16,370,0,42.15,94.01,101.38,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974670.701,1.1.0:370
+11:17:51,7,1,1,16,305,0,50.53,100.95,123.94,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974671.704,1.1.0:305
+11:17:52,8,1,1,16,479,0,37.15,72.58,91.19,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974672.705,1.1.0:479
+11:17:53,9,1,1,16,508,0,34.18,61.38,102.67,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974673.706,1.1.0:508
+11:17:54,10,1,1,16,468,0,38.77,72.28,83.97,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974674.706,1.1.0:468
+11:17:55,11,1,1,16,272,0,51.52,130.05,138.69,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974675.707,1.1.0:272
+11:17:56,12,1,1,16,258,0,55.18,136.72,161.7,2,927,296,air-quality-api,POST /api/v1/air-quality/particulate,1793974676.707,1.1.0:258
+11:17:57,13,1,1,16,361,0,46.59,98.53,131.14,2,517,10,air-quality-api,POST /api/v1/air-quality/particulate,1793974677.707,1.1.0:361
+11:17:58,14,1,1,16,422,0,41.43,73.13,80.31,2,517,10,air-quality-api,POST /api/v1/air-quality/particulate,1793974678.708,1.1.0:422
+11:17:59,15,1,1,16,417,0,42.22,73.37,80.97,2,517,10,air-quality-api,POST /api/v1/air-quality/particulate,1793974679.709,1.1.0:417
+11:18:00,16,1,1,16,494,0,30.9,71.35,78.89,2,517,10,air-quality-api,POST /api/v1/air-quality/particulate,1793974680.709,1.1.0:494
+11:18:01,17,1,1,16,408,0,41.19,82.72,124.27,2,517,10,air-quality-api,POST /api/v1/air-quality/particulate,1793974681.71,1.1.0:408
+11:18:02,18,1,1,16,467,0,37.42,72.08,80.72,2,517,10,air-quality-api,POST /api/v1/air-quality/particulate,1793974682.711,1.1.0:467
+11:18:03,19,1,1,16,491,0,33.82,66.52,111.13,2,517,10,air-quality-api,POST /api/v1/air-quality/particulate,1793974683.711,1.1.0:491
+11:18:04,20,1,1,10,518,0,30.28,57.62,73.31,2,517,10,air-quality-api,POST /api/v1/air-quality/particulate,1793974684.712,1.1.0:518

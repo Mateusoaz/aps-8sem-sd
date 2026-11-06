@@ -2,6 +2,8 @@
 
 Três APIs REST em **.NET 8 (C#)**, cada uma cuidando de um domínio ambiental. Os dados ficam num **PostgreSQL**, as consultas agregadas num cache **Redis** e os alertas são avaliados de forma assíncrona por uma fila **RabbitMQ**. Um **cliente web** leve consome tudo pelo gateway.
 
+> **Para rodar e demonstrar tudo passo a passo (pelos scripts ou com os comandos separados), veja o [Guia de execução](GUIA-DE-EXECUCAO.md).**
+
 A mesma aplicação roda de dois jeitos:
 
 - **Kubernetes** (Etapa 3): cluster local de 3 nós com o k3d, atrás de um Ingress. Veja [Kubernetes](#kubernetes-etapa-3).
@@ -93,6 +95,7 @@ kubectl apply -f k8s/
 |---|---|---|
 | `00-namespace.yaml` | Namespace `aps` | `kubectl delete namespace aps` apaga tudo |
 | `01-configmap.yaml` | ConfigMap `aps-config` | hosts, pool de conexões, cache e fila liga/desliga, regras de alerta |
+| `05-gateway-ha.yaml` | HelmChartConfig do Traefik (k3s) | gateway com 2 réplicas em nós diferentes + PodDisruptionBudget: um nó drenado não derruba a entrada do cluster |
 | `10-postgres.yaml` | StatefulSet + Service headless | PVC `dados-postgres-0`; `max_connections=300` |
 | `11-redis.yaml` | Deployment + Service | sem volume (cache é descartável), 64 MB com descarte LRU |
 | `12-rabbitmq.yaml` | StatefulSet + Service headless | PVC `dados-rabbitmq-0`; fila durável |
@@ -100,6 +103,7 @@ kubectl apply -f k8s/
 | `23-web-client.yaml` | Deployment + Service | nginx sem root |
 | `30-ingress.yaml` | Ingress `gateway` | roteamento por caminho para os 4 Services |
 | `40-hpa.yaml` | 3 HPAs | mín. 2, máx. 10, meta de 50% da CPU |
+| `50-pdb.yaml` | 4 PodDisruptionBudgets | `minAvailable: 1` nas APIs e no cliente: um drain nunca tira a última réplica pronta |
 
 O Secret **não** está em `k8s/`: ele é criado a partir do `.env`, que não vai para o Git. O repositório leva só o modelo `secret.example.yaml`.
 
@@ -231,6 +235,8 @@ python carga/experimento.py rolling-sem-prestop   # ~5 min
 python carga/experimento.py cache                 # ~5 min
 python carga/experimento.py fila                  # ~5 min
 python carga/experimento.py todos                 # todos em sequência (~50 min)
+python carga/experimento.py demo                  # demonstração ao vivo: liga a carga e a janela e espera
+                                                  # você digitar os kubectl em outro terminal (Ctrl+C encerra)
 ```
 
 | Experimento | O que faz | Seção da ficha |

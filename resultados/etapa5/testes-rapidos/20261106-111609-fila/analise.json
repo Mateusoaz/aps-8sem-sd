@@ -1,0 +1,100 @@
+{
+  "linhas": [
+    {
+      "rotulo": "fila (assíncrono)",
+      "replicas": null,
+      "resumo": {
+        "trabalhadores": 32,
+        "janela_medida_s": 10,
+        "requisicoes": 8176,
+        "ok": 8176,
+        "erros": 0,
+        "taxa_erro_pct": 0.0,
+        "vazao_req_s": 817.6,
+        "latencia_ms": {
+          "p50": 39.47,
+          "p95": 93.43,
+          "p99": 130.05,
+          "media": 39.07,
+          "max": 181.62
+        },
+        "latencia_ok_ms": {
+          "p50": 39.47,
+          "p95": 93.43,
+          "p99": 130.05
+        },
+        "por_pod": {
+          "air-quality-api-79557f74c9-c85nx": 4090,
+          "air-quality-api-79557f74c9-6wrlk": 4086
+        },
+        "por_status": {
+          "201": 8176
+        },
+        "por_erro": {},
+        "por_versao": {
+          "1.1.0": 8176
+        },
+        "por_cache": {},
+        "lei_de_little": {
+          "latencia_media_medida_ms": 39.07,
+          "latencia_media_prevista_ms": 39.14
+        },
+        "cpu_api_m": 517,
+        "cpu_banco_m": 10,
+        "pct_cache_hit": null
+      },
+      "rota": "POST /api/v1/air-quality/particulate",
+      "trabalhadores": 32,
+      "duracao_s": 20,
+      "fila": "11396 mensagens pendentes ao fim da carga, 22 s para esvaziar"
+    },
+    {
+      "rotulo": "sem fila (síncrono)",
+      "replicas": null,
+      "resumo": {
+        "trabalhadores": 32,
+        "janela_medida_s": 10,
+        "requisicoes": 4736,
+        "ok": 4736,
+        "erros": 0,
+        "taxa_erro_pct": 0.0,
+        "vazao_req_s": 473.6,
+        "latencia_ms": {
+          "p50": 62.61,
+          "p95": 190.78,
+          "p99": 279.76,
+          "media": 67.46,
+          "max": 400.58
+        },
+        "latencia_ok_ms": {
+          "p50": 62.61,
+          "p95": 190.78,
+          "p99": 279.76
+        },
+        "por_pod": {
+          "air-quality-api-7f54c84944-7wbtw": 2369,
+          "air-quality-api-7f54c84944-sfcrt": 2367
+        },
+        "por_status": {
+          "201": 4736
+        },
+        "por_erro": {},
+        "por_versao": {
+          "1.1.0": 4736
+        },
+        "por_cache": {},
+        "lei_de_little": {
+          "latencia_media_medida_ms": 67.46,
+          "latencia_media_prevista_ms": 67.57
+        },
+        "cpu_api_m": 374,
+        "cpu_banco_m": 111,
+        "pct_cache_hit": null
+      },
+      "rota": "POST /api/v1/air-quality/particulate",
+      "trabalhadores": 32,
+      "duracao_s": 20,
+      "fila": "0 mensagens pendentes ao fim da carga, 1 s para esvaziar"
+    }
+  ]
+}

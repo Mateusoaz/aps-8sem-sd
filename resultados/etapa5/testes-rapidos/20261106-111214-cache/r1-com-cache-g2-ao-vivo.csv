@@ -1,0 +1,24 @@
+hora,segundo,fase,fases,trabalhadores,ok_s,erros_s,p50_ms,p95_ms,p99_ms,pods,cpu_api_m,cpu_banco_m,servico,rota,epoch,versoes
+11:14:19,1,1,1,16,509,0,5.82,94.36,98.97,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974459.54,1.1.0:509
+11:14:20,2,1,1,16,612,0,5.53,90.73,94.46,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974460.542,1.1.0:612
+11:14:21,3,1,1,16,576,0,5.3,91.81,93.87,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974461.543,1.1.0:576
+11:14:22,4,1,1,16,526,0,4.83,94.77,97.16,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974462.546,1.1.0:526
+11:14:23,5,1,1,16,506,0,6.13,93.45,95.91,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974463.548,1.1.0:506
+11:14:24,6,1,1,16,492,0,6.08,93.44,96.17,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974464.549,1.1.0:492
+11:14:25,7,1,1,16,155,0,6.43,91.03,91.61,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974465.55,1.1.0:155
+11:14:26,8,1,1,16,0,0,,,,0,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974466.55,
+11:14:27,9,1,1,16,182,0,2.3,50.88,2453.67,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974467.55,1.1.0:182
+11:14:28,10,1,1,16,586,0,3.15,72.83,3592.57,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974468.551,1.1.0:586
+11:14:29,11,1,1,16,764,0,6.25,64.63,91.83,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974469.551,1.1.0:764
+11:14:30,12,1,1,16,890,0,7.21,62.2,66.95,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974470.551,1.1.0:890
+11:14:31,13,1,1,16,632,0,11.06,86.13,92.45,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974471.552,1.1.0:632
+11:14:32,14,1,1,16,629,0,8.55,88.67,96.01,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974472.553,1.1.0:629
+11:14:33,15,1,1,16,725,0,6.36,85.22,91.51,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974473.554,1.1.0:725
+11:14:34,16,1,1,16,685,0,7.25,86.83,92.04,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974474.554,1.1.0:685
+11:14:35,17,1,1,16,728,0,4.48,88.99,93.49,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974475.555,1.1.0:728
+11:14:36,18,1,1,16,619,0,5.39,90.44,95.5,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974476.556,1.1.0:619
+11:14:37,19,1,1,16,547,0,6.68,90.21,94.11,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974477.557,1.1.0:547
+11:14:38,20,1,1,16,555,0,7.67,89.25,95.14,2,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974478.557,1.1.0:555
+11:14:39,21,1,1,16,0,0,,,,0,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974479.558,
+11:14:40,22,1,1,16,0,0,,,,0,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974480.558,
+11:14:41,23,1,1,10,6,0,2752.63,3057.71,3057.71,1,,,air-quality-api,GET /api/v1/air-quality/areas/CENTRO/average?hours=24,1793974481.558,1.1.0:6
