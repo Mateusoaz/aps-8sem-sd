@@ -161,12 +161,13 @@
         "cpu_banco_dp": 2.0
       }
     ],
-    "saturacao_a_partir_de": 4,
+    "saturacao_a_partir_de": null,
     "vazao_maxima": {
       "trabalhadores": 64,
       "vazao_req_s": 1866.2533333333333,
       "p95_ms": 75.58666666666666
-    }
+    },
+    "no_ponto_de_saturacao": null
   },
   "ingestao": {
     "alvo": {
@@ -330,11 +331,17 @@
         "cpu_banco_dp": 42.922410618851934
       }
     ],
-    "saturacao_a_partir_de": 2,
+    "saturacao_a_partir_de": 16,
     "vazao_maxima": {
       "trabalhadores": 64,
       "vazao_req_s": 755.0799999999999,
       "p95_ms": 112.66000000000001
+    },
+    "no_ponto_de_saturacao": {
+      "vazao_req_s": 724.2533333333334,
+      "p95_ms": 57.64333333333334,
+      "cpu_api_m": 496.0,
+      "cpu_banco_m": 316.6666666666667
     }
   }
 }

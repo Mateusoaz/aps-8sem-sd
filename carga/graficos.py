@@ -40,8 +40,9 @@ GRADE = "#e4e3df"
 FUNDO = "#fcfcfb"
 SATURACAO = "#efeeea"
 
-# Critério do joelho: dobrar os trabalhadores deu menos de 15% de vazão a mais, ou os erros passaram de 1%.
-GANHO_MINIMO = 1.15
+# Critério do joelho: o primeiro degrau que já alcança 90% da vazão máxima medida (daí em diante, mais
+# trabalhadores quase não rendem vazão, só fila), ou o primeiro com mais de 1% de erros.
+FRACAO_DO_MAXIMO = 0.90
 ERRO_MAXIMO_PCT = 1.0
 
 
@@ -93,13 +94,14 @@ def agregar(arquivos: list[str]) -> dict:
             linha[chave], linha[chave + "_dp"] = media_dp(d[chave])
         linhas.append(linha)
 
-    # Joelho: o primeiro degrau em que dobrar a concorrência quase não aumentou a vazão (ou surgiram erros)
-    joelho = None
-    for anterior, atual in zip(linhas, linhas[1:]):
-        if (atual["vazao"] or 0) < GANHO_MINIMO * (anterior["vazao"] or 0) or (atual["erro"] or 0) > ERRO_MAXIMO_PCT:
-            joelho = atual["trabalhadores"]
-            break
     pico = max(linhas, key=lambda l: l["vazao"] or 0)
+    # Joelho: o primeiro degrau que já alcança 90% da vazão máxima, ou o primeiro com erros acima de 1%.
+    # Se isso só acontece no último degrau, a curva ainda subia: não dá para afirmar que saturou.
+    joelho = next((l["trabalhadores"] for l in linhas
+                   if (l["vazao"] or 0) >= FRACAO_DO_MAXIMO * (pico["vazao"] or 0) or (l["erro"] or 0) > ERRO_MAXIMO_PCT), None)
+    if joelho == linhas[-1]["trabalhadores"] and (linhas[-1]["erro"] or 0) <= ERRO_MAXIMO_PCT:
+        joelho = None
+    no_joelho = next((l for l in linhas if l["trabalhadores"] == joelho), None)
     return {
         "alvo": resumos[0]["alvo"],
         "servico": alvo,
@@ -112,6 +114,9 @@ def agregar(arquivos: list[str]) -> dict:
         "linhas": linhas,
         "saturacao_a_partir_de": joelho,
         "vazao_maxima": {"trabalhadores": pico["trabalhadores"], "vazao_req_s": pico["vazao"], "p95_ms": pico["p95"]},
+        "no_ponto_de_saturacao": {"vazao_req_s": no_joelho["vazao"], "p95_ms": no_joelho["p95"],
+                                  "cpu_api_m": no_joelho["cpu_alvo"], "cpu_banco_m": no_joelho["cpu_banco"]}
+        if no_joelho else None,
     }
 
 
@@ -144,11 +149,17 @@ def tabela_md(nome: str, a: dict) -> str:
     v = a["vazao_maxima"]
     linhas += [
         "",
-        f"**Ponto de saturação:** a partir de {a['saturacao_a_partir_de'] or '— (não saturou nos degraus medidos)'} trabalhadores"
-        f" · vazão máxima {fmt(v['vazao_req_s'])} req/s (com {v['trabalhadores']} trabalhadores) · p95 nesse ponto {fmt(v['p95_ms'])} ms",
+        (f"**Ponto de saturação:** a partir de {a['saturacao_a_partir_de']} trabalhadores"
+         f" · vazão nesse ponto {fmt(a['no_ponto_de_saturacao']['vazao_req_s'])} req/s"
+         f" · p95 nesse ponto {fmt(a['no_ponto_de_saturacao']['p95_ms'])} ms"
+         f" · vazão máxima {fmt(v['vazao_req_s'])} req/s (com {v['trabalhadores']} trabalhadores, p95 {fmt(v['p95_ms'])} ms)")
+        if a["no_ponto_de_saturacao"] else
+        (f"**Ponto de saturação:** não alcançado nos degraus medidos (a vazão ainda subia no último degrau)"
+         f" · vazão máxima {fmt(v['vazao_req_s'])} req/s (com {v['trabalhadores']} trabalhadores) · p95 nesse ponto {fmt(v['p95_ms'])} ms"),
         "",
-        f"Critério do joelho: dobrar os trabalhadores aumentou a vazão em menos de {round((GANHO_MINIMO - 1) * 100)}%, "
-        f"ou os erros passaram de {ERRO_MAXIMO_PCT:g}%.",
+        f"Critério do joelho: o primeiro degrau que já alcança {round(FRACAO_DO_MAXIMO * 100)}% da vazão máxima medida, "
+        f"ou o primeiro com mais de {ERRO_MAXIMO_PCT:g}% de erros. Se só o último degrau alcança, a vazão ainda subia "
+        "e a saturação não é afirmada.",
         "",
         f"CPU do gerador: até {fmt(a['cpu_gerador_pct_max'])}% de um núcleo "
         "(perto de 100%, o limite medido pode ser o do próprio gerador).",

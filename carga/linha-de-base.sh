@@ -70,7 +70,15 @@ for i in $(seq -w 1 10); do
     -d "{\"stationId\":\"EST-$i\",\"sensorId\":\"SEN-PM-1\",\"areaId\":\"CENTRO\",\"pm25\":10,\"pm10\":20}"
 done
 
-# 4. Degraus, REPS vezes cada rota, alternando as rotas entre as repetições
+# 4. Aquecimento DESCARTADO: na 1ª medição o .NET ainda compila o caminho do POST e os pools de conexão
+#    e o cache do Postgres estão frios (a 1ª repetição saía com metade da vazão nos degraus baixos).
+echo ">> aquecimento (descartado): 20 s em cada rota"
+mkdir -p "$SAIDA/descartado"
+"$PY" carga/loadgen.py "$GW/api/v1/air-quality/particulate" -X POST --corpo ar -c 8 -d 20 --aquecimento 0   --saida "$SAIDA/descartado/aquecimento-ingestao" > /dev/null
+"$PY" carga/loadgen.py "$GW/api/v1/air-quality/stations/{{escolha:$ESTACOES}}/latest" -c 8 -d 20 --aquecimento 0   --saida "$SAIDA/descartado/aquecimento-consulta" > /dev/null
+esperar_fila "$SAIDA/descartado/aquecimento-fila.txt"
+
+# 5. Degraus, REPS vezes cada rota, alternando as rotas entre as repetições
 for rep in $(seq 1 "$REPS"); do
   echo; echo "================ repetição $rep/$REPS: ingestão ================"
   "$PY" carga/loadgen.py "$GW/api/v1/air-quality/particulate" -X POST --corpo ar \
@@ -84,6 +92,6 @@ for rep in $(seq 1 "$REPS"); do
   esperar_fila "$SAIDA/consulta-rep$rep-fila.txt"
 done
 
-# 5. Tabelas e gráficos
+# 6. Tabelas e gráficos
 "$PY" carga/graficos.py "$SAIDA"
 echo; echo ">> pronto: $SAIDA (tabela-*.md, grafico-*.png, linha-de-base.json e os arquivos brutos)"

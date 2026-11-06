@@ -12,9 +12,9 @@ Rota: `POST http://127.0.0.1:8081/api/v1/air-quality/particulate` · 1 réplica 
 | 32 | 18.134 | 725,4 ± 78,5 | 41,6 ± 12,1 | 79,1 ± 1,5 | 86,7 ± 0,2 | 0,00 | 495m | 319m |
 | 64 | 18.877 | 755,1 ± 26,2 | 88,2 ± 2,4 | 112,7 ± 7,8 | 139,8 ± 13,7 | 0,00 | 479m | 286m |
 
-**Ponto de saturação:** a partir de 2 trabalhadores · vazão máxima 755,1 req/s (com 64 trabalhadores) · p95 nesse ponto 112,7 ms
+**Ponto de saturação:** a partir de 16 trabalhadores · vazão nesse ponto 724,3 req/s · p95 nesse ponto 57,6 ms · vazão máxima 755,1 req/s (com 64 trabalhadores, p95 112,7 ms)
 
-Critério do joelho: dobrar os trabalhadores aumentou a vazão em menos de 15%, ou os erros passaram de 1%.
+Critério do joelho: o primeiro degrau que já alcança 90% da vazão máxima medida, ou o primeiro com mais de 1% de erros. Se só o último degrau alcança, a vazão ainda subia e a saturação não é afirmada.
 
 CPU do gerador: até 19,1% de um núcleo (perto de 100%, o limite medido pode ser o do próprio gerador).
 

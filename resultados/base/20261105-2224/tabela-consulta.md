@@ -12,9 +12,9 @@ Rota: `GET http://127.0.0.1:8081/api/v1/air-quality/stations/{{escolha:EST-01|ES
 | 32 | 38.788 | 1.551,5 ± 5,6 | 8,3 ± 0,4 | 66,0 ± 5,1 | 72,3 ± 3,5 | 0,00 | 498m | 11m |
 | 64 | 46.656 | 1.866,3 ± 29,6 | 22,9 ± 1,6 | 75,6 ± 3,4 | 83,6 ± 5,1 | 0,00 | 498m | 12m |
 
-**Ponto de saturação:** a partir de 4 trabalhadores · vazão máxima 1.866,3 req/s (com 64 trabalhadores) · p95 nesse ponto 75,6 ms
+**Ponto de saturação:** não alcançado nos degraus medidos (a vazão ainda subia no último degrau) · vazão máxima 1.866,3 req/s (com 64 trabalhadores) · p95 nesse ponto 75,6 ms
 
-Critério do joelho: dobrar os trabalhadores aumentou a vazão em menos de 15%, ou os erros passaram de 1%.
+Critério do joelho: o primeiro degrau que já alcança 90% da vazão máxima medida, ou o primeiro com mais de 1% de erros. Se só o último degrau alcança, a vazão ainda subia e a saturação não é afirmada.
 
 CPU do gerador: até 37,6% de um núcleo (perto de 100%, o limite medido pode ser o do próprio gerador).
 

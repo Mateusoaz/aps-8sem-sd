@@ -43,14 +43,34 @@ O k3d cria um cluster Kubernetes (k3s) em que **cada nó é um contêiner Docker
 
 ### Subir do zero
 
-Requisitos: **Docker** em execução, **kubectl** e **k3d** v5+ (Windows: `winget install k3d.k3d`). No Windows, rode no **Git Bash**.
+Só se instala o que roda **na máquina**. Tudo o que a aplicação usa (.NET 8, PostgreSQL 16, Redis, RabbitMQ, nginx, o próprio Kubernetes) vem em imagens com versão fixa, baixadas sozinhas, como no Compose.
+
+**Windows (PowerShell)**, uma vez por máquina:
+
+```powershell
+winget install -e --id Docker.DockerDesktop     # traz o kubectl junto; abra e espere "Engine running"
+winget install -e --id k3d.k3d
+winget install -e --id Git.Git
+winget install -e --id Python.Python.3.13       # só para o gerador de carga e os gráficos
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned   # libera os scripts .ps1 do projeto
+```
+
+Feche e abra o PowerShell, e então:
+
+```powershell
+git clone -b gulosao https://github.com/Mateusoaz/aps-8sem-sd.git
+cd aps-8sem-sd
+Copy-Item .env.example .env          # ajuste as senhas se quiser
+.\scripts\k8s-up.ps1                 # cluster + imagens + Secret + manifestos, e espera tudo ficar pronto
+.\scripts\k8s-verificar.ps1          # confere tudo pelo gateway
+```
+
+**Linux, macOS ou Git Bash**: os mesmos scripts em bash.
 
 ```bash
-git clone <repositório>
-cd aps-8sem-sd
-cp .env.example .env                 # ajuste as senhas
-bash scripts/k8s-up.sh               # cluster + imagens + Secret + manifestos, e espera tudo ficar pronto
-bash scripts/k8s-verificar.sh        # confere tudo pelo gateway
+cp .env.example .env
+bash scripts/k8s-up.sh
+bash scripts/k8s-verificar.sh
 ```
 
 Depois abra **http://localhost:8081/** (cliente web). Swagger de cada API pelo gateway: `http://localhost:8081/api/v1/air-quality/swagger` (troque pelo prefixo de `flooding` ou `thermal-inversion`).
@@ -150,6 +170,46 @@ Para desligar o cache ou a fila nos experimentos: mude `Cache__Enabled` ou `Queu
 
 Limpeza: `kubectl delete namespace aps` apaga a aplicação e os volumes; `k3d cluster delete aps` apaga o cluster; `k3d cluster stop aps` / `start aps` pausa sem apagar.
 
+## Gerador de carga e linha de base (Etapa 4)
+
+`carga/loadgen.py` é o instrumento de medição das Etapas 4 e 5. Só usa a biblioteca padrão do Python.
+
+- **Trabalhadores em laço fechado.** Cada trabalhador é um cliente que envia, espera a resposta inteira e só então envia a próxima. N trabalhadores = N requisições em andamento ao mesmo tempo.
+- **Nada é descartado.** Timeout, conexão recusada e HTTP ≥ 400 entram como erro.
+- **Três modos:** constante (`-c 8 -d 20`), rampa (`-c 20 -d 120 --rampa 60`, para o HPA) e degraus (`--degraus 1,2,4,8,16,32,64`, para a linha de base).
+- **Corpos variados:** `--corpo ar|alagamento|termica` gera leituras aleatórias. Os marcadores `{{num:5:60}}`, `{{escolha:A|B}}` etc. funcionam no corpo e na URL.
+
+```powershell
+python carga/loadgen.py http://127.0.0.1:8081/api/v1/air-quality/health/live -c 8 -d 20
+python carga/loadgen.py http://127.0.0.1:8081/api/v1/air-quality/particulate -X POST --corpo ar -c 16 -d 60 --top
+python carga/loadgen.py --help
+```
+
+Cada execução grava, com o prefixo `--saida` (padrão `resultados/<data-hora>`):
+
+| Arquivo | Conteúdo |
+|---|---|
+| `-requisicoes.csv.gz` | uma linha por requisição: hora, latência, status, erro, `X-Pod`, `X-Versao`, `X-Cache` (comprimido; o pandas lê direto) |
+| `-segundos.csv` | uma linha por segundo com a hora do relógio: vazão, p50/p95/p99, erros, respostas por pod e por versão |
+| `-top.csv` | amostras do `kubectl top pod` durante a carga (com `--top`) |
+| `-resumo.json` | o comando exato, o ambiente (CPU, núcleos, RAM) e o resumo geral e por degrau, com a conferência pela Lei de Little |
+| `-ao-vivo.csv` | uma linha por segundo gravada na hora, para os gráficos ao vivo |
+
+**Gráficos ao vivo** (um painel por medida, redesenhado a cada segundo): `python carga/ao_vivo.py resultados/base`
+
+**Linha de base completa:** 1 réplica de cada serviço e HPA removido. Primeiro, 20 s de aquecimento descartado. Depois, degraus de 1 a 64 trabalhadores, 30 s cada, com 5 s de aquecimento descartados, e 3 repetições da ingestão e da consulta. No fim saem as tabelas e os gráficos. Leva uns 30 minutos, abre a janela ao vivo e devolve o cluster ao normal ao terminar.
+
+```powershell
+python -m pip install matplotlib
+.\carga\linha-de-base.ps1            # Linux/macOS/Git Bash: bash carga/linha-de-base.sh
+```
+
+Resultado em `resultados/base/<data-hora>/`:
+- `tabela-<rota>.md`: a tabela da seção 5 da ficha, já preenchida;
+- `grafico-<rota>.png`: latência, vazão e erros num gráfico só;
+- `graficos-<rota>/`: um PNG por medida;
+- os arquivos brutos de cada repetição e o tempo que a fila levou para esvaziar.
+
 ## Docker Compose (sem cluster)
 
 Só precisa de **Docker** instalado. O .NET SDK não é necessário na máquina: o build acontece dentro do contêiner.
@@ -233,10 +293,16 @@ aps-8sem-sd/
 ├── secret.example.yaml         # modelo do Secret do Kubernetes (documentação, não é aplicado)
 ├── ApsSd.sln                   # abre as 3 APIs juntas no Visual Studio/Rider
 ├── k8s/                        # manifestos do Kubernetes (kubectl apply -f k8s/)
-├── scripts/
-│   ├── k8s-up.sh               # sobe tudo no k3d, do zero
-│   ├── k8s-build.sh            # constrói as imagens com uma tag e importa no cluster
-│   └── k8s-verificar.sh        # confere a aplicação pelo gateway
+├── scripts/                    # cada um em .ps1 (PowerShell) e .sh (bash)
+│   ├── k8s-up                  # sobe tudo no k3d, do zero
+│   ├── k8s-build               # constrói as imagens com uma tag e importa no cluster
+│   └── k8s-verificar           # confere a aplicação pelo gateway
+├── carga/
+│   ├── loadgen.py              # gerador de carga (Etapas 4 e 5)
+│   ├── ao_vivo.py              # gráficos ao vivo durante o teste
+│   ├── graficos.py             # tabelas e gráficos da linha de base
+│   └── linha-de-base           # .ps1 e .sh: roda a linha de base inteira
+├── resultados/                 # arquivos brutos, tabelas e gráficos de cada medição
 ├── tools/
 │   └── load-generator/         # gerador de carga em Python (dados aleatórios)
 └── src/

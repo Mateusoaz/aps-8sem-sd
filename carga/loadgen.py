@@ -13,7 +13,7 @@ Modos de intensidade:
   degraus    1, 2, 4, 8... trabalhadores, T segundos cada     (--degraus 1,2,4 --duracao-degrau T) -> linha de base
 
 Saída (prefixo --saida):
-  <prefixo>-requisicoes.csv  uma linha por requisição (a matéria-prima)
+  <prefixo>-requisicoes.csv.gz  uma linha por requisição (a matéria-prima), comprimido com gzip
   <prefixo>-segundos.csv     uma linha por segundo, com a hora do relógio (linhas do tempo da Etapa 5)
   <prefixo>-top.csv          amostras do "kubectl top pod" durante a carga (com --top)
   <prefixo>-resumo.json      resumo geral e por degrau (tabelas do relatório)
@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gzip
 import datetime as dt
 import http.client
 import itertools
@@ -451,7 +452,9 @@ def gravar(args, alvo, fases, estado, partida, fim, ativos_por_segundo, cpu_gera
     prefixo = args.saida
     registros = estado.registros
 
-    with open(f"{prefixo}-requisicoes.csv", "w", newline="", encoding="utf-8") as f:
+    # Comprimido: dezenas de milhares de linhas por teste. Abre direto no pandas (pd.read_csv lê .gz),
+    # no 7-Zip ou com "python -m gzip -d arquivo.csv.gz".
+    with gzip.open(f"{prefixo}-requisicoes.csv.gz", "wt", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(CAMPOS)
         w.writerows(registros)
@@ -502,7 +505,7 @@ def gravar(args, alvo, fases, estado, partida, fim, ativos_por_segundo, cpu_gera
         "cpu_gerador_pct_de_um_nucleo": round(cpu_gerador_pct, 1),
         "geral": geral,
         "por_fase": por_fase,
-        "arquivos": {"requisicoes": f"{prefixo}-requisicoes.csv", "segundos": f"{prefixo}-segundos.csv",
+        "arquivos": {"requisicoes": f"{prefixo}-requisicoes.csv.gz", "segundos": f"{prefixo}-segundos.csv",
                      "top": f"{prefixo}-top.csv" if estado.top else None, "resumo": f"{prefixo}-resumo.json"},
     }
     with open(f"{prefixo}-resumo.json", "w", encoding="utf-8") as f:
@@ -549,7 +552,7 @@ def imprimir_resumo(resumo: dict):
         print(f"Erros: {g['por_erro']}")
     print(f"CPU do próprio gerador: {resumo['cpu_gerador_pct_de_um_nucleo']}% de um núcleo "
           f"(perto de 100%, o gargalo pode ser o gerador)")
-    print(f"Arquivos: {resumo['arquivos']['resumo']} (+ -requisicoes.csv, -segundos.csv"
+    print(f"Arquivos: {resumo['arquivos']['resumo']} (+ -requisicoes.csv.gz, -segundos.csv"
           f"{', -top.csv' if resumo['arquivos']['top'] else ''})")
 
 

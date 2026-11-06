@@ -566,7 +566,7 @@
     }
   ],
   "arquivos": {
-    "requisicoes": "resultados/base/20261105-2224/ingestao-rep1-requisicoes.csv",
+    "requisicoes": "resultados/base/20261105-2224/ingestao-rep1-requisicoes.csv.gz",
     "segundos": "resultados/base/20261105-2224/ingestao-rep1-segundos.csv",
     "top": "resultados/base/20261105-2224/ingestao-rep1-top.csv",
     "resumo": "resultados/base/20261105-2224/ingestao-rep1-resumo.json"

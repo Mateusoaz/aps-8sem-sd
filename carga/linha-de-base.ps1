@@ -81,7 +81,17 @@ try {
             -ContentType "application/json" -Body $corpo | Out-Null
     }
 
-    # 4. Degraus, várias vezes cada rota, alternando as rotas entre as repetições
+    # 4. Aquecimento DESCARTADO: na 1ª medição o .NET ainda compila o caminho do POST e os pools de conexão
+    #    e o cache do Postgres estão frios (a 1ª repetição saía com metade da vazão nos degraus baixos).
+    Write-Host ">> aquecimento (descartado): 20 s em cada rota"
+    New-Item -ItemType Directory -Force "$saida/descartado" | Out-Null
+    & $Python carga/loadgen.py "$Gateway/api/v1/air-quality/particulate" -X POST --corpo ar -c 8 -d 20 `
+        --aquecimento 0 --saida "$saida/descartado/aquecimento-ingestao" | Out-Null
+    & $Python carga/loadgen.py "$Gateway/api/v1/air-quality/stations/{{escolha:$estacoes}}/latest" -c 8 -d 20 `
+        --aquecimento 0 --saida "$saida/descartado/aquecimento-consulta" | Out-Null
+    Esperar-Fila "$saida/descartado/aquecimento-fila.txt"
+
+    # 5. Degraus, várias vezes cada rota, alternando as rotas entre as repetições
     foreach ($rep in 1..$Repeticoes) {
         Write-Host ""; Write-Host "================ repetição $rep/${Repeticoes}: ingestão ================"
         & $Python carga/loadgen.py "$Gateway/api/v1/air-quality/particulate" -X POST --corpo ar `
@@ -98,7 +108,7 @@ try {
         Esperar-Fila "$saida/consulta-rep$rep-fila.txt"
     }
 
-    # 5. Tabelas e gráficos
+    # 6. Tabelas e gráficos
     & $Python carga/graficos.py $saida
     Write-Host ""; Write-Host ">> pronto: $saida (tabela-*.md, grafico-*.png, graficos-*/, linha-de-base.json e os arquivos brutos)"
 }
