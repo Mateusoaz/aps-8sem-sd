@@ -373,7 +373,8 @@ def executar(args, alvo) -> None:
     ao_vivo = open(f"{args.saida}-ao-vivo.csv", "w", newline="", encoding="utf-8")
     escritor = csv.writer(ao_vivo)
     escritor.writerow(["hora", "segundo", "fase", "fases", "trabalhadores", "ok_s", "erros_s",
-                       "p50_ms", "p95_ms", "p99_ms", "pods", "cpu_api_m", "cpu_banco_m", "servico", "rota"])
+                       "p50_ms", "p95_ms", "p99_ms", "pods", "cpu_api_m", "cpu_banco_m", "servico", "rota",
+                       "epoch", "versoes"])
     ao_vivo.flush()
     rota = f"{args.metodo} {re.sub(r'^https?://[^/]+', '', args.url)}"
 
@@ -406,7 +407,8 @@ def executar(args, alvo) -> None:
             escritor.writerow([time.strftime("%H:%M:%S"), s, fase.indice + 1 if fase else 0, len(fases), ativos,
                                len(novos) - erros, erros, percentil(lat, 50) or "", percentil(lat, 95) or "",
                                percentil(lat, 99) or "", pods, estado.ultimo_top.get(servico, ""),
-                               estado.ultimo_top.get("postgres", ""), servico or "", rota])
+                               estado.ultimo_top.get("postgres", ""), servico or "", rota, round(time.time(), 3),
+                               ";".join(f"{v}:{n}" for v, n in sorted(Counter(r[11] for r in novos if r[11]).items()))])
             ao_vivo.flush()
 
     threading.Thread(target=monitor, daemon=True).start()

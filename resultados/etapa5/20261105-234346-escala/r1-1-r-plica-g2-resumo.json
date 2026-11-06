@@ -1,0 +1,112 @@
+{
+  "comando": "'C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\carga\\loadgen.py' http://127.0.0.1:8081/api/v1/air-quality/particulate -X POST -c 32 -d 20 --aquecimento 10 --timeout 5 --saida 'C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234346-escala\\r1-1-r-plica-g2' --corpo ar",
+  "alvo": {
+    "metodo": "POST",
+    "url": "http://127.0.0.1:8081/api/v1/air-quality/particulate",
+    "corpo": "ar"
+  },
+  "modo": "constante",
+  "parametros": {
+    "trabalhadores": 32,
+    "duracao_s": 20.0,
+    "degraus": null,
+    "duracao_degrau_s": 25,
+    "rampa_s": 0,
+    "aquecimento_s": 10.0,
+    "timeout_s": 5.0,
+    "semente": null
+  },
+  "inicio": "2026-11-05T23:44:26",
+  "fim": "2026-11-05T23:44:46",
+  "ambiente": {
+    "sistema": "Windows 11",
+    "cpu": "AMD Ryzen 9 5900X 12-Core Processor",
+    "nucleos_logicos": 24,
+    "ram_gb": 31.9,
+    "python": "3.13.14",
+    "maquina": "MateuszPC"
+  },
+  "cpu_gerador_pct_de_um_nucleo": 7.5,
+  "geral": {
+    "trabalhadores": 32,
+    "janela_medida_s": 10.0,
+    "requisicoes": 1685,
+    "ok": 1685,
+    "erros": 0,
+    "taxa_erro_pct": 0.0,
+    "vazao_req_s": 168.5,
+    "latencia_ms": {
+      "p50": 190.89,
+      "p95": 254.61,
+      "p99": 303.84,
+      "media": 189.1,
+      "max": 363.96
+    },
+    "latencia_ok_ms": {
+      "p50": 190.89,
+      "p95": 254.61,
+      "p99": 303.84
+    },
+    "por_pod": {
+      "air-quality-api-7c846d4dd8-pwrkw": 1685
+    },
+    "por_status": {
+      "201": 1685
+    },
+    "por_erro": {},
+    "por_versao": {
+      "1.1.0": 1685
+    },
+    "por_cache": {},
+    "lei_de_little": {
+      "latencia_media_medida_ms": 189.1,
+      "latencia_media_prevista_ms": 189.91
+    }
+  },
+  "por_fase": [
+    {
+      "trabalhadores": 32,
+      "janela_medida_s": 10.0,
+      "requisicoes": 1685,
+      "ok": 1685,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 168.5,
+      "latencia_ms": {
+        "p50": 190.89,
+        "p95": 254.61,
+        "p99": 303.84,
+        "media": 189.1,
+        "max": 363.96
+      },
+      "latencia_ok_ms": {
+        "p50": 190.89,
+        "p95": 254.61,
+        "p99": 303.84
+      },
+      "por_pod": {
+        "air-quality-api-7c846d4dd8-pwrkw": 1685
+      },
+      "por_status": {
+        "201": 1685
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 1685
+      },
+      "por_cache": {},
+      "lei_de_little": {
+        "latencia_media_medida_ms": 189.1,
+        "latencia_media_prevista_ms": 189.91
+      },
+      "fase": 0,
+      "inicio": "2026-11-05T23:44:26"
+    }
+  ],
+  "arquivos": {
+    "requisicoes": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234346-escala\\r1-1-r-plica-g2-requisicoes.csv.gz",
+    "segundos": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234346-escala\\r1-1-r-plica-g2-segundos.csv",
+    "top": null,
+    "resumo": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234346-escala\\r1-1-r-plica-g2-resumo.json"
+  }
+}

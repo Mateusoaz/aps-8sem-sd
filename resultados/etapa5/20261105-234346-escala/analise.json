@@ -1,0 +1,159 @@
+{
+  "linhas": [
+    {
+      "rotulo": "1 réplica",
+      "replicas": 1,
+      "resumo": {
+        "trabalhadores": 128,
+        "janela_medida_s": 10,
+        "requisicoes": 6753,
+        "ok": 6753,
+        "erros": 0,
+        "taxa_erro_pct": 0.0,
+        "vazao_req_s": 675.3,
+        "latencia_ms": {
+          "p50": 190.53,
+          "p95": 254.38,
+          "p99": 297.58,
+          "media": 188.69,
+          "max": 363.96
+        },
+        "latencia_ok_ms": {
+          "p50": 190.53,
+          "p95": 254.38,
+          "p99": 297.58
+        },
+        "por_pod": {
+          "air-quality-api-7c846d4dd8-pwrkw": 6753
+        },
+        "por_status": {
+          "201": 6753
+        },
+        "por_erro": {},
+        "por_versao": {
+          "1.1.0": 6753
+        },
+        "por_cache": {},
+        "lei_de_little": {
+          "latencia_media_medida_ms": 188.69,
+          "latencia_media_prevista_ms": 189.55
+        },
+        "cpu_api_m": 228,
+        "cpu_banco_m": 207,
+        "pct_cache_hit": null
+      },
+      "rota": "POST /api/v1/air-quality/particulate",
+      "trabalhadores": 128,
+      "duracao_s": 20,
+      "fila": "12417 mensagens pendentes ao fim da carga, 33 s para esvaziar",
+      "ganho_medido": 1.0,
+      "ganho_ideal": 1,
+      "s_estimado": null
+    },
+    {
+      "rotulo": "2 réplicas",
+      "replicas": 2,
+      "resumo": {
+        "trabalhadores": 128,
+        "janela_medida_s": 10,
+        "requisicoes": 4562,
+        "ok": 4562,
+        "erros": 0,
+        "taxa_erro_pct": 0.0,
+        "vazao_req_s": 456.2,
+        "latencia_ms": {
+          "p50": 90.29,
+          "p95": 623.34,
+          "p99": 691.78,
+          "media": 278.25,
+          "max": 775.42
+        },
+        "latencia_ok_ms": {
+          "p50": 90.29,
+          "p95": 623.34,
+          "p99": 691.78
+        },
+        "por_pod": {
+          "air-quality-api-7c846d4dd8-pwrkw": 2282,
+          "air-quality-api-7c846d4dd8-5llv4": 2280
+        },
+        "por_status": {
+          "201": 4562
+        },
+        "por_erro": {},
+        "por_versao": {
+          "1.1.0": 4562
+        },
+        "por_cache": {},
+        "lei_de_little": {
+          "latencia_media_medida_ms": 278.25,
+          "latencia_media_prevista_ms": 280.58
+        },
+        "cpu_api_m": 289,
+        "cpu_banco_m": 88,
+        "pct_cache_hit": null
+      },
+      "rota": "POST /api/v1/air-quality/particulate",
+      "trabalhadores": 128,
+      "duracao_s": 20,
+      "fila": "5036 mensagens pendentes ao fim da carga, 15 s para esvaziar",
+      "ganho_medido": 0.68,
+      "ganho_ideal": 2,
+      "s_estimado": 1.961
+    },
+    {
+      "rotulo": "4 réplicas",
+      "replicas": 4,
+      "resumo": {
+        "trabalhadores": 128,
+        "janela_medida_s": 10,
+        "requisicoes": 9235,
+        "ok": 9235,
+        "erros": 0,
+        "taxa_erro_pct": 0.0,
+        "vazao_req_s": 923.5,
+        "latencia_ms": {
+          "p50": 47.57,
+          "p95": 530.02,
+          "p99": 628.39,
+          "media": 136.06,
+          "max": 700.37
+        },
+        "latencia_ok_ms": {
+          "p50": 47.57,
+          "p95": 530.02,
+          "p99": 628.39
+        },
+        "por_pod": {
+          "air-quality-api-7c846d4dd8-5llv4": 2312,
+          "air-quality-api-7c846d4dd8-8qsm8": 2309,
+          "air-quality-api-7c846d4dd8-l44rw": 2307,
+          "air-quality-api-7c846d4dd8-pwrkw": 2307
+        },
+        "por_status": {
+          "201": 9235
+        },
+        "por_erro": {},
+        "por_versao": {
+          "1.1.0": 9235
+        },
+        "por_cache": {},
+        "lei_de_little": {
+          "latencia_media_medida_ms": 136.06,
+          "latencia_media_prevista_ms": 138.6
+        },
+        "cpu_api_m": 803,
+        "cpu_banco_m": 598,
+        "pct_cache_hit": null
+      },
+      "rota": "POST /api/v1/air-quality/particulate",
+      "trabalhadores": 128,
+      "duracao_s": 20,
+      "fila": "5302 mensagens pendentes ao fim da carga, 7 s para esvaziar",
+      "ganho_medido": 1.37,
+      "ganho_ideal": 4,
+      "s_estimado": 0.642
+    }
+  ],
+  "s_amdahl": 1.302
+}

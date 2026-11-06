@@ -1,0 +1,30 @@
+Alvo: POST http://127.0.0.1:8081/api/v1/air-quality/particulate
+Modo: constante, 32 trabalhadores | duração total ~20 s | timeout 5 s | aquecimento 10 s
+hora       fase  trab   req/s  erros   p50 ms   p95 ms  pods
+23:47:26   1/1     32     202      0     44.8    557.9  4
+23:47:27   1/1     32     143      0     54.2    704.2  4
+23:47:28   1/1     32     137      0     46.1    883.0  4
+23:47:29   1/1     32     161      0     49.0    876.7  4
+23:47:30   1/1     32     196      0     46.7    533.0  4
+23:47:31   1/1     32     199      0     65.2    569.3  4
+23:47:32   1/1     32     250      0     43.1    493.1  4
+23:47:33   1/1     32     239      0     45.0    440.8  4
+23:47:34   1/1     32     213      0     61.0    436.8  4
+23:47:35   1/1     32     189      0     47.9    600.3  4
+23:47:36   1/1     32     193      0     44.8    667.3  4
+23:47:37   1/1     32     254      0     54.7    358.9  4
+23:47:38   1/1     32     243      0     47.5    430.8  4
+23:47:39   1/1     32     208      0     38.2    590.8  4
+23:47:40   1/1     32     220      0     36.6    598.8  4
+23:47:41   1/1     32     259      0     51.5    406.7  4
+23:47:42   1/1     32     272      0     53.6    334.3  4
+23:47:43   1/1     32     191      0     53.0    534.6  4
+23:47:44   1/1     32     203      0     46.9    570.4  4
+23:47:45   1/1     26     268      0     43.4    425.9  4
+
+trab      req     req/s      p50      p95      p99  erros %  CPU média por serviço (kubectl top)
+  32     2305     230.5     47.2    528.3    613.9     0.00  -
+
+Por pod: {'air-quality-api-7c846d4dd8-pwrkw': 604, 'air-quality-api-7c846d4dd8-l44rw': 580, 'air-quality-api-7c846d4dd8-8qsm8': 568, 'air-quality-api-7c846d4dd8-5llv4': 553}
+CPU do próprio gerador: 9.9% de um núcleo (perto de 100%, o gargalo pode ser o gerador)
+Arquivos: C:\Users\thelu\Documents\GitHub\aps-8sem-sd\resultados\etapa5\20261105-234346-escala\r3-4-r-plicas-g4-resumo.json (+ -requisicoes.csv.gz, -segundos.csv)

@@ -1,0 +1,30 @@
+Alvo: POST http://127.0.0.1:8081/api/v1/air-quality/particulate
+Modo: constante, 32 trabalhadores | duração total ~20 s | timeout 5 s | aquecimento 10 s
+hora       fase  trab   req/s  erros   p50 ms   p95 ms  pods
+23:47:26   1/1     32     259      0     44.0    465.1  4
+23:47:27   1/1     32     144      0     45.2    732.6  4
+23:47:28   1/1     32     173      0     43.7    855.3  4
+23:47:29   1/1     32     131      0     42.6    899.8  4
+23:47:30   1/1     32     255      0     48.6    534.5  4
+23:47:31   1/1     32     168      0     96.6    565.0  4
+23:47:32   1/1     32     257      0     48.3    479.0  4
+23:47:33   1/1     32     279      0     38.8    436.0  4
+23:47:34   1/1     32     212      0     63.5    440.0  4
+23:47:35   1/1     32     221      0     43.5    569.4  4
+23:47:36   1/1     32     179      0     40.8    685.2  4
+23:47:37   1/1     32     281      0     50.7    371.4  4
+23:47:38   1/1     32     237      0     47.4    425.1  4
+23:47:39   1/1     32     188      0     39.7    575.5  4
+23:47:40   1/1     32     227      0     35.1    628.4  4
+23:47:41   1/1     32     228      0     53.6    421.3  4
+23:47:42   1/1     32     269      0     54.2    300.0  4
+23:47:43   1/1     32     230      0     57.5    526.6  4
+23:47:44   1/1     32     210      0     45.1    566.5  4
+23:47:45   1/1     30     295      0     44.0    427.8  4
+
+trab      req     req/s      p50      p95      p99  erros %  CPU média por serviço (kubectl top)
+  32     2344     234.4     47.4    529.1    638.0     0.00  air-quality-api 665m, postgres 436m, rabbitmq 165m
+
+Por pod: {'air-quality-api-7c846d4dd8-pwrkw': 598, 'air-quality-api-7c846d4dd8-8qsm8': 596, 'air-quality-api-7c846d4dd8-5llv4': 578, 'air-quality-api-7c846d4dd8-l44rw': 572}
+CPU do próprio gerador: 12.3% de um núcleo (perto de 100%, o gargalo pode ser o gerador)
+Arquivos: C:\Users\thelu\Documents\GitHub\aps-8sem-sd\resultados\etapa5\20261105-234346-escala\r3-4-r-plicas-g1-resumo.json (+ -requisicoes.csv.gz, -segundos.csv, -top.csv)

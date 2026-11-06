@@ -1,0 +1,35 @@
+{
+  "experimento": "hpa",
+  "inicio": "2026-11-05T23:48:07",
+  "t0": 1793933287.900968,
+  "comando": "carga/experimento.py hpa --rapido --sem-janela",
+  "rapido": true,
+  "tipo": "linha_do_tempo",
+  "execucoes": [
+    {
+      "rotulo": "rampa com HPA",
+      "slug": "r1-rampa-com-hpa",
+      "inicio": 1793933720.4622562,
+      "fim": 1793933822.5125115,
+      "prefixos": [
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234807-hpa\\r1-rampa-com-hpa-g1",
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234807-hpa\\r1-rampa-com-hpa-g2",
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234807-hpa\\r1-rampa-com-hpa-g3",
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234807-hpa\\r1-rampa-com-hpa-g4"
+      ],
+      "rota": "POST /api/v1/air-quality/particulate",
+      "trabalhadores": 128,
+      "geradores": 4,
+      "duracao_s": 100,
+      "aquecimento_s": 0,
+      "rampa_s": 40,
+      "codigos_saida": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "fim": "2026-11-05T23:57:02"
+}

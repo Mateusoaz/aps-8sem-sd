@@ -1,0 +1,22 @@
+{
+  "requisicoes": 15192,
+  "falhas": 0,
+  "por_erro": {},
+  "versoes": {
+    "1.1.0": 15192
+  },
+  "acao": "pod apagado: air-quality-api-7c846d4dd8-7fgsc",
+  "t_acao_s": 10.1,
+  "falhas_apos_acao": 0,
+  "vazao_normal": 569.5,
+  "p95_normal": 103.74000000000001,
+  "tempo_ate_substituto_pronto_s": 6.7,
+  "tempo_ate_todos_substitutos_s": 6.7,
+  "tempo_ate_patamar_normal_s": 7.9,
+  "pods_retirados": [
+    "air-quality-api-7c846d4dd8-7fgsc (k3d-aps-agent-0, 23:42:05)"
+  ],
+  "pods_criados": [
+    "air-quality-api-7c846d4dd8-qf78f -> k3d-aps-agent-0 pronto às 23:42:11"
+  ]
+}

@@ -31,8 +31,26 @@ kubectl apply -f k8s/00-namespace.yaml
 # tr -d '\r': um .env salvo no Windows (CRLF) grudaria um \r no fim de cada senha
 env_file="$(mktemp)"
 tr -d '\r' < .env > "$env_file"
+antes="$(kubectl get secret "$SECRET" -n "$NS" -o jsonpath='{.data}' 2>/dev/null || true)"
 kubectl create secret generic "$SECRET" -n "$NS" --from-env-file="$env_file" \
   --dry-run=client -o yaml | kubectl apply -f -
+depois="$(kubectl get secret "$SECRET" -n "$NS" -o jsonpath='{.data}')"
+
+# Senha trocada no .env com o banco JÁ criado: o Postgres e o RabbitMQ guardam no volume a senha da
+# primeira inicialização, e mudar o Secret não muda essa senha. Sem isto, os pods novos das APIs
+# recebem a senha nova e o banco recusa ("password authentication failed"): ficam 0/1 para sempre.
+if [ -n "$antes" ] && [ "$antes" != "$depois" ]; then
+  echo ">> o Secret mudou: atualizando as senhas do Postgres e do RabbitMQ e reiniciando as APIs"
+  valor() { grep -E "^$1=" "$env_file" | tail -1 | cut -d= -f2-; }
+  pu="$(valor POSTGRES_USER)"; pp="$(valor POSTGRES_PASSWORD)"
+  kubectl exec -n "$NS" postgres-0 -- psql -U "$pu" -d postgres -c "ALTER USER \"$pu\" WITH PASSWORD '$pp';" >/dev/null 2>&1 \
+    || echo "   aviso: não deu para mudar a senha no Postgres (o usuário mudou? apague o namespace e suba de novo)"
+  kubectl exec -n "$NS" rabbitmq-0 -- rabbitmqctl -q change_password "$(valor RABBITMQ_USER)" "$(valor RABBITMQ_PASSWORD)" >/dev/null 2>&1 \
+    || echo "   aviso: não deu para mudar a senha no RabbitMQ"
+  for d in air-quality-api flooding-api thermal-inversion-api; do
+    kubectl rollout restart deployment/"$d" -n "$NS" >/dev/null 2>&1 || true
+  done
+fi
 rm -f "$env_file"
 
 # 4. Todo o resto, em ordem alfabética dos arquivos

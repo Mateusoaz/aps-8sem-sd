@@ -1,0 +1,36 @@
+{
+  "experimento": "pod-apagado",
+  "inicio": "2026-11-05T23:41:25",
+  "t0": 1793932885.3415892,
+  "comando": "carga/experimento.py pod-apagado --rapido --sem-janela",
+  "rapido": true,
+  "tipo": "linha_do_tempo",
+  "acao": {
+    "epoch": 1793932925.1089897,
+    "descricao": "pod apagado: air-quality-api-7c846d4dd8-7fgsc",
+    "pod": "air-quality-api-7c846d4dd8-7fgsc"
+  },
+  "execucoes": [
+    {
+      "rotulo": "pod apagado",
+      "slug": "r1-pod-apagado",
+      "inicio": 1793932915.0139754,
+      "fim": 1793932946.5404289,
+      "prefixos": [
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234125-pod-apagado\\r1-pod-apagado-g1",
+        "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234125-pod-apagado\\r1-pod-apagado-g2"
+      ],
+      "rota": "POST /api/v1/air-quality/particulate",
+      "trabalhadores": 32,
+      "geradores": 2,
+      "duracao_s": 30,
+      "aquecimento_s": 5,
+      "rampa_s": 0,
+      "codigos_saida": [
+        0,
+        0
+      ]
+    }
+  ],
+  "fim": "2026-11-05T23:42:58"
+}

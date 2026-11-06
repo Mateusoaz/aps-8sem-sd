@@ -1,0 +1,30 @@
+Alvo: POST http://127.0.0.1:8081/api/v1/air-quality/particulate
+Modo: constante, 32 trabalhadores | duração total ~20 s | timeout 5 s | aquecimento 10 s
+hora       fase  trab   req/s  erros   p50 ms   p95 ms  pods
+23:44:27   1/1     32     175      0    183.6    231.4  1
+23:44:28   1/1     32     170      0    187.4    251.0  1
+23:44:29   1/1     32     163      0    195.2    257.2  1
+23:44:30   1/1     32     163      0    187.0    217.1  1
+23:44:31   1/1     32     154      0    201.8    359.7  1
+23:44:32   1/1     32     165      0    195.5    257.8  1
+23:44:33   1/1     32     167      0    190.6    209.7  1
+23:44:34   1/1     32     171      0    194.2    206.9  1
+23:44:35   1/1     32     169      0    201.7    246.3  1
+23:44:36   1/1     32     155      0    198.1    249.8  1
+23:44:37   1/1     32     169      0    201.0    260.4  1
+23:44:38   1/1     32     169      0    191.7    255.9  1
+23:44:39   1/1     32     174      0    187.4    200.1  1
+23:44:40   1/1     32     149      0    204.1    310.1  1
+23:44:41   1/1     32     171      0    185.3    204.1  1
+23:44:42   1/1     32     178      0    189.8    214.5  1
+23:44:43   1/1     32     177      0    186.7    265.3  1
+23:44:44   1/1     32     172      0    189.2    221.4  1
+23:44:45   1/1     32     167      0    192.0    258.1  1
+23:44:46   1/1     32     165      0    194.6    244.5  1
+
+trab      req     req/s      p50      p95      p99  erros %  CPU média por serviço (kubectl top)
+  32     1691     169.1    190.5    256.3    307.4     0.00  air-quality-api 231m, rabbitmq 222m, postgres 193m, thermal-inversion-api 11m
+
+Por pod: {'air-quality-api-7c846d4dd8-pwrkw': 1691}
+CPU do próprio gerador: 8.6% de um núcleo (perto de 100%, o gargalo pode ser o gerador)
+Arquivos: C:\Users\thelu\Documents\GitHub\aps-8sem-sd\resultados\etapa5\20261105-234346-escala\r1-1-r-plica-g1-resumo.json (+ -requisicoes.csv.gz, -segundos.csv, -top.csv)

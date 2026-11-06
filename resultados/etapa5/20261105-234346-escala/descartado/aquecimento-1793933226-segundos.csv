@@ -1,0 +1,7 @@
+segundo,epoch,hora,ativos,requisicoes,ok,erros,p50_ms,p95_ms,p99_ms,pods_distintos,por_pod,por_versao,erros_tipos
+0,1793933226,23:47:06,,16,16,0,21.22,3086.58,3086.58,4,air-quality-api-7c846d4dd8-5llv4:4;air-quality-api-7c846d4dd8-8qsm8:4;air-quality-api-7c846d4dd8-l44rw:4;air-quality-api-7c846d4dd8-pwrkw:4,1.1.0:16,
+1,1793933227,23:47:07,8,0,0,0,,,,0,,,
+2,1793933228,23:47:08,8,15,15,0,8.05,986.22,986.22,4,air-quality-api-7c846d4dd8-5llv4:4;air-quality-api-7c846d4dd8-8qsm8:3;air-quality-api-7c846d4dd8-l44rw:4;air-quality-api-7c846d4dd8-pwrkw:4,1.1.0:15,
+3,1793933229,23:47:09,8,234,234,0,11.67,97.81,147.69,4,air-quality-api-7c846d4dd8-5llv4:58;air-quality-api-7c846d4dd8-8qsm8:59;air-quality-api-7c846d4dd8-l44rw:59;air-quality-api-7c846d4dd8-pwrkw:58,1.1.0:234,
+4,1793933230,23:47:10,8,279,279,0,9.84,87.09,92.65,4,air-quality-api-7c846d4dd8-5llv4:70;air-quality-api-7c846d4dd8-8qsm8:70;air-quality-api-7c846d4dd8-l44rw:69;air-quality-api-7c846d4dd8-pwrkw:70,1.1.0:279,
+5,1793933231,23:47:11,8,273,273,0,17.18,79.85,89.5,4,air-quality-api-7c846d4dd8-5llv4:68;air-quality-api-7c846d4dd8-8qsm8:68;air-quality-api-7c846d4dd8-l44rw:69;air-quality-api-7c846d4dd8-pwrkw:68,1.1.0:273,

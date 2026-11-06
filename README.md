@@ -210,6 +210,53 @@ Resultado em `resultados/base/<data-hora>/`:
 - `graficos-<rota>/`: um PNG por medida;
 - os arquivos brutos de cada repetição e o tempo que a fila levou para esvaziar.
 
+## Experimentos de escalabilidade e resiliência (Etapa 5)
+
+Um comando por experimento. Cada um:
+1. prepara o cluster (réplicas, HPA, ConfigMap);
+2. liga os geradores e a janela ao vivo;
+3. executa a ação no segundo combinado, registrando com horário tudo o que o Kubernetes fez;
+4. devolve o cluster ao normal (`kubectl apply -f k8s/`);
+5. gera a tabela da ficha e os gráficos.
+
+O serviço medido é a `air-quality-api`, o de ingestão.
+
+```powershell
+python carga/experimento.py escala                # ~10 min
+python carga/experimento.py hpa                   # ~14 min (inclui a redução, 5 min depois da carga)
+python carga/experimento.py pod-apagado           # ~3 min
+python carga/experimento.py no-drenado            # ~4 min
+python carga/experimento.py rolling               # ~5 min
+python carga/experimento.py rolling-sem-prestop   # ~5 min
+python carga/experimento.py cache                 # ~5 min
+python carga/experimento.py fila                  # ~5 min
+python carga/experimento.py todos                 # todos em sequência (~50 min)
+```
+
+| Experimento | O que faz | Seção da ficha |
+|---|---|---|
+| `escala` | 1, 2, 4 e 8 réplicas, HPA removido, a mesma carga (128 trabalhadores, `POST /particulate`) | 5.1: vazão, ganho medido × ideal, fração serial pela Lei de Amdahl |
+| `hpa` | HPA ligado (mín. 2, máx. 10), rampa de 4 a 128 trabalhadores em 120 s, carga até 300 s, depois observa a redução | 5.2: linha do tempo (decisão, pods prontos, p95 de volta, redução) |
+| `pod-apagado` | 2 réplicas, carga constante; no segundo 30, `kubectl delete pod` | 5.3: falhas, tempo até o substituto ficar pronto e até o patamar normal |
+| `no-drenado` | 2 réplicas; no segundo 30, `kubectl drain` do agente que tem uma réplica (nunca o plano de controle, nem o nó do Postgres ou do RabbitMQ); `uncordon` no fim | 5.3 |
+| `rolling` / `rolling-sem-prestop` | 3 réplicas; `set image` 1.1.0 → 1.2.0; 30 s depois do fim, `rollout undo`; o segundo remove o `preStop` antes, para comparar | 5.4: falhas e segundos com as duas versões atendendo |
+| `cache` | média do bairro em 24 h, com cache × sem cache (`Cache__Enabled`) | 5.5 |
+| `fila` | ingestão com fila (assíncrono) × alerta dentro do POST (`Queue__Enabled`) | 5.5 |
+
+Resultado em `resultados/etapa5/<data-hora>-<experimento>/`:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `tabela.md` | a seção 5 da ficha preenchida, com uma hipótese sugerida, o procedimento e as evidências; falta a análise crítica, que é de vocês |
+| `graficos/` | um PNG por medida: linha do tempo com os eventos marcados (vazão, erros, p50/p95/p99, réplicas prontas, CPU, HPA, versões) ou comparação entre cenários |
+| `eventos.csv` | cada coisa que o Kubernetes fez, com horário: pod criado/pronto/terminando/removido, decisões do HPA, ações |
+| `replicas.csv`, `hpa.csv` | réplicas prontas e estado do HPA a cada segundo |
+| `r*-g*-requisicoes.csv.gz`, `*-resumo.json` | arquivos brutos de cada gerador |
+
+Opções: `--rapido` (durações divididas por 3, só para conferir o fluxo), `--sem-janela`. Para refazer só a análise: `python carga/analise_etapa5.py resultados/etapa5/<pasta>`.
+
+> Rode os experimentos **na mesma máquina** da linha de base, com o PC sem outras cargas pesadas: as 3 "VMs" dividem os núcleos dele.
+
 ## Docker Compose (sem cluster)
 
 Só precisa de **Docker** instalado. O .NET SDK não é necessário na máquina: o build acontece dentro do contêiner.
@@ -301,7 +348,9 @@ aps-8sem-sd/
 │   ├── loadgen.py              # gerador de carga (Etapas 4 e 5)
 │   ├── ao_vivo.py              # gráficos ao vivo durante o teste
 │   ├── graficos.py             # tabelas e gráficos da linha de base
-│   └── linha-de-base           # .ps1 e .sh: roda a linha de base inteira
+│   ├── linha-de-base           # .ps1 e .sh: roda a linha de base inteira
+│   ├── experimento.py          # experimentos da Etapa 5 (escala, HPA, falhas, rolling, cache, fila)
+│   └── analise_etapa5.py       # tabelas e linhas do tempo de cada experimento
 ├── resultados/                 # arquivos brutos, tabelas e gráficos de cada medição
 ├── tools/
 │   └── load-generator/         # gerador de carga em Python (dados aleatórios)

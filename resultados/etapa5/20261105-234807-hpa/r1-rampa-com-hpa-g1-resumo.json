@@ -1,0 +1,286 @@
+{
+  "comando": "'C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\carga\\loadgen.py' http://127.0.0.1:8081/api/v1/air-quality/particulate -X POST -c 32 -d 100 --aquecimento 0 --timeout 5 --saida 'C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234807-hpa\\r1-rampa-com-hpa-g1' --corpo ar --rampa 40 --top --top-intervalo 3 --top-atraso 0",
+  "alvo": {
+    "metodo": "POST",
+    "url": "http://127.0.0.1:8081/api/v1/air-quality/particulate",
+    "corpo": "ar"
+  },
+  "modo": "rampa",
+  "parametros": {
+    "trabalhadores": 32,
+    "duracao_s": 100.0,
+    "degraus": null,
+    "duracao_degrau_s": 25,
+    "rampa_s": 40.0,
+    "aquecimento_s": 0.0,
+    "timeout_s": 5.0,
+    "semente": null
+  },
+  "inicio": "2026-11-05T23:55:20",
+  "fim": "2026-11-05T23:57:00",
+  "ambiente": {
+    "sistema": "Windows 11",
+    "cpu": "AMD Ryzen 9 5900X 12-Core Processor",
+    "nucleos_logicos": 24,
+    "ram_gb": 31.9,
+    "python": "3.13.14",
+    "maquina": "MateuszPC"
+  },
+  "cpu_gerador_pct_de_um_nucleo": 13.9,
+  "geral": {
+    "trabalhadores": 32,
+    "janela_medida_s": 100.0,
+    "requisicoes": 24096,
+    "ok": 24096,
+    "erros": 0,
+    "taxa_erro_pct": 0.0,
+    "vazao_req_s": 240.96,
+    "latencia_ms": {
+      "p50": 76.11,
+      "p95": 307.19,
+      "p99": 589.78,
+      "media": 106.25,
+      "max": 2366.97
+    },
+    "latencia_ok_ms": {
+      "p50": 76.11,
+      "p95": 307.19,
+      "p99": 589.78
+    },
+    "por_pod": {
+      "air-quality-api-7c846d4dd8-f8g6x": 5360,
+      "air-quality-api-7c846d4dd8-g2kx5": 5246,
+      "air-quality-api-7c846d4dd8-nrlhq": 2345,
+      "air-quality-api-7c846d4dd8-rxp5x": 2329,
+      "air-quality-api-7c846d4dd8-58tzk": 1700,
+      "air-quality-api-7c846d4dd8-4845w": 1644,
+      "air-quality-api-7c846d4dd8-5lt4k": 1606,
+      "air-quality-api-7c846d4dd8-trvns": 1565,
+      "air-quality-api-7c846d4dd8-8gn99": 1165,
+      "air-quality-api-7c846d4dd8-rqrjz": 1136
+    },
+    "por_status": {
+      "201": 24096
+    },
+    "por_erro": {},
+    "por_versao": {
+      "1.1.0": 24096
+    },
+    "por_cache": {},
+    "lei_de_little": {
+      "latencia_media_medida_ms": 106.25,
+      "latencia_media_prevista_ms": 132.8
+    },
+    "cpu_top_m": {
+      "air-quality-api-7c846d4dd8-4845w": {
+        "media": 471,
+        "max": 497
+      },
+      "air-quality-api-7c846d4dd8-58tzk": {
+        "media": 473,
+        "max": 498
+      },
+      "air-quality-api-7c846d4dd8-5lt4k": {
+        "media": 488,
+        "max": 497
+      },
+      "air-quality-api-7c846d4dd8-8gn99": {
+        "media": 495,
+        "max": 497
+      },
+      "air-quality-api-7c846d4dd8-f8g6x": {
+        "media": 402,
+        "max": 501
+      },
+      "air-quality-api-7c846d4dd8-g2kx5": {
+        "media": 378,
+        "max": 499
+      },
+      "air-quality-api-7c846d4dd8-nrlhq": {
+        "media": 499,
+        "max": 500
+      },
+      "air-quality-api-7c846d4dd8-rqrjz": {
+        "media": 499,
+        "max": 500
+      },
+      "air-quality-api-7c846d4dd8-rxp5x": {
+        "media": 490,
+        "max": 497
+      },
+      "air-quality-api-7c846d4dd8-trvns": {
+        "media": 468,
+        "max": 497
+      },
+      "flooding-api-75f75d59d5-dr89z": {
+        "media": 4,
+        "max": 5
+      },
+      "flooding-api-75f75d59d5-t2nss": {
+        "media": 3,
+        "max": 4
+      },
+      "postgres-0": {
+        "media": 577,
+        "max": 1521
+      },
+      "rabbitmq-0": {
+        "media": 164,
+        "max": 424
+      },
+      "redis-55d4876657-lh28r": {
+        "media": 7,
+        "max": 10
+      },
+      "thermal-inversion-api-79f68869c9-hzxl9": {
+        "media": 3,
+        "max": 4
+      },
+      "thermal-inversion-api-79f68869c9-k47mb": {
+        "media": 3,
+        "max": 4
+      },
+      "web-client-78787d6459-7bxqc": {
+        "media": 1,
+        "max": 1
+      },
+      "web-client-78787d6459-m2gwg": {
+        "media": 1,
+        "max": 1
+      }
+    }
+  },
+  "por_fase": [
+    {
+      "trabalhadores": 32,
+      "janela_medida_s": 100.0,
+      "requisicoes": 24096,
+      "ok": 24096,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 240.96,
+      "latencia_ms": {
+        "p50": 76.11,
+        "p95": 307.19,
+        "p99": 589.78,
+        "media": 106.25,
+        "max": 2366.97
+      },
+      "latencia_ok_ms": {
+        "p50": 76.11,
+        "p95": 307.19,
+        "p99": 589.78
+      },
+      "por_pod": {
+        "air-quality-api-7c846d4dd8-f8g6x": 5360,
+        "air-quality-api-7c846d4dd8-g2kx5": 5246,
+        "air-quality-api-7c846d4dd8-nrlhq": 2345,
+        "air-quality-api-7c846d4dd8-rxp5x": 2329,
+        "air-quality-api-7c846d4dd8-58tzk": 1700,
+        "air-quality-api-7c846d4dd8-4845w": 1644,
+        "air-quality-api-7c846d4dd8-5lt4k": 1606,
+        "air-quality-api-7c846d4dd8-trvns": 1565,
+        "air-quality-api-7c846d4dd8-8gn99": 1165,
+        "air-quality-api-7c846d4dd8-rqrjz": 1136
+      },
+      "por_status": {
+        "201": 24096
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 24096
+      },
+      "por_cache": {},
+      "lei_de_little": {
+        "latencia_media_medida_ms": 106.25,
+        "latencia_media_prevista_ms": 132.8
+      },
+      "cpu_top_m": {
+        "air-quality-api-7c846d4dd8-4845w": {
+          "media": 471,
+          "max": 497
+        },
+        "air-quality-api-7c846d4dd8-58tzk": {
+          "media": 473,
+          "max": 498
+        },
+        "air-quality-api-7c846d4dd8-5lt4k": {
+          "media": 488,
+          "max": 497
+        },
+        "air-quality-api-7c846d4dd8-8gn99": {
+          "media": 495,
+          "max": 497
+        },
+        "air-quality-api-7c846d4dd8-f8g6x": {
+          "media": 415,
+          "max": 501
+        },
+        "air-quality-api-7c846d4dd8-g2kx5": {
+          "media": 390,
+          "max": 499
+        },
+        "air-quality-api-7c846d4dd8-nrlhq": {
+          "media": 499,
+          "max": 500
+        },
+        "air-quality-api-7c846d4dd8-rqrjz": {
+          "media": 499,
+          "max": 500
+        },
+        "air-quality-api-7c846d4dd8-rxp5x": {
+          "media": 490,
+          "max": 497
+        },
+        "air-quality-api-7c846d4dd8-trvns": {
+          "media": 468,
+          "max": 497
+        },
+        "flooding-api-75f75d59d5-dr89z": {
+          "media": 4,
+          "max": 5
+        },
+        "flooding-api-75f75d59d5-t2nss": {
+          "media": 3,
+          "max": 4
+        },
+        "postgres-0": {
+          "media": 595,
+          "max": 1521
+        },
+        "rabbitmq-0": {
+          "media": 169,
+          "max": 424
+        },
+        "redis-55d4876657-lh28r": {
+          "media": 7,
+          "max": 10
+        },
+        "thermal-inversion-api-79f68869c9-hzxl9": {
+          "media": 3,
+          "max": 4
+        },
+        "thermal-inversion-api-79f68869c9-k47mb": {
+          "media": 3,
+          "max": 4
+        },
+        "web-client-78787d6459-7bxqc": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-m2gwg": {
+          "media": 1,
+          "max": 1
+        }
+      },
+      "fase": 0,
+      "inicio": "2026-11-05T23:55:20"
+    }
+  ],
+  "arquivos": {
+    "requisicoes": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234807-hpa\\r1-rampa-com-hpa-g1-requisicoes.csv.gz",
+    "segundos": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234807-hpa\\r1-rampa-com-hpa-g1-segundos.csv",
+    "top": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234807-hpa\\r1-rampa-com-hpa-g1-top.csv",
+    "resumo": "C:\\Users\\thelu\\Documents\\GitHub\\aps-8sem-sd\\resultados\\etapa5\\20261105-234807-hpa\\r1-rampa-com-hpa-g1-resumo.json"
+  }
+}

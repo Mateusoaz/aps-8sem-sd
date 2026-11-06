@@ -1,0 +1,81 @@
+epoch,hora,segundo,tipo,objeto,no,versao,detalhe
+1793933291.081,23:48:11,3.2,pod_removido,air-quality-api-7c846d4dd8-l44rw,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933293.08,23:48:13,5.2,pod_removido,air-quality-api-7c846d4dd8-5llv4,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933301.697,23:48:21,13.8,pod_criado,air-quality-api-7c846d4dd8-f8g6x,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933301.697,23:48:21,13.8,pod_agendado,air-quality-api-7c846d4dd8-f8g6x,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933301.697,23:48:21,13.8,pod_criado,air-quality-api-7c846d4dd8-zkdm7,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933301.697,23:48:21,13.8,pod_agendado,air-quality-api-7c846d4dd8-zkdm7,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933302.28,23:48:22,14.4,hpa_decisao,air-quality-api,,,0 -> 4 réplicas (CPU 246%)
+1793933306.773,23:48:26,18.9,pod_pronto,air-quality-api-7c846d4dd8-f8g6x,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933306.773,23:48:26,18.9,pod_pronto,air-quality-api-7c846d4dd8-zkdm7,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933316.203,23:48:36,28.3,pod_criado,air-quality-api-7c846d4dd8-7ghzn,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933316.204,23:48:36,28.3,pod_agendado,air-quality-api-7c846d4dd8-7ghzn,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933316.204,23:48:36,28.3,pod_criado,air-quality-api-7c846d4dd8-cttwp,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933316.204,23:48:36,28.3,pod_agendado,air-quality-api-7c846d4dd8-cttwp,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933316.204,23:48:36,28.3,pod_criado,air-quality-api-7c846d4dd8-hh7b2,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933316.204,23:48:36,28.3,pod_agendado,air-quality-api-7c846d4dd8-hh7b2,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933316.204,23:48:36,28.3,pod_criado,air-quality-api-7c846d4dd8-z7k6f,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933316.204,23:48:36,28.3,pod_agendado,air-quality-api-7c846d4dd8-z7k6f,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933316.315,23:48:36,28.4,hpa_decisao,air-quality-api,,,4 -> 8 réplicas (CPU 4%)
+1793933320.152,23:48:40,32.3,pod_pronto,air-quality-api-7c846d4dd8-cttwp,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933320.152,23:48:40,32.3,pod_pronto,air-quality-api-7c846d4dd8-hh7b2,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933320.152,23:48:40,32.3,pod_pronto,air-quality-api-7c846d4dd8-z7k6f,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933321.16,23:48:41,33.3,pod_pronto,air-quality-api-7c846d4dd8-7ghzn,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933331.751,23:48:51,43.9,pod_criado,air-quality-api-7c846d4dd8-cjlw9,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933331.751,23:48:51,43.9,pod_agendado,air-quality-api-7c846d4dd8-cjlw9,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933331.751,23:48:51,43.9,pod_criado,air-quality-api-7c846d4dd8-g2kx5,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933331.751,23:48:51,43.9,pod_agendado,air-quality-api-7c846d4dd8-g2kx5,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933332.747,23:48:52,44.8,hpa_decisao,air-quality-api,,,8 -> 10 réplicas (CPU 19%)
+1793933336.13,23:48:56,48.2,pod_pronto,air-quality-api-7c846d4dd8-cjlw9,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933336.13,23:48:56,48.2,pod_pronto,air-quality-api-7c846d4dd8-g2kx5,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933601.338,23:53:21,313.4,pod_terminando,air-quality-api-7c846d4dd8-cjlw9,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933601.338,23:53:21,313.4,pod_terminando,air-quality-api-7c846d4dd8-hh7b2,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933602.859,23:53:22,315.0,hpa_decisao,air-quality-api,,,10 -> 8 réplicas (CPU 4%)
+1793933607.296,23:53:27,319.4,pod_removido,air-quality-api-7c846d4dd8-hh7b2,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933608.274,23:53:28,320.4,pod_removido,air-quality-api-7c846d4dd8-cjlw9,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933630.61,23:53:50,342.7,hpa_decisao,air-quality-api,,,8 -> 7 réplicas (CPU 7%)
+1793933631.334,23:53:51,343.4,pod_terminando,air-quality-api-7c846d4dd8-8qsm8,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933637.278,23:53:57,349.4,pod_removido,air-quality-api-7c846d4dd8-8qsm8,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933646.286,23:54:06,358.4,pod_terminando,air-quality-api-7c846d4dd8-cttwp,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933646.286,23:54:06,358.4,pod_terminando,air-quality-api-7c846d4dd8-pwrkw,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933646.286,23:54:06,358.4,pod_terminando,air-quality-api-7c846d4dd8-z7k6f,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933646.286,23:54:06,358.4,pod_terminando,air-quality-api-7c846d4dd8-zkdm7,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933646.363,23:54:06,358.5,hpa_decisao,air-quality-api,,,7 -> 3 réplicas (CPU 4%)
+1793933652.288,23:54:12,364.4,pod_removido,air-quality-api-7c846d4dd8-cttwp,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933652.289,23:54:12,364.4,pod_removido,air-quality-api-7c846d4dd8-pwrkw,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933652.289,23:54:12,364.4,pod_removido,air-quality-api-7c846d4dd8-z7k6f,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933652.289,23:54:12,364.4,pod_removido,air-quality-api-7c846d4dd8-zkdm7,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933691.755,23:54:51,403.9,pod_terminando,air-quality-api-7c846d4dd8-7ghzn,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933692.391,23:54:52,404.5,hpa_decisao,air-quality-api,,,3 -> 2 réplicas (CPU 2%)
+1793933697.42,23:54:57,409.5,pod_removido,air-quality-api-7c846d4dd8-7ghzn,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933720.462,23:55:20,432.6,preparado,air-quality-api,,,"HPA ligado, 2 réplicas"
+1793933720.542,23:55:20,432.6,carga_inicio,,,,rampa com HPA: 128 trabalhadores
+1793933751.461,23:55:51,463.6,pod_criado,air-quality-api-7c846d4dd8-nrlhq,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933751.461,23:55:51,463.6,pod_agendado,air-quality-api-7c846d4dd8-nrlhq,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933751.461,23:55:51,463.6,pod_criado,air-quality-api-7c846d4dd8-rxp5x,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933751.461,23:55:51,463.6,pod_agendado,air-quality-api-7c846d4dd8-rxp5x,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933752.857,23:55:52,465.0,hpa_decisao,air-quality-api,,,2 -> 4 réplicas (CPU 464%)
+1793933756.383,23:55:56,468.5,pod_pronto,air-quality-api-7c846d4dd8-nrlhq,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933756.383,23:55:56,468.5,pod_pronto,air-quality-api-7c846d4dd8-rxp5x,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933766.506,23:56:06,478.6,pod_criado,air-quality-api-7c846d4dd8-4845w,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933766.506,23:56:06,478.6,pod_agendado,air-quality-api-7c846d4dd8-4845w,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933766.506,23:56:06,478.6,pod_criado,air-quality-api-7c846d4dd8-58tzk,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933766.506,23:56:06,478.6,pod_agendado,air-quality-api-7c846d4dd8-58tzk,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933766.506,23:56:06,478.6,pod_criado,air-quality-api-7c846d4dd8-5lt4k,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933766.506,23:56:06,478.6,pod_agendado,air-quality-api-7c846d4dd8-5lt4k,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933766.506,23:56:06,478.6,pod_criado,air-quality-api-7c846d4dd8-trvns,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933766.506,23:56:06,478.6,pod_agendado,air-quality-api-7c846d4dd8-trvns,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933766.632,23:56:06,478.7,hpa_decisao,air-quality-api,,,4 -> 8 réplicas (CPU 496%)
+1793933771.48,23:56:11,483.6,pod_pronto,air-quality-api-7c846d4dd8-58tzk,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933771.48,23:56:11,483.6,pod_pronto,air-quality-api-7c846d4dd8-5lt4k,k3d-aps-agent-1,1.1.0,app=air-quality-api
+1793933772.765,23:56:12,484.9,pod_pronto,air-quality-api-7c846d4dd8-4845w,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933772.765,23:56:12,484.9,pod_pronto,air-quality-api-7c846d4dd8-trvns,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933781.547,23:56:21,493.6,pod_criado,air-quality-api-7c846d4dd8-8gn99,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933781.547,23:56:21,493.6,pod_agendado,air-quality-api-7c846d4dd8-8gn99,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933781.547,23:56:21,493.6,pod_criado,air-quality-api-7c846d4dd8-rqrjz,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933781.547,23:56:21,493.6,pod_agendado,air-quality-api-7c846d4dd8-rqrjz,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933782.797,23:56:22,494.9,hpa_decisao,air-quality-api,,,8 -> 10 réplicas (CPU 498%)
+1793933787.464,23:56:27,499.6,pod_pronto,air-quality-api-7c846d4dd8-8gn99,k3d-aps-agent-0,1.1.0,app=air-quality-api
+1793933788.61,23:56:28,500.7,pod_pronto,air-quality-api-7c846d4dd8-rqrjz,k3d-aps-server-0,1.1.0,app=air-quality-api
+1793933822.498,23:57:02,534.6,carga_fim,,,,rampa com HPA
+1793933857.632,23:57:37,569.7,fila_vazia,rabbitmq,,,"54422 mensagens pendentes ao fim da carga, 35 s para esvaziar"
