@@ -1,6 +1,15 @@
 # APS 2026 — Gerenciamento de Informações Ambientais Urbanas
 
-Três APIs REST em **.NET 8 (C#)**, cada uma cuidando de um domínio ambiental, gravando num **PostgreSQL**, tudo rodando em contêineres Docker orquestrados pelo **Docker Compose**.
+Três APIs REST em **.NET 8 (C#)** para domínios ambientais, com persistência no **PostgreSQL**. O projeto pode rodar localmente pelo **Docker Compose** ou em um cluster **Kubernetes** local criado com k3d.
+
+## Comece por aqui
+
+Para uma explicação do fluxo das requisições, das APIs, do cache, do Compose, dos pods Kubernetes, dos contêineres do k3d, dos testes e de problemas comuns, consulte o [Guia de funcionamento do sistema e tour pelo código](GUIA_FUNCIONAMENTO_CODIGO.md).
+
+Escolha como executar:
+
+- **Compose:** [subir as APIs localmente](#como-rodar-m%C3%A1quina-limpa); use Swagger nas portas 5001, 5002 e 5003.
+- **Kubernetes/k3d:** siga [Kubernetes local](#kubernetes-local) na primeira instalação. Nas próximas vezes, inicie o Docker Desktop e rode `k3d cluster start aps`; confira com `kubectl get pods -n aps`. O Compose não precisa iniciar junto.
 
 | API | Domínio | Porta (host) | Banco |
 |---|---|---|---|
@@ -309,8 +318,15 @@ As APIs ficam acessíveis pelo Ingress em `http://127.0.0.1:8081/api/v1/...`. Po
 Exemplo de escrita e prova do pod/versão que respondeu:
 
 ```powershell
-curl.exe -i -X POST http://127.0.0.1:8081/api/v1/flooding/water-level -H "Content-Type: application/json" --data '{"monitoringPointId":"PT-DEMO","sensorId":"SEN-DEMO","waterLevelCm":120}'
+$body = @{ monitoringPointId = "PT-DEMO"; sensorId = "SEN-DEMO"; waterLevelCm = 120 } | ConvertTo-Json -Compress
+$response = Invoke-WebRequest -Uri "http://127.0.0.1:8081/api/v1/flooding/water-level" -Method Post -ContentType "application/json" -Body $body
+$response.StatusCode
+$response.Headers["X-Pod"]
+$response.Headers["X-Versao"]
+$response.Content
 ```
+
+O exemplo usa `Invoke-WebRequest`, que preserva o JSON corretamente no PowerShell e deixa inspecionar os cabeçalhos. O Ingress não publica o Swagger; para isso, use `kubectl port-forward`, conforme o [guia de funcionamento](GUIA_FUNCIONAMENTO_CODIGO.md).
 
 HPA e PDB aparecem junto dos demais manifestos. Na linha de base desative o HPA e fixe uma réplica antes de iniciar a carga: `kubectl delete hpa flooding-api -n aps` e `kubectl scale deployment/flooding-api -n aps --replicas=1`.
 

@@ -1,6 +1,32 @@
 # Guia de funcionamento do sistema e tour pelo código
 
-Este guia foi escrito para explicar o código em voz alta. Comece pelo caminho de uma requisição, depois abra os arquivos na ordem indicada. A implementação está na cópia `aps-8sem-sd`; o original em `Documents` não foi alterado.
+Este guia apresenta a arquitetura, o caminho de uma requisição e a operação local do projeto. Comece por “Comece por aqui” se quiser iniciar e testar o sistema; depois use o tour de código para entender a implementação.
+
+## Comece por aqui: escolha como executar
+
+O projeto tem dois modos locais independentes. Escolha um deles para começar:
+
+| Modo | Use quando | O que inicia | Endereços |
+|---|---|---|---|
+| Docker Compose | Desenvolvimento simples e teste manual das três APIs. | PostgreSQL, Redis e as três APIs como serviços Docker. | Swagger nas portas 5001, 5002 e 5003. |
+| Kubernetes com k3d | Aprender pods, Services, Ingress, réplicas e HPA. | Um cluster local; os mesmos serviços rodam dentro dos pods do cluster. | API pelo Ingress em `http://127.0.0.1:8081/api/v1/...`. |
+
+Compose e Kubernetes não compartilham contêineres nem bancos. Cada modo tem seu próprio PostgreSQL e seus próprios dados. Eles podem coexistir, mas consomem mais memória juntos. O Compose não precisa estar ligado para usar k3d.
+
+Para uso recorrente do cluster já configurado, inicie o Docker Desktop e execute:
+
+```powershell
+k3d cluster start aps
+kubectl get pods -n aps
+```
+
+Quando os pods estiverem `Running` e prontos (`READY` mostra `1/1`, ou o número de réplicas prontas), use `http://127.0.0.1:8081`. Para desligar sem remover o cluster nem os dados:
+
+```powershell
+k3d cluster stop aps
+```
+
+Não use `k3d cluster delete aps` para desligar: apagar o cluster remove também o PostgreSQL e o volume persistente dele.
 
 ## 1. Resumo em uma frase
 
@@ -214,3 +240,143 @@ Em 5–7 minutos, abra os arquivos nesta ordem:
 - Banco e Redis têm uma instância no cluster local. Replicar as APIs não replica o banco.
 - Output Cache pode devolver resposta de até 15 s atrás.
 - A cópia contém código e procedimentos de medição, mas os valores de vazão, percentis, falhas e recuperação precisam vir de execução real. Não foram fabricados neste guia.
+
+## 13. O que aparece no Docker Desktop quando k3d está ligado
+
+k3d executa cada nó Kubernetes como um contêiner Docker. Neste cluster, `docker ps --filter "name=k3d-aps"` normalmente lista:
+
+| Nome | Função |
+|---|---|
+| `k3d-aps-server-0` | Nó de controle: hospeda a API Kubernetes, agenda pods e acompanha o estado desejado. Também pode executar pods da aplicação; neste cluster, PostgreSQL e uma réplica de flooding foram agendados nele. |
+| `k3d-aps-agent-0` e `k3d-aps-agent-1` | Nós de trabalho. O Kubernetes distribui os pods entre eles conforme recursos disponíveis e regras de agendamento. |
+| `k3d-aps-serverlb` | Proxy do k3d. Encaminha a porta HTTP `8081` do computador para a porta 80 do cluster e uma porta local dinâmica para a API Kubernetes na porta 6443. |
+| `k3d-aps-tools` | Contêiner auxiliar usado pelo k3d. Não é uma API nem um serviço de negócio. |
+
+Com um servidor, dois agents, o proxy e a ferramenta auxiliar, é comum ver cinco contêineres `k3d-aps-*` no Docker Desktop. A lista de pods é outra: use `kubectl get pods -n aps`. Os contêineres das aplicações são gerenciados pelo `containerd` dentro dos nós k3d; por isso o Docker Desktop mostra os nós como contêineres, não cada pod como contêiner Docker irmão.
+
+O caminho da chamada é `computador:8081` → `serverlb` → Ingress Traefik → Service Kubernetes da API → pod pronto. O Service tem endereço estável e escolhe um pod pronto; assim, réplicas podem ser criadas ou substituídas sem mudar a URL do cliente.
+
+No estado observado neste cluster havia seis pods: uma réplica de qualidade do ar, duas de flooding, uma térmica, uma de PostgreSQL e uma de Redis. O número pode mudar. O HPA de flooding começa com duas réplicas e pode variar de duas a dez conforme a utilização média de CPU; ele não escala diretamente pela quantidade de requisições.
+
+## 14. Primeira instalação e atualização do cluster
+
+Execute esta configuração uma vez. O Docker Desktop precisa estar ligado; `k3d`, `kubectl` e o Docker CLI precisam estar disponíveis no PowerShell. Rode os comandos na raiz do repositório.
+
+1. Crie `.env` se ele ainda não existir e defina uma senha própria em `POSTGRES_PASSWORD`. Não publique o arquivo nem envie a senha em mensagens.
+
+   ```powershell
+   if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+   notepad .env
+   ```
+
+2. Crie o cluster. Se `k3d cluster list` já mostrar `aps`, pule a criação.
+
+   ```powershell
+   k3d cluster create aps --agents 2 -p "8081:80@loadbalancer"
+   kubectl config use-context k3d-aps
+   kubectl get nodes
+   ```
+
+   Os nós precisam aparecer como `Ready`.
+
+3. Compile e importe as imagens. Repita estes comandos depois de alterar o código de uma API; ajuste a tag e os manifests juntos se mudar a versão.
+
+   ```powershell
+   docker build --build-arg APP_VERSION=1.0.0 -t aps-sd/air-quality-api:1.0.0 ./src/AirQuality.Api
+   docker build --build-arg APP_VERSION=1.0.0 -t aps-sd/flooding-api:1.0.0 ./src/Flooding.Api
+   docker build --build-arg APP_VERSION=1.0.0 -t aps-sd/thermal-inversion-api:1.0.0 ./src/ThermalInversion.Api
+   k3d image import aps-sd/air-quality-api:1.0.0 aps-sd/flooding-api:1.0.0 aps-sd/thermal-inversion-api:1.0.0 -c aps
+   ```
+
+4. Crie o namespace, gere o Secret Kubernetes a partir do `.env` e aplique os manifests. O Secret guarda as conexões dos três bancos no cluster; o script não imprime os valores.
+
+   ```powershell
+   kubectl apply -f k8s/00-namespace.yaml
+   .\scripts\create-k8s-secret.ps1
+   kubectl apply -f k8s/
+   kubectl get pods -n aps -w
+   ```
+
+   Aguarde os pods ficarem prontos; `Ctrl+C` encerra somente a observação. Veja o panorama com `kubectl get all,ingress,pvc,hpa -n aps -o wide`.
+
+O Ingress expõe somente prefixos `/api/v1/...`; ele não publica o Swagger. Para abrir o Swagger de flooding via port-forward, deixe este comando rodando em um terminal e acesse `http://localhost:5002/swagger`:
+
+```powershell
+kubectl port-forward -n aps svc/flooding-api 5002:8080
+```
+
+`Ctrl+C` encerra o port-forward, não a API. Para qualidade do ar ou inversão térmica, use o Service correspondente e outra porta local.
+
+### Atualizar o código depois da instalação
+
+Depois de mudar uma API, reconstrua somente a imagem dela, importe a nova imagem e reinicie seu Deployment. Exemplo para flooding mantendo a tag `1.0.0`:
+
+```powershell
+docker build --build-arg APP_VERSION=1.0.0 -t aps-sd/flooding-api:1.0.0 ./src/Flooding.Api
+k3d image import aps-sd/flooding-api:1.0.0 -c aps
+kubectl rollout restart deployment/flooding-api -n aps
+kubectl rollout status deployment/flooding-api -n aps
+```
+
+## 15. Testar e observar as APIs no PowerShell
+
+Use `Invoke-RestMethod` para enviar JSON no PowerShell; ele evita que o shell remova as aspas do corpo quando `curl.exe` recebe JSON inline. Exemplo para criar uma leitura de flooding pelo Ingress:
+
+```powershell
+$body = @{ monitoringPointId = "PT-K8S"; sensorId = "SEN-K8S"; waterLevelCm = 120 } | ConvertTo-Json -Compress
+$reading = Invoke-RestMethod -Uri "http://127.0.0.1:8081/api/v1/flooding/water-level" -Method Post -ContentType "application/json" -Body $body
+$reading
+```
+
+A leitura deve aparecer no PostgreSQL do cluster. Consulte-a:
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8081/api/v1/flooding/water-level?monitoringPointId=PT-K8S"
+```
+
+As APIs retornam `X-Pod` (pod que respondeu) e `X-Versao` (versão da imagem). `Invoke-WebRequest` permite inspecionar esses cabeçalhos:
+
+```powershell
+$response = Invoke-WebRequest -Uri "http://127.0.0.1:8081/api/v1/flooding/water-level?monitoringPointId=PT-K8S"
+$response.StatusCode
+$response.Headers["X-Pod"]
+$response.Headers["X-Versao"]
+```
+
+Para conferir estado e distribuição, use `kubectl get nodes`, `kubectl get pods -n aps -o wide`, `kubectl get hpa -n aps` e `kubectl get pvc -n aps`. `Running` e `READY 1/1` indicam um pod pronto; `RESTARTS` maior que zero justifica olhar os logs.
+
+### Teste de funcionalidade versus teste de carga
+
+O repositório tem geradores de carga e de leituras sintéticas, mas não inclui um projeto separado de testes automatizados unitários/integração. O Swagger ou os exemplos `Invoke-RestMethod` exercitam rotas manualmente. `tools/load-generator/generator.py` envia leituras plausíveis para as três APIs; `carga/loadgen.py` mede latência, vazão e erros e grava arquivos em `resultados/`. Carga grava dados no banco e não substitui asserts de uma suíte de testes.
+
+## 16. Diagnóstico rápido
+
+| Sintoma | O que verificar |
+|---|---|
+| `kubectl` não conecta ao servidor | Abra o Docker Desktop; rode `k3d cluster list`, confirme o contexto com `kubectl config current-context` e selecione `kubectl config use-context k3d-aps`. Se o cluster consta ativo mas o endpoint `host.docker.internal` falha no Windows, veja o procedimento abaixo. |
+| Um pod fica `Pending` | Rode `kubectl describe pod NOME -n aps` e leia `Events` no final; pode faltar recurso ou armazenamento. |
+| Pod `CrashLoopBackOff` ou `Error` | Veja `kubectl logs NOME -n aps --previous` e `kubectl describe pod NOME -n aps`; confira Secret, banco, Redis e mensagens de inicialização. |
+| `ImagePullBackOff` | Confira imagem e tag (`docker images`), rode `k3d image import IMAGEM:TAG -c aps` e verifique se o manifest usa a mesma tag. |
+| `404` no Ingress | Confira o prefixo (`/api/v1/air-quality`, `/api/v1/flooding` ou `/api/v1/thermal-inversion`) e `kubectl get ingress -n aps`. O Swagger não é publicado no Ingress. |
+| HTTP `400` ao enviar JSON no PowerShell | Use `Invoke-RestMethod` como no exemplo e confira nomes/campos obrigatórios do DTO. |
+| API responde `503` ou não está pronta | Confira `/health/ready`, `kubectl get pods -n aps` e logs; readiness verifica PostgreSQL. |
+
+Para logs, use `kubectl logs deployment/flooding-api -n aps --all-pods=true --tail=100`. Para eventos do namespace: `kubectl get events -n aps --sort-by=.lastTimestamp`.
+
+### Windows: endpoint do kubectl em `host.docker.internal` não responde
+
+O servidor k3d expõe a API Kubernetes em uma porta local dinâmica. Se `kubectl get nodes` expirar, mas `k3d cluster list` indicar o cluster ativo, verifique o endpoint e a conectividade local:
+
+```powershell
+kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'
+Test-NetConnection 127.0.0.1 -Port PORTA
+```
+
+Substitua `PORTA` pela porta mostrada no endpoint. Se `TcpTestSucceeded` for `True`, aponte o contexto ao loopback, preservando o restante da configuração:
+
+```powershell
+kubectl config set-cluster k3d-aps --server=https://127.0.0.1:PORTA
+kubectl get nodes
+```
+
+Troque `PORTA` pela mesma porta encontrada; não copie literalmente a palavra. A porta pode mudar se o cluster for recriado. Esse ajuste muda o kubeconfig local do usuário, não os recursos do projeto.
