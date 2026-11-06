@@ -1,0 +1,598 @@
+{
+  "comando": "carga/loadgen.py 'http://127.0.0.1:8081/api/v1/air-quality/stations/{{escolha:EST-01|EST-02|EST-03|EST-04|EST-05|EST-06|EST-07|EST-08|EST-09|EST-10}}/latest' --degraus 1,2,4,8,16,32,64 --duracao-degrau 30 --aquecimento 5 --timeout 5 --top --top-intervalo 3 --saida resultados/base/20261105-2224/consulta-rep1",
+  "alvo": {
+    "metodo": "GET",
+    "url": "http://127.0.0.1:8081/api/v1/air-quality/stations/{{escolha:EST-01|EST-02|EST-03|EST-04|EST-05|EST-06|EST-07|EST-08|EST-09|EST-10}}/latest",
+    "corpo": null
+  },
+  "modo": "degraus",
+  "parametros": {
+    "trabalhadores": 8,
+    "duracao_s": 20,
+    "degraus": "1,2,4,8,16,32,64",
+    "duracao_degrau_s": 30.0,
+    "rampa_s": 0,
+    "aquecimento_s": 5.0,
+    "timeout_s": 5.0,
+    "semente": null
+  },
+  "inicio": "2026-11-05T22:30:39",
+  "fim": "2026-11-05T22:34:09",
+  "ambiente": {
+    "sistema": "Windows 11",
+    "cpu": "AMD Ryzen 9 5900X 12-Core Processor",
+    "nucleos_logicos": 24,
+    "ram_gb": 31.9,
+    "python": "3.13.14",
+    "maquina": "MateuszPC"
+  },
+  "cpu_gerador_pct_de_um_nucleo": 37.1,
+  "geral": {
+    "trabalhadores": null,
+    "janela_medida_s": 175.0,
+    "requisicoes": 223545,
+    "ok": 223545,
+    "erros": 0,
+    "taxa_erro_pct": 0.0,
+    "vazao_req_s": 1277.4,
+    "latencia_ms": {
+      "p50": 3.2,
+      "p95": 67.32,
+      "p99": 78.97,
+      "media": 14.18,
+      "max": 192.06
+    },
+    "latencia_ok_ms": {
+      "p50": 3.2,
+      "p95": 67.32,
+      "p99": 78.97
+    },
+    "por_pod": {
+      "air-quality-api-85ffb8cb47-zrg8n": 223545
+    },
+    "por_status": {
+      "200": 223545
+    },
+    "por_erro": {},
+    "por_versao": {
+      "1.1.0": 223545
+    },
+    "por_cache": {
+      "HIT": 223198,
+      "MISS": 347
+    }
+  },
+  "por_fase": [
+    {
+      "trabalhadores": 1,
+      "janela_medida_s": 25.0,
+      "requisicoes": 16747,
+      "ok": 16747,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 669.88,
+      "latencia_ms": {
+        "p50": 1.37,
+        "p95": 1.68,
+        "p99": 2.1,
+        "media": 1.47,
+        "max": 31.55
+      },
+      "latencia_ok_ms": {
+        "p50": 1.37,
+        "p95": 1.68,
+        "p99": 2.1
+      },
+      "por_pod": {
+        "air-quality-api-85ffb8cb47-zrg8n": 16747
+      },
+      "por_status": {
+        "200": 16747
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 16747
+      },
+      "por_cache": {
+        "HIT": 16727,
+        "MISS": 20
+      },
+      "lei_de_little": {
+        "latencia_media_medida_ms": 1.47,
+        "latencia_media_prevista_ms": 1.49
+      },
+      "cpu_top_m": {
+        "air-quality-api-85ffb8cb47-zrg8n": {
+          "media": 187,
+          "max": 187
+        },
+        "flooding-api-6d4f844bbc-lvngs": {
+          "media": 2,
+          "max": 2
+        },
+        "postgres-0": {
+          "media": 12,
+          "max": 12
+        },
+        "rabbitmq-0": {
+          "media": 149,
+          "max": 149
+        },
+        "redis-55d4876657-lh28r": {
+          "media": 5,
+          "max": 5
+        },
+        "thermal-inversion-api-5cc8cfbfc9-x9k7b": {
+          "media": 2,
+          "max": 2
+        },
+        "web-client-78787d6459-7bxqc": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-m2gwg": {
+          "media": 1,
+          "max": 1
+        }
+      },
+      "fase": 0,
+      "inicio": "2026-11-05T22:30:39"
+    },
+    {
+      "trabalhadores": 2,
+      "janela_medida_s": 25.0,
+      "requisicoes": 27016,
+      "ok": 27016,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 1080.64,
+      "latencia_ms": {
+        "p50": 1.49,
+        "p95": 1.96,
+        "p99": 12.02,
+        "media": 1.82,
+        "max": 44.68
+      },
+      "latencia_ok_ms": {
+        "p50": 1.49,
+        "p95": 1.96,
+        "p99": 12.02
+      },
+      "por_pod": {
+        "air-quality-api-85ffb8cb47-zrg8n": 27016
+      },
+      "por_status": {
+        "200": 27016
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 27016
+      },
+      "por_cache": {
+        "HIT": 26993,
+        "MISS": 23
+      },
+      "lei_de_little": {
+        "latencia_media_medida_ms": 1.82,
+        "latencia_media_prevista_ms": 1.85
+      },
+      "cpu_top_m": {
+        "air-quality-api-85ffb8cb47-zrg8n": {
+          "media": 478,
+          "max": 478
+        },
+        "flooding-api-6d4f844bbc-lvngs": {
+          "media": 3,
+          "max": 3
+        },
+        "postgres-0": {
+          "media": 10,
+          "max": 10
+        },
+        "rabbitmq-0": {
+          "media": 4,
+          "max": 4
+        },
+        "redis-55d4876657-lh28r": {
+          "media": 59,
+          "max": 59
+        },
+        "thermal-inversion-api-5cc8cfbfc9-x9k7b": {
+          "media": 2,
+          "max": 2
+        },
+        "web-client-78787d6459-7bxqc": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-m2gwg": {
+          "media": 1,
+          "max": 1
+        }
+      },
+      "fase": 1,
+      "inicio": "2026-11-05T22:31:09"
+    },
+    {
+      "trabalhadores": 4,
+      "janela_medida_s": 25.0,
+      "requisicoes": 28432,
+      "ok": 28432,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 1137.28,
+      "latencia_ms": {
+        "p50": 1.65,
+        "p95": 9.1,
+        "p99": 48.3,
+        "media": 3.49,
+        "max": 60.84
+      },
+      "latencia_ok_ms": {
+        "p50": 1.65,
+        "p95": 9.1,
+        "p99": 48.3
+      },
+      "por_pod": {
+        "air-quality-api-85ffb8cb47-zrg8n": 28432
+      },
+      "por_status": {
+        "200": 28432
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 28432
+      },
+      "por_cache": {
+        "HIT": 28406,
+        "MISS": 26
+      },
+      "lei_de_little": {
+        "latencia_media_medida_ms": 3.49,
+        "latencia_media_prevista_ms": 3.52
+      },
+      "cpu_top_m": {
+        "air-quality-api-85ffb8cb47-zrg8n": {
+          "media": 500,
+          "max": 500
+        },
+        "flooding-api-6d4f844bbc-lvngs": {
+          "media": 2,
+          "max": 2
+        },
+        "postgres-0": {
+          "media": 9,
+          "max": 9
+        },
+        "rabbitmq-0": {
+          "media": 4,
+          "max": 4
+        },
+        "redis-55d4876657-lh28r": {
+          "media": 77,
+          "max": 77
+        },
+        "thermal-inversion-api-5cc8cfbfc9-x9k7b": {
+          "media": 2,
+          "max": 2
+        },
+        "web-client-78787d6459-7bxqc": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-m2gwg": {
+          "media": 1,
+          "max": 1
+        }
+      },
+      "fase": 2,
+      "inicio": "2026-11-05T22:31:39"
+    },
+    {
+      "trabalhadores": 8,
+      "janela_medida_s": 25.0,
+      "requisicoes": 31638,
+      "ok": 31638,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 1265.52,
+      "latencia_ms": {
+        "p50": 2.02,
+        "p95": 61.88,
+        "p99": 66.57,
+        "media": 6.29,
+        "max": 72.61
+      },
+      "latencia_ok_ms": {
+        "p50": 2.02,
+        "p95": 61.88,
+        "p99": 66.57
+      },
+      "por_pod": {
+        "air-quality-api-85ffb8cb47-zrg8n": 31638
+      },
+      "por_status": {
+        "200": 31638
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 31638
+      },
+      "por_cache": {
+        "HIT": 31602,
+        "MISS": 36
+      },
+      "lei_de_little": {
+        "latencia_media_medida_ms": 6.29,
+        "latencia_media_prevista_ms": 6.32
+      },
+      "cpu_top_m": {
+        "air-quality-api-85ffb8cb47-zrg8n": {
+          "media": 498,
+          "max": 498
+        },
+        "flooding-api-6d4f844bbc-lvngs": {
+          "media": 2,
+          "max": 2
+        },
+        "postgres-0": {
+          "media": 11,
+          "max": 11
+        },
+        "rabbitmq-0": {
+          "media": 100,
+          "max": 100
+        },
+        "redis-55d4876657-lh28r": {
+          "media": 88,
+          "max": 88
+        },
+        "thermal-inversion-api-5cc8cfbfc9-x9k7b": {
+          "media": 2,
+          "max": 2
+        },
+        "web-client-78787d6459-7bxqc": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-m2gwg": {
+          "media": 1,
+          "max": 1
+        }
+      },
+      "fase": 3,
+      "inicio": "2026-11-05T22:32:09"
+    },
+    {
+      "trabalhadores": 16,
+      "janela_medida_s": 25.0,
+      "requisicoes": 35118,
+      "ok": 35118,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 1404.72,
+      "latencia_ms": {
+        "p50": 3.62,
+        "p95": 63.75,
+        "p99": 68.09,
+        "media": 11.36,
+        "max": 97.4
+      },
+      "latencia_ok_ms": {
+        "p50": 3.62,
+        "p95": 63.75,
+        "p99": 68.09
+      },
+      "por_pod": {
+        "air-quality-api-85ffb8cb47-zrg8n": 35118
+      },
+      "por_status": {
+        "200": 35118
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 35118
+      },
+      "por_cache": {
+        "HIT": 35078,
+        "MISS": 40
+      },
+      "lei_de_little": {
+        "latencia_media_medida_ms": 11.36,
+        "latencia_media_prevista_ms": 11.39
+      },
+      "cpu_top_m": {
+        "air-quality-api-85ffb8cb47-zrg8n": {
+          "media": 497,
+          "max": 497
+        },
+        "flooding-api-6d4f844bbc-lvngs": {
+          "media": 3,
+          "max": 3
+        },
+        "postgres-0": {
+          "media": 13,
+          "max": 13
+        },
+        "rabbitmq-0": {
+          "media": 4,
+          "max": 4
+        },
+        "redis-55d4876657-lh28r": {
+          "media": 94,
+          "max": 94
+        },
+        "thermal-inversion-api-5cc8cfbfc9-x9k7b": {
+          "media": 3,
+          "max": 3
+        },
+        "web-client-78787d6459-7bxqc": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-m2gwg": {
+          "media": 1,
+          "max": 1
+        }
+      },
+      "fase": 4,
+      "inicio": "2026-11-05T22:32:39"
+    },
+    {
+      "trabalhadores": 32,
+      "janela_medida_s": 25.0,
+      "requisicoes": 38781,
+      "ok": 38781,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 1551.24,
+      "latencia_ms": {
+        "p50": 8.43,
+        "p95": 64.72,
+        "p99": 69.52,
+        "media": 20.6,
+        "max": 99.55
+      },
+      "latencia_ok_ms": {
+        "p50": 8.43,
+        "p95": 64.72,
+        "p99": 69.52
+      },
+      "por_pod": {
+        "air-quality-api-85ffb8cb47-zrg8n": 38781
+      },
+      "por_status": {
+        "200": 38781
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 38781
+      },
+      "por_cache": {
+        "HIT": 38717,
+        "MISS": 64
+      },
+      "lei_de_little": {
+        "latencia_media_medida_ms": 20.6,
+        "latencia_media_prevista_ms": 20.63
+      },
+      "cpu_top_m": {
+        "air-quality-api-85ffb8cb47-zrg8n": {
+          "media": 498,
+          "max": 498
+        },
+        "flooding-api-6d4f844bbc-lvngs": {
+          "media": 3,
+          "max": 3
+        },
+        "postgres-0": {
+          "media": 9,
+          "max": 9
+        },
+        "rabbitmq-0": {
+          "media": 88,
+          "max": 88
+        },
+        "redis-55d4876657-lh28r": {
+          "media": 98,
+          "max": 98
+        },
+        "thermal-inversion-api-5cc8cfbfc9-x9k7b": {
+          "media": 3,
+          "max": 3
+        },
+        "web-client-78787d6459-7bxqc": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-m2gwg": {
+          "media": 1,
+          "max": 1
+        }
+      },
+      "fase": 5,
+      "inicio": "2026-11-05T22:33:09"
+    },
+    {
+      "trabalhadores": 64,
+      "janela_medida_s": 25.0,
+      "requisicoes": 45813,
+      "ok": 45813,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 1832.52,
+      "latencia_ms": {
+        "p50": 22.8,
+        "p95": 78.84,
+        "p99": 89.08,
+        "media": 34.9,
+        "max": 192.06
+      },
+      "latencia_ok_ms": {
+        "p50": 22.8,
+        "p95": 78.84,
+        "p99": 89.08
+      },
+      "por_pod": {
+        "air-quality-api-85ffb8cb47-zrg8n": 45813
+      },
+      "por_status": {
+        "200": 45813
+      },
+      "por_erro": {},
+      "por_versao": {
+        "1.1.0": 45813
+      },
+      "por_cache": {
+        "HIT": 45675,
+        "MISS": 138
+      },
+      "lei_de_little": {
+        "latencia_media_medida_ms": 34.9,
+        "latencia_media_prevista_ms": 34.92
+      },
+      "cpu_top_m": {
+        "air-quality-api-85ffb8cb47-zrg8n": {
+          "media": 499,
+          "max": 499
+        },
+        "flooding-api-6d4f844bbc-lvngs": {
+          "media": 3,
+          "max": 3
+        },
+        "postgres-0": {
+          "media": 10,
+          "max": 10
+        },
+        "rabbitmq-0": {
+          "media": 4,
+          "max": 4
+        },
+        "redis-55d4876657-lh28r": {
+          "media": 93,
+          "max": 93
+        },
+        "thermal-inversion-api-5cc8cfbfc9-x9k7b": {
+          "media": 2,
+          "max": 2
+        },
+        "web-client-78787d6459-7bxqc": {
+          "media": 1,
+          "max": 1
+        },
+        "web-client-78787d6459-m2gwg": {
+          "media": 1,
+          "max": 1
+        }
+      },
+      "fase": 6,
+      "inicio": "2026-11-05T22:33:39"
+    }
+  ],
+  "arquivos": {
+    "requisicoes": "resultados/base/20261105-2224/consulta-rep1-requisicoes.csv",
+    "segundos": "resultados/base/20261105-2224/consulta-rep1-segundos.csv",
+    "top": "resultados/base/20261105-2224/consulta-rep1-top.csv",
+    "resumo": "resultados/base/20261105-2224/consulta-rep1-resumo.json"
+  }
+}

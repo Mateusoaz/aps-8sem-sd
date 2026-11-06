@@ -1,0 +1,1 @@
+mensagens na fila ao fim da carga: 68832 | segundos até esvaziar: 139

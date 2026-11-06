@@ -49,8 +49,8 @@ Requisitos: **Docker** em execução, **kubectl** e **k3d** v5+ (Windows: `winge
 git clone <repositório>
 cd aps-8sem-sd
 cp .env.example .env                 # ajuste as senhas
-./scripts/k8s-up.sh                  # cluster + imagens + Secret + manifestos, e espera tudo ficar pronto
-./scripts/k8s-verificar.sh           # confere tudo pelo gateway
+bash scripts/k8s-up.sh               # cluster + imagens + Secret + manifestos, e espera tudo ficar pronto
+bash scripts/k8s-verificar.sh        # confere tudo pelo gateway
 ```
 
 Depois abra **http://localhost:8081/** (cliente web). Swagger de cada API pelo gateway: `http://localhost:8081/api/v1/air-quality/swagger` (troque pelo prefixo de `flooding` ou `thermal-inversion`).
@@ -59,7 +59,7 @@ O `k8s-up.sh` faz, em ordem, o mesmo que estes comandos (o roteiro de verificaç
 
 ```bash
 k3d cluster create aps --agents 2 -p "8081:80@loadbalancer"
-./scripts/k8s-build.sh 1.1.0         # docker build das 4 imagens + k3d image import
+bash scripts/k8s-build.sh 1.1.0       # docker build das 4 imagens + k3d image import
 kubectl apply -f k8s/00-namespace.yaml
 kubectl create secret generic aps-credenciais -n aps --from-env-file=.env
 kubectl apply -f k8s/
@@ -140,7 +140,7 @@ kubectl port-forward -n aps svc/rabbitmq 15672                 # painel da fila:
 Rolling update e rollback:
 
 ```bash
-./scripts/k8s-build.sh 1.2.0
+bash scripts/k8s-build.sh 1.2.0
 kubectl set image deployment/air-quality-api -n aps api=aps-sd/air-quality-api:1.2.0
 kubectl rollout status deployment/air-quality-api -n aps
 kubectl rollout undo deployment/air-quality-api -n aps

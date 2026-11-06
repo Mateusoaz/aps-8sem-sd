@@ -20,7 +20,7 @@ kubectl config use-context "k3d-$CLUSTER" >/dev/null
 kubectl wait --for=condition=Ready nodes --all --timeout=120s
 
 # 2. Imagens com tag fixa, importadas nos nós
-./scripts/k8s-build.sh 1.1.0
+bash scripts/k8s-build.sh 1.1.0
 
 # 3. Namespace e Secret. O Secret vem do .env (fora do Git); o repositório só leva o modelo.
 [ -f .env ] || { cp .env.example .env; echo ">> .env criado a partir do .env.example"; }
@@ -49,4 +49,4 @@ kubectl get all,ingress,pvc,hpa -n "$NS" -o wide
 echo
 echo "Pronto. Cliente web: http://localhost:8081/"
 echo "Swagger: http://localhost:8081/api/v1/air-quality/swagger  (flooding, thermal-inversion)"
-echo "Verificação: ./scripts/k8s-verificar.sh"
+echo "Verificação: bash scripts/k8s-verificar.sh"

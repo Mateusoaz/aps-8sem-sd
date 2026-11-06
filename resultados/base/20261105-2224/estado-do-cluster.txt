@@ -1,0 +1,22 @@
+# 05/11/2026 22:24:27
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                               SELECTOR
+deployment.apps/air-quality-api         1/1     1            1           37m   api          aps-sd/air-quality-api:1.1.0         app=air-quality-api
+deployment.apps/flooding-api            1/1     1            1           37m   api          aps-sd/flooding-api:1.1.0            app=flooding-api
+deployment.apps/redis                   1/1     1            1           37m   redis        redis:7.4-alpine                     app=redis
+deployment.apps/thermal-inversion-api   1/1     1            1           37m   api          aps-sd/thermal-inversion-api:1.1.0   app=thermal-inversion-api
+deployment.apps/web-client              2/2     2            2           37m   nginx        aps-sd/web-client:1.1.0              app=web-client
+
+NAME                                     READY   STATUS    RESTARTS   AGE   IP          NODE               NOMINATED NODE   READINESS GATES
+air-quality-api-85ffb8cb47-zrg8n         1/1     Running   0          37m   10.42.2.6   k3d-aps-server-0   <none>           <none>
+flooding-api-6d4f844bbc-lvngs            1/1     Running   0          37m   10.42.0.6   k3d-aps-agent-0    <none>           <none>
+postgres-0                               1/1     Running   0          37m   10.42.2.8   k3d-aps-server-0   <none>           <none>
+rabbitmq-0                               1/1     Running   0          37m   10.42.0.8   k3d-aps-agent-0    <none>           <none>
+redis-55d4876657-lh28r                   1/1     Running   0          37m   10.42.1.5   k3d-aps-agent-1    <none>           <none>
+thermal-inversion-api-5cc8cfbfc9-x9k7b   1/1     Running   0          37m   10.42.2.7   k3d-aps-server-0   <none>           <none>
+web-client-78787d6459-7bxqc              1/1     Running   0          37m   10.42.0.7   k3d-aps-agent-0    <none>           <none>
+web-client-78787d6459-m2gwg              1/1     Running   0          37m   10.42.1.9   k3d-aps-agent-1    <none>           <none>
+
+NAME               STATUS   ROLES           AGE   VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE           KERNEL-VERSION                      CONTAINER-RUNTIME
+k3d-aps-agent-0    Ready    <none>          38m   v1.35.5+k3s1   172.19.0.5    <none>        K3s v1.35.5+k3s1   6.18.33.2-microsoft-standard-WSL2   containerd://2.2.3-k3s1
+k3d-aps-agent-1    Ready    <none>          38m   v1.35.5+k3s1   172.19.0.4    <none>        K3s v1.35.5+k3s1   6.18.33.2-microsoft-standard-WSL2   containerd://2.2.3-k3s1
+k3d-aps-server-0   Ready    control-plane   38m   v1.35.5+k3s1   172.19.0.3    <none>        K3s v1.35.5+k3s1   6.18.33.2-microsoft-standard-WSL2   containerd://2.2.3-k3s1
