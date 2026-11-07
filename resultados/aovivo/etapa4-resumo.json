@@ -1,0 +1,33 @@
+{
+  "comando": "carga/loadgen.py http://localhost:8081/air-quality/api/v1/air-quality/particulate --payload ar -c 8 -d 20 --prefixo aovivo/etapa4",
+  "inicio": "2026-11-06T21:09:41",
+  "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate",
+  "metodo": "POST",
+  "modo": "constante",
+  "duracao_s": 20.0,
+  "aquecimento_descartado_s": 5,
+  "timeout_s": 10,
+  "requisicoes_no_aquecimento": 1631,
+  "geral": {
+    "requisicoes": 4785,
+    "sucessos": 4785,
+    "erros": 0,
+    "taxa_erro_pct": 0.0,
+    "vazao_req_s": 319.0,
+    "latencia_media_ms": 25.04,
+    "p50_ms": 8.4,
+    "p95_ms": 87.22,
+    "p99_ms": 94.23,
+    "latencia_max_ms": 195.65,
+    "little_trabalhadores": 7.99,
+    "por_pod": {
+      "air-quality-api-6b65c57b8d-5rwbg": 2393,
+      "air-quality-api-6b65c57b8d-kxrmq": 2392
+    },
+    "por_status": {
+      "201": 4785
+    },
+    "por_erro": {}
+  },
+  "degraus": []
+}

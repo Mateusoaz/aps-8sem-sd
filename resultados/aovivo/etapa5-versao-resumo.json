@@ -1,0 +1,40 @@
+{
+  "comando": "carga/loadgen.py http://localhost:8081/air-quality/api/v1/air-quality/particulate --payload ar -c 16 -d 80 --prefixo aovivo/etapa5-versao",
+  "inicio": "2026-11-06T21:14:06",
+  "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate",
+  "metodo": "POST",
+  "modo": "constante",
+  "duracao_s": 80.0,
+  "aquecimento_descartado_s": 5,
+  "timeout_s": 10,
+  "requisicoes_no_aquecimento": 1794,
+  "geral": {
+    "requisicoes": 30805,
+    "sucessos": 30805,
+    "erros": 0,
+    "taxa_erro_pct": 0.0,
+    "vazao_req_s": 410.73,
+    "latencia_media_ms": 38.92,
+    "p50_ms": 23.44,
+    "p95_ms": 88.45,
+    "p99_ms": 101.0,
+    "latencia_max_ms": 1319.45,
+    "little_trabalhadores": 15.99,
+    "por_pod": {
+      "air-quality-api-6b65c57b8d-ckgdf": 3922,
+      "air-quality-api-6b65c57b8d-clxdv": 4295,
+      "air-quality-api-6b65c57b8d-fht6l": 2607,
+      "air-quality-api-6b65c57b8d-mwdcl": 3480,
+      "air-quality-api-6b65c57b8d-n9kfl": 4755,
+      "air-quality-api-6b65c57b8d-sxjd6": 3034,
+      "air-quality-api-6d59f5476c-2pl4s": 2947,
+      "air-quality-api-6d59f5476c-n2wm8": 2976,
+      "air-quality-api-6d59f5476c-tbgtc": 2789
+    },
+    "por_status": {
+      "201": 30805
+    },
+    "por_erro": {}
+  },
+  "degraus": []
+}
