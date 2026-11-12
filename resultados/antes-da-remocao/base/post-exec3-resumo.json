@@ -1,0 +1,241 @@
+{
+  "comando": "carga/loadgen.py http://localhost:8081/air-quality/api/v1/air-quality/particulate --payload ar --degraus 1,2,4,8,16,32,64,128,256 -d 30 --aquecimento 5 --prefixo base/post-exec3",
+  "inicio": "2026-10-31T20:01:13",
+  "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate",
+  "metodo": "POST",
+  "modo": "degraus",
+  "duracao_s": 270.0,
+  "aquecimento_descartado_s": 5.0,
+  "timeout_s": 10,
+  "requisicoes_no_aquecimento": 42256,
+  "geral": {
+    "requisicoes": 280517,
+    "sucessos": 82499,
+    "erros": 198018,
+    "taxa_erro_pct": 70.59,
+    "vazao_req_s": 366.66,
+    "latencia_media_ms": 45.48,
+    "p50_ms": 36.43,
+    "p95_ms": 107.1,
+    "p99_ms": 166.39,
+    "latencia_max_ms": 416.24,
+    "little_trabalhadores": 56.7,
+    "por_pod": {
+      "(sem X-Pod)": 198018,
+      "air-quality-api-68cd867567-p89mz": 82499
+    },
+    "por_status": {
+      "201": 82499,
+      "503": 198018
+    },
+    "por_erro": {
+      "http_503": 198018
+    }
+  },
+  "degraus": [
+    {
+      "trabalhadores": 1,
+      "cpu_gerador_pct": 36.1,
+      "requisicoes": 6141,
+      "sucessos": 6141,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 245.64,
+      "latencia_media_ms": 4.04,
+      "p50_ms": 3.29,
+      "p95_ms": 8.1,
+      "p99_ms": 26.35,
+      "latencia_max_ms": 39.86,
+      "little_trabalhadores": 0.99,
+      "por_pod": {
+        "air-quality-api-68cd867567-p89mz": 6141
+      },
+      "por_status": {
+        "201": 6141
+      },
+      "por_erro": {}
+    },
+    {
+      "trabalhadores": 2,
+      "cpu_gerador_pct": 38.7,
+      "requisicoes": 6143,
+      "sucessos": 6143,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 245.72,
+      "latencia_media_ms": 8.12,
+      "p50_ms": 3.52,
+      "p95_ms": 42.72,
+      "p99_ms": 60.26,
+      "latencia_max_ms": 318.35,
+      "little_trabalhadores": 2.0,
+      "por_pod": {
+        "air-quality-api-68cd867567-p89mz": 6143
+      },
+      "por_status": {
+        "201": 6143
+      },
+      "por_erro": {}
+    },
+    {
+      "trabalhadores": 4,
+      "cpu_gerador_pct": 48.6,
+      "requisicoes": 6015,
+      "sucessos": 6015,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 240.6,
+      "latencia_media_ms": 16.53,
+      "p50_ms": 4.33,
+      "p95_ms": 80.77,
+      "p99_ms": 84.03,
+      "latencia_max_ms": 309.16,
+      "little_trabalhadores": 3.98,
+      "por_pod": {
+        "air-quality-api-68cd867567-p89mz": 6015
+      },
+      "por_status": {
+        "201": 6015
+      },
+      "por_erro": {}
+    },
+    {
+      "trabalhadores": 8,
+      "cpu_gerador_pct": 48.5,
+      "requisicoes": 10045,
+      "sucessos": 10045,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 401.8,
+      "latencia_media_ms": 19.92,
+      "p50_ms": 5.96,
+      "p95_ms": 79.02,
+      "p99_ms": 85.07,
+      "latencia_max_ms": 89.94,
+      "little_trabalhadores": 8.0,
+      "por_pod": {
+        "air-quality-api-68cd867567-p89mz": 10045
+      },
+      "por_status": {
+        "201": 10045
+      },
+      "por_erro": {}
+    },
+    {
+      "trabalhadores": 16,
+      "cpu_gerador_pct": 50.7,
+      "requisicoes": 12859,
+      "sucessos": 12859,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 514.36,
+      "latencia_media_ms": 31.08,
+      "p50_ms": 11.18,
+      "p95_ms": 86.29,
+      "p99_ms": 91.03,
+      "latencia_max_ms": 99.02,
+      "little_trabalhadores": 15.99,
+      "por_pod": {
+        "air-quality-api-68cd867567-p89mz": 12859
+      },
+      "por_status": {
+        "201": 12859
+      },
+      "por_erro": {}
+    },
+    {
+      "trabalhadores": 32,
+      "cpu_gerador_pct": 48.6,
+      "requisicoes": 14118,
+      "sucessos": 14118,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 564.72,
+      "latencia_media_ms": 56.64,
+      "p50_ms": 81.07,
+      "p95_ms": 99.16,
+      "p99_ms": 104.13,
+      "latencia_max_ms": 172.73,
+      "little_trabalhadores": 31.99,
+      "por_pod": {
+        "air-quality-api-68cd867567-p89mz": 14118
+      },
+      "por_status": {
+        "201": 14118
+      },
+      "por_erro": {}
+    },
+    {
+      "trabalhadores": 64,
+      "cpu_gerador_pct": 54.5,
+      "requisicoes": 23077,
+      "sucessos": 23077,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "vazao_req_s": 923.08,
+      "latencia_media_ms": 69.4,
+      "p50_ms": 80.96,
+      "p95_ms": 103.22,
+      "p99_ms": 114.65,
+      "latencia_max_ms": 193.49,
+      "little_trabalhadores": 64.07,
+      "por_pod": {
+        "air-quality-api-68cd867567-p89mz": 23077
+      },
+      "por_status": {
+        "201": 23077
+      },
+      "por_erro": {}
+    },
+    {
+      "trabalhadores": 128,
+      "cpu_gerador_pct": 102.0,
+      "requisicoes": 87439,
+      "sucessos": 4101,
+      "erros": 83338,
+      "taxa_erro_pct": 95.31,
+      "vazao_req_s": 164.04,
+      "latencia_media_ms": 36.46,
+      "p50_ms": 28.88,
+      "p95_ms": 92.13,
+      "p99_ms": 191.87,
+      "latencia_max_ms": 281.57,
+      "little_trabalhadores": 127.52,
+      "por_pod": {
+        "(sem X-Pod)": 83338,
+        "air-quality-api-68cd867567-p89mz": 4101
+      },
+      "por_status": {
+        "201": 4101,
+        "503": 83338
+      },
+      "por_erro": {
+        "http_503": 83338
+      }
+    },
+    {
+      "trabalhadores": 256,
+      "cpu_gerador_pct": 143.3,
+      "requisicoes": 114680,
+      "sucessos": 0,
+      "erros": 114680,
+      "taxa_erro_pct": 100.0,
+      "vazao_req_s": 0.0,
+      "latencia_media_ms": 55.77,
+      "p50_ms": 49.69,
+      "p95_ms": 120.44,
+      "p99_ms": 160.43,
+      "latencia_max_ms": 416.24,
+      "little_trabalhadores": 255.81,
+      "por_pod": {
+        "(sem X-Pod)": 114680
+      },
+      "por_status": {
+        "503": 114680
+      },
+      "por_erro": {
+        "http_503": 114680
+      }
+    }
+  ]
+}

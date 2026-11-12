@@ -8,9 +8,8 @@ Uso (na raiz do repositório):
 Cada execução usa PROCESSOS cópias do loadgen.py ao mesmo tempo. Um processo Python usa
 pouco mais de um núcleo, e a Etapa 4 mostrou que isso limitaria a medição com 4 ou 8 réplicas.
 As cópias são juntadas em um único -requisicoes.csv, -serie.csv e -resumo.json.
-Junto com a carga, a cada 5 s são anotados pods, nós, fila e CPU da máquina (-recursos.jsonl).
+Junto com a carga, a cada 5 s são anotados pods, nós e CPU da máquina (-recursos.jsonl).
 """
-import base64
 import collections
 import csv
 import datetime
@@ -20,7 +19,6 @@ import subprocess
 import sys
 import threading
 import time
-import urllib.request
 
 import psutil
 
@@ -28,9 +26,9 @@ PASTA = "resultados/etapa5"
 API = "air-quality-api"
 POST_URL = "http://localhost:8081/air-quality/api/v1/air-quality/particulate"
 GET_URL = "http://localhost:8081/air-quality/api/v1/air-quality/areas/CENTRO/average?hours=24"
-FILA = "air-quality.particulate-readings"
 PROCESSOS = 4
-OUTROS = ["flooding-api", "thermal-inversion-api", "web-client"]
+OUTROS = ["flooding-api", "thermal-inversion-api"]
+NOS = ("k3d-aps-server-0", "k3d-aps-agent-0", "k3d-aps-agent-1")
 
 
 # ---------------------------------------------------------------- comandos do cluster
@@ -59,43 +57,14 @@ def pods_api():
     return saida
 
 
-class Fila:
-    """Lê o tamanho da fila pela API do painel do RabbitMQ, mais leve que rodar rabbitmqctl."""
-
-    def __init__(self):
-        segredo = json.loads(k("get", "secret", "banco-credenciais", "-n", "aps", "-o", "json"))["data"]
-        decodifica = lambda c: base64.b64decode(segredo[c]).decode()
-        self.auth = base64.b64encode(f"{decodifica('RABBITMQ_USER')}:{decodifica('RABBITMQ_PASSWORD')}".encode()).decode()
-        self.pf = None
-
-    def tamanho(self):
-        for _ in range(2):
-            try:
-                pedido = urllib.request.Request(f"http://127.0.0.1:15672/api/queues/%2F/{FILA}",
-                                                headers={"Authorization": f"Basic {self.auth}"})
-                dados = json.load(urllib.request.urlopen(pedido, timeout=3))
-                return dados.get("messages", 0)
-            except Exception:
-                if self.pf is None or self.pf.poll() is not None:
-                    self.pf = subprocess.Popen(["kubectl", "port-forward", "-n", "aps", "pod/rabbitmq-0", "15672"],
-                                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                time.sleep(2)
-        return None
-
-    def fecha(self):
-        if self.pf:
-            self.pf.terminate()
-
-
-def espera_sistema(fila, pausa=20):
-    """Toda execução começa com a fila vazia e todos os pods prontos."""
+def espera_sistema(pausa=20):
+    """Toda execução começa com todos os pods prontos."""
     while True:
         pendentes = [l for l in k("get", "pods", "-n", "aps", "--no-headers").splitlines()
                      if " 1/1 " not in l or "Running" not in l]
-        tamanho = fila.tamanho()
-        if not pendentes and tamanho == 0:
+        if not pendentes:
             break
-        log(f"aguardando: fila={tamanho} pods fora de 1/1={len(pendentes)}")
+        log(f"aguardando: pods fora de 1/1={len(pendentes)}")
         time.sleep(10)
     time.sleep(pausa)
 
@@ -109,14 +78,22 @@ def sem_hpa():
     k("delete", "hpa", API, "-n", "aps", "--ignore-not-found")
 
 
+def reespalha(deploys):
+    """Recria os pods para o scheduler espalhá-los de novo pelos 3 nós."""
+    for d in deploys:
+        k("rollout", "restart", f"deployment/{d}", "-n", "aps")
+    for d in deploys:
+        k("rollout", "status", f"deployment/{d}", "-n", "aps", "--timeout=300s")
+
+
 # ---------------------------------------------------------------- medição
 
 class Monitor(threading.Thread):
     """Anota o estado do sistema a cada 5 s e os pods da API a cada segundo."""
 
-    def __init__(self, nome, fila):
+    def __init__(self, nome):
         super().__init__(daemon=True)
-        self.nome, self.fila = nome, fila
+        self.nome = nome
         self.fim = threading.Event()
         self.pods = []
         self.vigia = threading.Thread(target=self.vigia_pods, daemon=True)
@@ -136,7 +113,7 @@ class Monitor(threading.Thread):
             while not self.fim.wait(5):
                 f.write(json.dumps({
                     "epoch": time.time(), "cpu_maquina_pct": psutil.cpu_percent(None),
-                    "memoria_maquina_pct": psutil.virtual_memory().percent, "fila": self.fila.tamanho(),
+                    "memoria_maquina_pct": psutil.virtual_memory().percent,
                     "top_pods": k("top", "pod", "-n", "aps", "--no-headers", check=False, timeout=30),
                     "top_nos": k("top", "node", "--no-headers", check=False, timeout=30),
                     "hpa": k("get", "hpa", "-n", "aps", "--no-headers", check=False, timeout=30),
@@ -217,13 +194,15 @@ def junta(nome, inicio, duracao, aquecimento, eventos, parametros):
     return resumo
 
 
-def carga(nome, fila, trabalhadores, duracao, aquecimento=10, rampa=None, url=POST_URL, acoes=(), extra=None):
+def carga(nome, trabalhadores, duracao, aquecimento=10, rampa=None, url=POST_URL, acoes=(), extra=None):
     """Roda uma execução: gerador, monitor e as ações marcadas para cada instante."""
     if os.path.exists(f"{PASTA}/{nome}-resumo.json"):
         log(f"{nome}: já feito, pulando")
         return json.load(open(f"{PASTA}/{nome}-resumo.json", encoding="utf-8"))
     log(f"{nome}: início ({trabalhadores} trabalhadores, {duracao} s)")
-    monitor = Monitor(nome, fila)
+    with open(f"{PASTA}/{nome}-antes.txt", "w", encoding="utf-8") as f:
+        f.write(k("get", "pods", "-n", "aps", "-o", "wide"))
+    monitor = Monitor(nome)
     monitor.start()
     processos, por_processo = [], [trabalhadores // PROCESSOS + (i < trabalhadores % PROCESSOS) for i in range(PROCESSOS)]
     pasta_relativa = os.path.relpath(PASTA, "resultados")
@@ -257,20 +236,6 @@ def carga(nome, fila, trabalhadores, duracao, aquecimento=10, rampa=None, url=PO
 
 # ---------------------------------------------------------------- experimentos
 
-def e51(fila):
-    """Escala manual: mesma carga com 1, 2, 4 e 8 réplicas."""
-    sem_hpa()
-    for d in OUTROS:
-        replicas(1, d)
-    for n in (1, 2, 4, 8):
-        for rep in (1, 2, 3):
-            if os.path.exists(f"{PASTA}/51-r{n}-exec{rep}-resumo.json"):
-                continue
-            replicas(n)
-            espera_sistema(fila)
-            carga(f"51-r{n}-exec{rep}", fila, 64, 60, extra={"replicas": n})
-
-
 def aquece(url=POST_URL):
     """Carga curta, descartada: o pod recém-criado ainda está compilando o código."""
     comando = [sys.executable, "carga/loadgen.py", url, "-c", "8", "-d", "20", "--aquecimento", "1", "--prefixo", "aquecimento/descartar"]
@@ -279,8 +244,8 @@ def aquece(url=POST_URL):
     subprocess.run(comando, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def serie_escala(fila, prefixo, url):
-    """Repete a escala manual: a mesma carga com 1, 2, 4 e 8 réplicas, 3 vezes cada."""
+def serie_escala(prefixo, url):
+    """Escala manual: a mesma carga com 1, 2, 4 e 8 réplicas, 3 vezes cada."""
     sem_hpa()
     for d in OUTROS:
         replicas(1, d)
@@ -292,35 +257,32 @@ def serie_escala(fila, prefixo, url):
             replicas(n)
             if rep == 1:
                 aquece(url)
-            espera_sistema(fila)
-            carga(nome, fila, 64, 60, url=url, extra={"replicas": n, "pool_conexoes": 8})
+            espera_sistema()
+            carga(nome, 64, 60, url=url, extra={"replicas": n, "pool_conexoes": 8})
 
 
-def e51b(fila):
-    """POST depois de limitar o pool a 8 conexões por pod."""
-    serie_escala(fila, "51b", POST_URL)
+def e51():
+    """Escala manual da ingestão (POST)."""
+    serie_escala("51", POST_URL)
 
 
-def e51g(fila):
-    """GET com cache: quase não usa o banco, então mostra o efeito da CPU do pod."""
-    serie_escala(fila, "51g", GET_URL)
+def e51g():
+    """Escala manual da consulta agregada (GET), calculada no banco a cada chamada."""
+    serie_escala("51g", GET_URL)
 
 
-def e52b(fila):
-    """HPA de novo, com o pool limitado."""
-    sem_hpa()
-    e52(fila, "52b-hpa")
-
-
-def e52(fila, nome="52-hpa"):
+def e52(nome="52-hpa"):
     """HPA: rampa de 1 a 64 trabalhadores e observação da redução."""
     if os.path.exists(f"{PASTA}/{nome}-resumo.json"):
         return
+    sem_hpa()
+    for d in OUTROS:
+        replicas(2, d)
     replicas(2)
-    espera_sistema(fila)
+    espera_sistema()
     k("apply", "-f", "k8s/40-hpa.yaml")
     time.sleep(90)  # o metrics-server precisa de uma medida limpa
-    carga(nome, fila, 64, 300, aquecimento=0, rampa=120, extra={"replicas_inicio": 2})
+    carga(nome, 64, 300, aquecimento=0, rampa=120, extra={"replicas_inicio": 2})
     # A carga acabou: acompanha a redução por 7 minutos.
     log(f"{nome}: observando a redução")
     with open(f"{PASTA}/{nome}-reducao.jsonl", "w", encoding="utf-8") as f:
@@ -328,61 +290,67 @@ def e52(fila, nome="52-hpa"):
             pods = pods_api()
             f.write(json.dumps({"epoch": time.time(), "hora": f"{datetime.datetime.now():%H:%M:%S}",
                                 "replicas": len(pods), "prontos": sum(p["pronto"] for p in pods),
-                                "fila": fila.tamanho(),
+                                "nos": dict(collections.Counter(p["no"] for p in pods)),
                                 "hpa": k("get", "hpa", "-n", "aps", "--no-headers", check=False)}) + "\n")
             f.flush()
             time.sleep(5)
     with open(f"{PASTA}/{nome}-eventos-k8s.json", "w", encoding="utf-8") as f:
-        f.write(k("get", "events", "-n", "aps", "--field-selector", f"involvedObject.kind=HorizontalPodAutoscaler", "-o", "json"))
+        f.write(k("get", "events", "-n", "aps", "--field-selector", "involvedObject.kind=HorizontalPodAutoscaler", "-o", "json"))
     with open(f"{PASTA}/{nome}-describe.txt", "w", encoding="utf-8") as f:
         f.write(k("describe", "hpa", API, "-n", "aps"))
+    sem_hpa()
 
 
-def e53(fila):
+def e53():
     """Resiliência: pod apagado e nó drenado, sob carga constante."""
     sem_hpa()
+    for d in OUTROS:
+        replicas(2, d)
     for rep in (1, 2, 3):
         nome = f"53-pod-exec{rep}"
         if os.path.exists(f"{PASTA}/{nome}-resumo.json"):
             continue
         replicas(2)
-        espera_sistema(fila)
+        espera_sistema()
 
         def apaga(marca):
             alvo = pods_api()[0]["nome"]
             marca(f"kubectl delete pod {alvo}")
             k("delete", "pod", alvo, "-n", "aps", "--wait=false")
 
-        carga(nome, fila, 16, 60, acoes=[(25, apaga)], extra={"replicas": 2})
+        carga(nome, 16, 60, acoes=[(25, apaga)], extra={"replicas": 2})
 
-    for nome, no, espera in (("53-no-sem-banco", "k3d-aps-server-0", None), ("53-no-com-banco", "k3d-aps-agent-1", 45)):
+    # O nó do banco é onde está o volume dele; o "sem banco" é o servidor (plano de controle).
+    banco = json.loads(k("get", "pod", "postgres-0", "-n", "aps", "-o", "json"))["spec"]["nodeName"]
+    sem_banco = "k3d-aps-server-0" if banco != "k3d-aps-server-0" else "k3d-aps-agent-0"
+    for nome, no, espera in (("53-no-sem-banco", sem_banco, None), ("53-no-com-banco", banco, 45)):
         if os.path.exists(f"{PASTA}/{nome}-resumo.json"):
             continue
         replicas(3)
-        espera_sistema(fila)
-        with open(f"{PASTA}/{nome}-antes.txt", "w", encoding="utf-8") as f:
-            f.write(k("get", "pods", "-A", "-o", "wide"))
+        espera_sistema()
 
-        def drena(marca):
+        def drena(marca, no=no):
             marca(f"kubectl drain {no}")
             threading.Thread(target=lambda: k("drain", no, "--ignore-daemonsets", "--delete-emptydir-data",
                                               "--timeout=120s", check=False, timeout=150), daemon=True).start()
 
-        def libera(marca):
+        def libera(marca, no=no):
             marca(f"kubectl uncordon {no}")
             k("uncordon", no)
 
         try:
             acoes = [(25, drena)] + ([(25 + espera, libera)] if espera else [])
-            carga(nome, fila, 16, 120, acoes=acoes, extra={"replicas": 3, "no": no})
+            carga(nome, 16, 120, acoes=acoes, extra={"replicas": 3, "no": no})
             with open(f"{PASTA}/{nome}-depois.txt", "w", encoding="utf-8") as f:
                 f.write(k("get", "pods", "-A", "-o", "wide"))
         finally:
             k("uncordon", no, check=False)  # o nó nunca fica bloqueado, mesmo se algo falhar
+        # Depois do drain, os pods ficaram nos outros nós: recria para espalhar de novo.
+        reespalha([API] + OUTROS)
         time.sleep(30)
 
 
-def e54(fila):
+def e54():
     """Rolling update e rollout undo, sem e com preStop."""
     sem_hpa()
     prestop = {"spec": {"template": {"spec": {"terminationGracePeriodSeconds": 30, "containers": [
@@ -396,7 +364,7 @@ def e54(fila):
             k("set", "image", f"deployment/{API}", "-n", "aps", f"api=aps-sd/{API}:1.1.0")
             k("rollout", "status", f"deployment/{API}", "-n", "aps", "--timeout=200s")
             replicas(3)
-            espera_sistema(fila)
+            espera_sistema()
 
             def publica(marca):
                 marca("kubectl set image 1.2.0")
@@ -410,55 +378,31 @@ def e54(fila):
                 k("rollout", "status", f"deployment/{API}", "-n", "aps", "--timeout=200s")
                 marca("rollout concluído")
 
-            carga(f"54-{rotulo}-update-exec{rep}", fila, 16, 70, acoes=[(20, publica)], extra={"replicas": 3, "prestop": rotulo})
-            espera_sistema(fila, pausa=5)
-            carga(f"54-{rotulo}-undo-exec{rep}", fila, 16, 70, acoes=[(20, desfaz)], extra={"replicas": 3, "prestop": rotulo})
+            carga(f"54-{rotulo}-update-exec{rep}", 16, 70, acoes=[(20, publica)], extra={"replicas": 3, "prestop": rotulo})
+            espera_sistema(pausa=5)
+            carga(f"54-{rotulo}-undo-exec{rep}", 16, 70, acoes=[(20, desfaz)], extra={"replicas": 3, "prestop": rotulo})
     with open(f"{PASTA}/54-rollout-history.txt", "w", encoding="utf-8") as f:
         f.write(k("rollout", "history", f"deployment/{API}", "-n", "aps"))
-    k("patch", "deployment", API, "-n", "aps", "--type=strategic", "-p", json.dumps(sem_prestop))
-    k("set", "image", f"deployment/{API}", "-n", "aps", f"api=aps-sd/{API}:1.1.0")
-    k("rollout", "status", f"deployment/{API}", "-n", "aps", "--timeout=200s")
 
 
-def e55(fila):
-    """Processamento assíncrono: com fila e sem fila, com a mesma carga."""
-    sem_hpa()
-    replicas(1)
-    for cenario in ("com-fila", "sem-fila"):
-        for rep in (1, 2, 3):
-            nome = f"55-{cenario}-exec{rep}"
-            if os.path.exists(f"{PASTA}/{nome}-resumo.json"):
-                continue
-            if cenario == "sem-fila":  # sem a conexão, a API avalia o alerta dentro do POST
-                espera_sistema(fila, pausa=0)  # a fila precisa zerar antes: sem consumidor, ela nunca esvazia
-                k("set", "env", f"deployment/{API}", "-n", "aps", "ConnectionStrings__RabbitMq=")
-            k("rollout", "status", f"deployment/{API}", "-n", "aps", "--timeout=200s")
-            espera_sistema(fila)
-            carga(nome, fila, 32, 60, extra={"cenario": cenario, "replicas": 1})
-
-
-def restaura(fila):
-    k("apply", "-f", "k8s/")
-    k("rollout", "restart", f"deployment/{API}", "-n", "aps")
-    k("rollout", "status", f"deployment/{API}", "-n", "aps", "--timeout=200s")
-    for no in ("k3d-aps-server-0", "k3d-aps-agent-0", "k3d-aps-agent-1"):
+def restaura():
+    for no in NOS:
         k("uncordon", no, check=False)
+    k("apply", "-f", "k8s/")
+    reespalha([API] + OUTROS)
     log("cluster restaurado")
 
 
 def main():
     os.makedirs(PASTA, exist_ok=True)
-    pedidos = sys.argv[1:] or ["5.1", "5.2", "5.3", "5.4", "5.5"]
-    fila = Fila()
+    pedidos = sys.argv[1:] or ["5.1", "5.1g", "5.2", "5.3", "5.4"]
     try:
-        for chave, funcao in (("5.1", e51), ("5.2", e52), ("5.3", e53), ("5.4", e54), ("5.5", e55),
-                              ("5.1b", e51b), ("5.1g", e51g), ("5.2b", e52b)):
+        for chave, funcao in (("5.1", e51), ("5.1g", e51g), ("5.2", e52), ("5.3", e53), ("5.4", e54)):
             if chave in pedidos:
                 log(f"=== experimento {chave}")
-                funcao(fila)
-        restaura(fila)
+                funcao()
     finally:
-        fila.fecha()
+        restaura()
     log("fim")
 
 

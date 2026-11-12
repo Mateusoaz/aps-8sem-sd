@@ -1,7 +1,14 @@
 deployment.apps/air-quality-api 
 REVISION  CHANGE-CAUSE
-6         <none>
-7         <none>
-13        <none>
-14        <none>
+20        <none>
+21        <none>
+22        <none>
+24        <none>
+25        <none>
+26        <none>
+27        <none>
+34        <none>
+35        <none>
+41        <none>
+42        <none>
 

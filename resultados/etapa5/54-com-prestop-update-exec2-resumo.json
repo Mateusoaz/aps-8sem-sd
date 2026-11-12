@@ -10,43 +10,43 @@
     "replicas": 3,
     "prestop": "com-prestop"
   },
-  "inicio": "2026-11-01T04:56:33",
-  "inicio_epoch": 1793519793.1711698,
+  "inicio": "2026-11-12T02:59:50",
+  "inicio_epoch": 1794463190.404222,
   "eventos": [
     {
       "evento": "kubectl set image 1.2.0",
-      "epoch": 1793519813.1724706,
-      "hora": "04:56:53",
+      "epoch": 1794463210.406764,
+      "hora": "03:00:10",
       "decorrido_s": 20.0
     },
     {
       "evento": "rollout concluído",
-      "epoch": 1793519826.1322896,
-      "hora": "04:57:06",
-      "decorrido_s": 33.0
+      "epoch": 1794463223.5031812,
+      "hora": "03:00:23",
+      "decorrido_s": 33.1
     }
   ],
-  "requisicoes": 28549,
+  "requisicoes": 35177,
   "falhas": 0,
   "taxa_erro_pct": 0.0,
-  "vazao_req_s": 475.8,
-  "latencia_media_ms": 33.59,
-  "p50_ms": 27.32,
-  "p95_ms": 86.69,
-  "p99_ms": 96.77,
+  "vazao_req_s": 586.3,
+  "latencia_media_ms": 27.25,
+  "p50_ms": 10.19,
+  "p95_ms": 81.82,
+  "p99_ms": 95.46,
   "little_trabalhadores": 16.0,
   "por_pod": {
-    "air-quality-api-6bbc9d9845-mbdc6": 3344,
-    "air-quality-api-6bbc9d9845-hxgv5": 4250,
-    "air-quality-api-6bbc9d9845-2vnq2": 3909,
-    "air-quality-api-fb5d4447d-ktb6c": 6251,
-    "air-quality-api-fb5d4447d-knv29": 5655,
-    "air-quality-api-fb5d4447d-nsrdt": 5140
+    "air-quality-api-6556fd6c7b-95f22": 4105,
+    "air-quality-api-6556fd6c7b-dfnrd": 3689,
+    "air-quality-api-6556fd6c7b-l8vcd": 4735,
+    "air-quality-api-95bd7f74f-j8lfp": 8178,
+    "air-quality-api-95bd7f74f-9jvkd": 7547,
+    "air-quality-api-95bd7f74f-pjxqn": 6923
   },
   "por_versao": {
-    "1.1.0": 11503,
-    "1.2.0": 17046
+    "1.1.0": 12529,
+    "1.2.0": 22648
   },
   "por_erro": {},
-  "requisicoes_no_aquecimento": 5888
+  "requisicoes_no_aquecimento": 7378
 }

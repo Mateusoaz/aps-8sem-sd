@@ -1,4 +1,0 @@
-Dockerfile
-.dockerignore
-nginx.compose.conf
-*.md

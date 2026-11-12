@@ -10,24 +10,24 @@
     "replicas": 1,
     "pool_conexoes": 8
   },
-  "inicio": "2026-11-01T12:16:42",
-  "inicio_epoch": 1793546202.9733577,
+  "inicio": "2026-11-12T02:06:26",
+  "inicio_epoch": 1794459986.5382802,
   "eventos": [],
-  "requisicoes": 89574,
+  "requisicoes": 16116,
   "falhas": 0,
   "taxa_erro_pct": 0.0,
-  "vazao_req_s": 1791.5,
-  "latencia_media_ms": 35.71,
-  "p50_ms": 10.88,
-  "p95_ms": 90.57,
-  "p99_ms": 98.57,
-  "little_trabalhadores": 64.0,
+  "vazao_req_s": 322.3,
+  "latencia_media_ms": 198.18,
+  "p50_ms": 195.71,
+  "p95_ms": 290.52,
+  "p99_ms": 296.21,
+  "little_trabalhadores": 63.9,
   "por_pod": {
-    "air-quality-api-f8944cd8c-6kfsn": 89574
+    "air-quality-api-68cf988864-wvg8b": 16116
   },
   "por_versao": {
-    "1.1.0": 89574
+    "1.1.0": 16116
   },
   "por_erro": {},
-  "requisicoes_no_aquecimento": 15393
+  "requisicoes_no_aquecimento": 2437
 }

@@ -1,5 +1,4 @@
-# Pilha completa: PostgreSQL + Redis (cache) + RabbitMQ (fila) + 3 APIs .NET 8 + cliente web,
-# cada um em seu próprio contêiner.
+# Pilha completa: PostgreSQL + 3 APIs .NET 8, cada um em seu próprio contêiner.
 # Subir tudo:   docker compose up -d --build
 # Derrubar:     docker compose down          (mantém os dados)
 # Zerar dados:  docker compose down -v       (apaga o volume do banco)
@@ -27,38 +26,6 @@ services:
       timeout: 3s
       retries: 10
 
-  # Cache das consultas agregadas. Sem volume: se reiniciar, o cache só começa vazio.
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    networks:
-      - backend
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  # Fila das leituras: o POST publica, o consumidor de cada API avalia o alerta.
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    restart: unless-stopped
-    hostname: rabbitmq          # nome fixo: o RabbitMQ guarda os dados numa pasta com o nome do host
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?Defina RABBITMQ_USER no .env}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no .env}
-    ports:
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    networks:
-      - backend
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-
   air-quality-api:
     build:
       context: ./src/AirQuality.Api
@@ -69,10 +36,6 @@ services:
     environment:
       # "postgres" é o NOME DO SERVIÇO acima — o DNS interno do Compose resolve para o IP do contêiner
       ConnectionStrings__Default: Host=postgres;Port=5432;Database=air_quality;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      ConnectionStrings__Redis: redis:6379,abortConnect=false,connectTimeout=1000,syncTimeout=1000
-      ConnectionStrings__RabbitMq: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
-      Cache__TtlSeconds: ${CACHE_TTL_SECONDS:-10}
-      PATH_BASE: /air-quality          # prefixo usado pelo cliente web (o acesso direto pela porta continua valendo)
       Alerts__Pm25Limit: ${AIR_PM25_LIMIT:-25}
       Alerts__Pm25ConsecutiveReadings: ${AIR_PM25_CONSECUTIVE_READINGS:-3}
     ports:
@@ -81,10 +44,6 @@ services:
       - backend
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/health/live"]
@@ -102,10 +61,6 @@ services:
     restart: unless-stopped
     environment:
       ConnectionStrings__Default: Host=postgres;Port=5432;Database=flooding;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      ConnectionStrings__Redis: redis:6379,abortConnect=false,connectTimeout=1000,syncTimeout=1000
-      ConnectionStrings__RabbitMq: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
-      Cache__TtlSeconds: ${CACHE_TTL_SECONDS:-10}
-      PATH_BASE: /flooding          # prefixo usado pelo cliente web (o acesso direto pela porta continua valendo)
       Alerts__OverflowLevelCm: ${FLOODING_OVERFLOW_LEVEL_CM:-300}
     ports:
       - "${FLOODING_API_PORT:-5002}:8080"
@@ -113,10 +68,6 @@ services:
       - backend
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/health/live"]
@@ -134,10 +85,6 @@ services:
     restart: unless-stopped
     environment:
       ConnectionStrings__Default: Host=postgres;Port=5432;Database=thermal_inversion;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
-      ConnectionStrings__Redis: redis:6379,abortConnect=false,connectTimeout=1000,syncTimeout=1000
-      ConnectionStrings__RabbitMq: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
-      Cache__TtlSeconds: ${CACHE_TTL_SECONDS:-10}
-      PATH_BASE: /thermal-inversion          # prefixo usado pelo cliente web (o acesso direto pela porta continua valendo)
       Alerts__MinInversionGradientC: ${THERMAL_MIN_INVERSION_GRADIENT_C:-0}
     ports:
       - "${THERMAL_INVERSION_API_PORT:-5003}:8080"
@@ -146,36 +93,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/health/live"]
       interval: 10s
       timeout: 3s
       retries: 3
       start_period: 15s
-
-  # Cliente leve: página estática. No Compose o nginx também encaminha os prefixos para as APIs
-  # (no Kubernetes quem faz isso é o Ingress).
-  web-client:
-    build: ./src/WebClient
-    image: aps-sd/web-client:${APP_VERSION:-1.1.0}
-    restart: unless-stopped
-    ports:
-      - "${WEB_CLIENT_PORT:-8080}:80"
-    volumes:
-      - ./src/WebClient/nginx.compose.conf:/etc/nginx/conf.d/default.conf:ro
-    networks:
-      - backend
-    depends_on:
-      air-quality-api:
-        condition: service_healthy
-      flooding-api:
-        condition: service_healthy
-      thermal-inversion-api:
-        condition: service_healthy
 
   # Gerador de carga — NÃO sobe com "docker compose up" (está no profile "load").
   # Rodar:  docker compose run --rm load-generator --rate 100 --duration 60
@@ -204,4 +127,3 @@ networks:
 
 volumes:
   postgres-data:
-  rabbitmq-data:

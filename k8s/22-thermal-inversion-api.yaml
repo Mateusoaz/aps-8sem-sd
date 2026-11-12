@@ -18,7 +18,26 @@ spec:
     metadata:
       labels:
         app: thermal-inversion-api
+        camada: api                # todas as APIs: usado para espalhá-las juntas
     spec:
+      # Espalha as réplicas pelos 3 nós (server-0, agent-0 e agent-1).
+      topologySpreadConstraints:
+        # As réplicas DESTE serviço: no máximo 1 de diferença entre os nós.
+        # Honor ignora nó cordonado (drain), senão o pod ficaria Pending durante a manutenção.
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          nodeTaintsPolicy: Honor
+          labelSelector:
+            matchLabels: { app: thermal-inversion-api }
+          matchLabelKeys: [pod-template-hash]   # no rolling update, a versão nova também se espalha
+        # Todas as APIs juntas: preferência (não bloqueia), para nenhum nó concentrar os pods.
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          nodeTaintsPolicy: Honor
+          labelSelector:
+            matchLabels: { camada: api }
       containers:
         - name: api
           image: aps-sd/thermal-inversion-api:1.1.0       # tag fixa; importada com k3d image import
@@ -31,7 +50,7 @@ spec:
             - containerPort: 8080
           envFrom:
             - configMapRef:
-                name: aps-config           # hosts, tempo do cache e regras de alerta
+                name: aps-config           # host do banco e regras de alerta
           env:
             - name: PATH_BASE              # prefixo que o gateway usa para este serviço
               value: "/thermal-inversion"
@@ -41,18 +60,8 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef: { name: banco-credenciais, key: POSTGRES_PASSWORD }
-            - name: RABBITMQ_USER
-              valueFrom:
-                secretKeyRef: { name: banco-credenciais, key: RABBITMQ_USER }
-            - name: RABBITMQ_PASSWORD
-              valueFrom:
-                secretKeyRef: { name: banco-credenciais, key: RABBITMQ_PASSWORD }
             - name: ConnectionStrings__Default
               value: "Host=$(BANCO_HOST);Port=5432;Database=thermal_inversion;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD);Maximum Pool Size=8"
-            - name: ConnectionStrings__Redis
-              value: "$(CACHE_HOST):6379,abortConnect=false,connectTimeout=1000,syncTimeout=1000"
-            - name: ConnectionStrings__RabbitMq
-              value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASSWORD)@$(FILA_HOST):5672"
           resources:
             requests: { cpu: 100m, memory: 128Mi }   # sem requests de CPU o HPA não funciona
             limits:   { cpu: 500m, memory: 320Mi }

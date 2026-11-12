@@ -1,5 +1,7 @@
 # Etapa 3 — Kubernetes: evidências e diagrama de implantação
 
+> Evidências de 10 e 11/10/2026, quando o sistema ainda tinha Redis, RabbitMQ e o cliente web. Esses três componentes foram retirados em 12/11/2026; o resto do que está aqui continua valendo.
+
 Saídas reais dos experimentos da Aula Prática 3, rodados na aplicação do grupo num cluster k3d de 3 nós
 (`k3d cluster create aps --agents 2 -p "8081:80@loadbalancer"`), em 10/10/2026.
 Cada seção diz o que foi feito, mostra a saída coletada e o que ela demonstra.

@@ -10,27 +10,27 @@
     "replicas": 4,
     "pool_conexoes": 8
   },
-  "inicio": "2026-11-01T12:27:08",
-  "inicio_epoch": 1793546828.655876,
+  "inicio": "2026-11-12T02:16:46",
+  "inicio_epoch": 1794460606.4277482,
   "eventos": [],
-  "requisicoes": 112552,
+  "requisicoes": 22441,
   "falhas": 0,
   "taxa_erro_pct": 0.0,
-  "vazao_req_s": 2251.0,
-  "latencia_media_ms": 28.46,
-  "p50_ms": 9.76,
-  "p95_ms": 60.85,
-  "p99_ms": 672.07,
-  "little_trabalhadores": 64.1,
+  "vazao_req_s": 448.8,
+  "latencia_media_ms": 142.32,
+  "p50_ms": 100.92,
+  "p95_ms": 382.22,
+  "p99_ms": 416.83,
+  "little_trabalhadores": 63.9,
   "por_pod": {
-    "air-quality-api-f8944cd8c-hhfn5": 28139,
-    "air-quality-api-f8944cd8c-9rzl5": 28140,
-    "air-quality-api-f8944cd8c-6kfsn": 28137,
-    "air-quality-api-f8944cd8c-5547s": 28136
+    "air-quality-api-68cf988864-5ktdj": 5611,
+    "air-quality-api-68cf988864-wvg8b": 5610,
+    "air-quality-api-68cf988864-kbjct": 5610,
+    "air-quality-api-68cf988864-5xgbv": 5610
   },
   "por_versao": {
-    "1.1.0": 112552
+    "1.1.0": 22441
   },
   "por_erro": {},
-  "requisicoes_no_aquecimento": 22620
+  "requisicoes_no_aquecimento": 4522
 }

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Junta as execuções da linha de base em uma tabela e um gráfico por rota.
 
-Para cada degrau, tira a média das execuções e cruza com a CPU dos pods e o tamanho
-da fila, amostrados a cada 5 s pelo carga/linha_base.sh.
+Para cada degrau, tira a média das execuções e cruza com a CPU dos pods,
+amostrada a cada 5 s pelo carga/linha_base.sh.
 Uso (na raiz do repositório): python carga/analisa_base.py
 Grava em resultados/base/: tabela-<rota>.md, grafico-<rota>.png e linha-base.json
 """
@@ -23,18 +23,17 @@ ROTAS = {"post": "POST /air-quality/api/v1/air-quality/particulate",
 
 
 def le_amostras(caminho, dia):
-    """Devolve [(instante, fila, {pod: milicores})] do arquivo top-*.txt."""
+    """Devolve [(instante, {pod: milicores})] do arquivo top-*.txt."""
     amostras = []
     for linha in open(caminho, encoding="utf-8", errors="replace"):
-        cabecalho = re.match(r"=== (\d\d:\d\d:\d\d) fila=(\d*)", linha)
+        cabecalho = re.match(r"=== (\d\d:\d\d:\d\d)", linha)
         if cabecalho:
             hora = datetime.datetime.strptime(cabecalho[1], "%H:%M:%S").time()
-            fila = int(cabecalho[2]) if cabecalho[2] else None
-            amostras.append((datetime.datetime.combine(dia, hora), fila, {}))
+            amostras.append((datetime.datetime.combine(dia, hora), {}))
             continue
         pod = re.match(r"(\S+)\s+(\d+)m\s", linha)
         if pod and amostras:
-            amostras[-1][2][pod[1]] = int(pod[2])
+            amostras[-1][1][pod[1]] = int(pod[2])
     return amostras
 
 
@@ -45,11 +44,10 @@ def media(valores):
 def recursos_do_degrau(amostras, inicio, fim):
     janela = [a for a in amostras if inicio <= a[0] <= fim]
     cpu = {}
-    for nome in ("air-quality-api", "postgres", "rabbitmq", "redis"):
-        leituras = [v for a in janela for p, v in a[2].items() if p.startswith(nome)]
+    for nome in ("air-quality-api", "postgres"):
+        leituras = [v for a in janela for p, v in a[1].items() if p.startswith(nome)]
         cpu[nome] = max(leituras) if leituras else None
-    filas = [a[1] for a in janela if a[1] is not None]
-    return cpu, (filas[-1] if filas else None)
+    return cpu
 
 
 def analisa(rota):
@@ -61,7 +59,7 @@ def analisa(rota):
         amostras = le_amostras(f"{PASTA}/top-{nome}.txt", inicio.date())
         for i, degrau in enumerate(resumo["degraus"]):
             comeco = inicio + datetime.timedelta(seconds=i * 30 + 5)
-            degrau["cpu"], degrau["fila"] = recursos_do_degrau(
+            degrau["cpu"] = recursos_do_degrau(
                 amostras, comeco, comeco + datetime.timedelta(seconds=25))
         execucoes.append(resumo)
 
@@ -85,9 +83,6 @@ def analisa(rota):
             "cpu_gerador": media(coluna("cpu_gerador_pct")),
             "cpu_api": media(recurso("air-quality-api")),
             "cpu_postgres": media(recurso("postgres")),
-            "cpu_rabbitmq": media(recurso("rabbitmq")),
-            "cpu_redis": media(recurso("redis")),
-            "fila": media(coluna("fila")),
             "por_erro": sorted({e for g in grupo for e in g["por_erro"]}),
         })
     return {"rota": ROTAS[rota], "execucoes": len(execucoes), "linhas": linhas}
@@ -102,12 +97,12 @@ def grava_tabela(chave, dados):
         f.write(f"# Linha de base: {dados['rota']}\n\n")
         f.write(f"Média de {dados['execucoes']} execuções; 1 réplica, sem HPA; 30 s por degrau, 5 s de aquecimento.\n\n")
         f.write("| Trab. | Requisições | Vazão (req/s) | Faixa da vazão | p50 (ms) | p95 (ms) | p99 (ms) | Erros (%) "
-                "| CPU API (m) | CPU banco (m) | CPU fila (m) | Fila ao fim | CPU gerador (%) |\n")
-        f.write("|" + "---:|" * 13 + "\n")
+                "| CPU API (m) | CPU banco (m) | CPU gerador (%) |\n")
+        f.write("|" + "---:|" * 11 + "\n")
         for l in dados["linhas"]:
             f.write(f"| {l['trabalhadores']} | {l['requisicoes']} | {n(l['vazao'])} | {n(l['vazao_min'], 0)} a {n(l['vazao_max'], 0)} "
                     f"| {n(l['p50'])} | {n(l['p95'])} | {n(l['p99'])} | {n(l['erros'], 2)} | {n(l['cpu_api'], 0)} "
-                    f"| {n(l['cpu_postgres'], 0)} | {n(l['cpu_rabbitmq'], 0)} | {n(l['fila'], 0)} | {n(l['cpu_gerador'], 0)} |\n")
+                    f"| {n(l['cpu_postgres'], 0)} | {n(l['cpu_gerador'], 0)} |\n")
 
 
 def grava_grafico(chave, dados):

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThermalInversion.Api.Data;
 using ThermalInversion.Api.Dtos;
-using ThermalInversion.Api.Messaging;
 using ThermalInversion.Api.Models;
 using ThermalInversion.Api.Services;
 
@@ -10,7 +9,7 @@ namespace ThermalInversion.Api.Controllers;
 
 [ApiController]
 [Route(ApiRoutes.Base + "/temperature-profile")]
-public class TemperatureProfileController(ThermalInversionDbContext db, AlertService alerts, ReadingQueue queue) : ControllerBase
+public class TemperatureProfileController(ThermalInversionDbContext db, AlertService alerts) : ControllerBase
 {
     // POST /api/v1/thermal-inversion/temperature-profile
     [HttpPost]
@@ -29,10 +28,8 @@ public class TemperatureProfileController(ThermalInversionDbContext db, AlertSer
 
         db.TemperatureProfiles.Add(reading);
         await db.SaveChangesAsync(ct);
-        // O alerta é avaliado fora do POST, pelo consumidor da fila.
-        // Se a fila estiver indisponível, avalia aqui mesmo para não perder o alerta.
-        if (!queue.TryPublish(reading.Id))
-            await alerts.EvaluateTemperatureProfileAsync(reading, ct);
+        // O alerta é avaliado na própria requisição, logo depois de gravar a leitura.
+        await alerts.EvaluateTemperatureProfileAsync(reading, ct);
 
         return CreatedAtAction(nameof(GetById), new { id = reading.Id }, reading);
     }

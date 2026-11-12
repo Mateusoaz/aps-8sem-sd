@@ -9,33 +9,33 @@
     "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate",
     "replicas": 2
   },
-  "inicio": "2026-11-01T04:32:18",
-  "inicio_epoch": 1793518338.1206696,
+  "inicio": "2026-11-12T02:37:30",
+  "inicio_epoch": 1794461850.5585315,
   "eventos": [
     {
-      "evento": "kubectl delete pod air-quality-api-68cd867567-5mw9n",
-      "epoch": 1793518363.2072487,
-      "hora": "04:32:43",
+      "evento": "kubectl delete pod air-quality-api-68cf988864-gzrh6",
+      "epoch": 1794461875.707483,
+      "hora": "02:37:55",
       "decorrido_s": 25.1
     }
   ],
-  "requisicoes": 24538,
+  "requisicoes": 26058,
   "falhas": 0,
   "taxa_erro_pct": 0.0,
-  "vazao_req_s": 490.8,
-  "latencia_media_ms": 32.57,
-  "p50_ms": 21.0,
-  "p95_ms": 93.1,
-  "p99_ms": 100.18,
+  "vazao_req_s": 521.2,
+  "latencia_media_ms": 30.66,
+  "p50_ms": 12.65,
+  "p95_ms": 94.06,
+  "p99_ms": 106.03,
   "little_trabalhadores": 16.0,
   "por_pod": {
-    "air-quality-api-68cd867567-bb4wb": 13352,
-    "air-quality-api-68cd867567-5mw9n": 5113,
-    "air-quality-api-68cd867567-j5z84": 6073
+    "air-quality-api-68cf988864-gzrh6": 6057,
+    "air-quality-api-68cf988864-wvg8b": 14253,
+    "air-quality-api-68cf988864-zhdtp": 5748
   },
   "por_versao": {
-    "1.1.0": 24538
+    "1.1.0": 26058
   },
   "por_erro": {},
-  "requisicoes_no_aquecimento": 6573
+  "requisicoes_no_aquecimento": 7418
 }

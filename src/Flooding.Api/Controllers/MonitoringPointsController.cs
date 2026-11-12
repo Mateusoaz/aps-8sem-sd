@@ -1,6 +1,5 @@
 using Flooding.Api.Data;
 using Flooding.Api.Dtos;
-using Flooding.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,29 +7,23 @@ namespace Flooding.Api.Controllers;
 
 [ApiController]
 [Route(ApiRoutes.Base + "/monitoring-points")]
-public class MonitoringPointsController(FloodingDbContext db, QueryCache cache) : ControllerBase
+public class MonitoringPointsController(FloodingDbContext db) : ControllerBase
 {
     // GET /api/v1/flooding/monitoring-points/PT-01/latest  ("nível atual por ponto de monitoramento")
     [HttpGet("{monitoringPointId}/latest")]
     public async Task<ActionResult<LatestReadingsResponse>> GetLatest(string monitoringPointId, CancellationToken ct)
     {
-        // Cache-aside no Redis: o mesmo ponto é respondido do cache por alguns segundos (cabeçalho X-Cache)
-        var latest = await cache.GetOrCreateAsync<LatestReadingsResponse>(Response, $"monitoring-points:{monitoringPointId}:latest", async () =>
-        {
-            var waterLevel = await db.WaterLevelReadings.AsNoTracking()
-                .Where(r => r.MonitoringPointId == monitoringPointId).OrderByDescending(r => r.Timestamp).FirstOrDefaultAsync(ct);
-            var rainfall = await db.RainfallReadings.AsNoTracking()
-                .Where(r => r.MonitoringPointId == monitoringPointId).OrderByDescending(r => r.Timestamp).FirstOrDefaultAsync(ct);
-            var flowRate = await db.FlowRateReadings.AsNoTracking()
-                .Where(r => r.MonitoringPointId == monitoringPointId).OrderByDescending(r => r.Timestamp).FirstOrDefaultAsync(ct);
+        var waterLevel = await db.WaterLevelReadings.AsNoTracking()
+            .Where(r => r.MonitoringPointId == monitoringPointId).OrderByDescending(r => r.Timestamp).FirstOrDefaultAsync(ct);
+        var rainfall = await db.RainfallReadings.AsNoTracking()
+            .Where(r => r.MonitoringPointId == monitoringPointId).OrderByDescending(r => r.Timestamp).FirstOrDefaultAsync(ct);
+        var flowRate = await db.FlowRateReadings.AsNoTracking()
+            .Where(r => r.MonitoringPointId == monitoringPointId).OrderByDescending(r => r.Timestamp).FirstOrDefaultAsync(ct);
 
-            if (waterLevel is null && rainfall is null && flowRate is null)
-                return null;
+        if (waterLevel is null && rainfall is null && flowRate is null)
+            return NotFound();
 
-            return new LatestReadingsResponse(monitoringPointId, waterLevel, rainfall, flowRate);
-        }, ct);
-
-        return latest is null ? NotFound() : latest;
+        return new LatestReadingsResponse(monitoringPointId, waterLevel, rainfall, flowRate);
     }
 
     // GET /api/v1/flooding/monitoring-points/PT-01/readings?from=...  ("histórico das últimas horas")

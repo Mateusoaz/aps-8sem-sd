@@ -1,0 +1,33 @@
+{
+  "nome": "51g-r1-exec2",
+  "parametros": {
+    "trabalhadores": 64,
+    "duracao_s": 60,
+    "aquecimento_s": 10,
+    "rampa_s": null,
+    "processos_gerador": 4,
+    "url": "http://localhost:8081/air-quality/api/v1/air-quality/areas/CENTRO/average?hours=24",
+    "replicas": 1,
+    "pool_conexoes": 8
+  },
+  "inicio": "2026-11-01T12:16:42",
+  "inicio_epoch": 1793546202.9733577,
+  "eventos": [],
+  "requisicoes": 89574,
+  "falhas": 0,
+  "taxa_erro_pct": 0.0,
+  "vazao_req_s": 1791.5,
+  "latencia_media_ms": 35.71,
+  "p50_ms": 10.88,
+  "p95_ms": 90.57,
+  "p99_ms": 98.57,
+  "little_trabalhadores": 64.0,
+  "por_pod": {
+    "air-quality-api-f8944cd8c-6kfsn": 89574
+  },
+  "por_versao": {
+    "1.1.0": 89574
+  },
+  "por_erro": {},
+  "requisicoes_no_aquecimento": 15393
+}

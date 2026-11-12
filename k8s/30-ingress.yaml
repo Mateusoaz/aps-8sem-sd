@@ -1,4 +1,4 @@
-# Gateway único: roteia POR CAMINHO para os três serviços; o resto (/) vai para o cliente web.
+# Gateway único: roteia POR CAMINHO para os três serviços.
 # O prefixo chega inteiro à API; o UsePathBase (PATH_BASE) o remove antes do roteamento.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -29,12 +29,5 @@ spec:
             backend:
               service:
                 name: thermal-inversion-api
-                port:
-                  number: 80
-          - path: /                    # o prefixo mais específico ganha; "/" pega o que sobrar
-            pathType: Prefix
-            backend:
-              service:
-                name: web-client
                 port:
                   number: 80

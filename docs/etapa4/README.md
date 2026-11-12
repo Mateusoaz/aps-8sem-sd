@@ -1,8 +1,29 @@
 # Etapa 4: gerador de carga e linha de base
 
-Medições de 31/10/2026. Os arquivos brutos estão em `resultados/base/`, e o procedimento completo em `carga/linha_base.sh`.
+## Medição atual (12/11/2026, sem Redis e RabbitMQ)
 
-## Ambiente de medição
+Refeita depois de tirar o cache e a fila: o POST agora avalia o alerta na própria requisição, e a consulta agregada é calculada no banco a cada chamada. Mesmo procedimento: 1 réplica, sem HPA, 3 execuções por rota, degraus de 30 s com 5 s de aquecimento. Arquivos em `resultados/base/`; tabelas completas em `resultados/base/tabela-post.md` e `tabela-get.md`.
+
+| Rota | Ponto de saturação | Depois disso | O que saturou |
+|---|---|---|---|
+| `POST .../particulate` | ~490 req/s, p95 de 102 ms, em 32 trabalhadores | Vazão parada em ~520 req/s; p95 de 204 ms (64), 417 ms (128) e 902 ms (256); **0 erros** | CPU do pod (500m desde 2 trabalhadores); banco ~360m |
+| `GET .../areas/CENTRO/average` | ~383 req/s, p95 de 106 ms, em 32 trabalhadores | Vazão ~335 a 380 req/s; p95 de 208 ms a 986 ms; **0 erros** | CPU do pod; banco subiu junto até ~660m |
+
+![Linha de base do POST](../../resultados/base/grafico-post.png)
+
+![Linha de base do GET](../../resultados/base/grafico-get.png)
+
+A Lei de Little bateu em todos os degraus (64,1 para 64 trabalhadores no POST) e o gerador usou no máximo 51% de um núcleo. Diferente da medição anterior, o sistema não recusou carga com `503`: a latência subiu e nada falhou.
+
+---
+
+## Medição anterior (31/10/2026, com Redis e RabbitMQ)
+
+O texto abaixo descreve a primeira medição, feita quando o sistema ainda tinha cache e fila. Os arquivos estão em `resultados/antes-da-remocao/base/`.
+
+Medições de 31/10/2026. Os arquivos brutos estão em `resultados/antes-da-remocao/base/`, e o procedimento completo em `carga/linha_base.sh`.
+
+### Ambiente de medição
 
 | Item | Valor |
 |---|---|
@@ -14,13 +35,13 @@ Medições de 31/10/2026. Os arquivos brutos estão em `resultados/base/`, e o p
 
 A ficha pede degraus até 64 "ou até saturar". O POST ainda aceitava mais carga em 64, então acrescentamos 128 e 256.
 
-## Por que estas rotas
+### Por que estas rotas
 
 **Ingestão: `POST /air-quality/api/v1/air-quality/particulate`.** É a rota do serviço que o HPA vai escalar. Cada requisição consome CPU do pod, faz uma escrita no banco e publica uma mensagem na fila, e o consumidor de alertas roda no mesmo pod. Exercita todo o caminho de escrita.
 
 **Consulta: `GET /air-quality/api/v1/air-quality/areas/CENTRO/average?hours=24`.** É a consulta agregada mais cara da API, mas o resultado fica 10 s no Redis, então quase toda requisição consome só CPU do pod e o cache. O custo fica estável porque a carga do POST grava na área CARGA, e não na CENTRO.
 
-## Resultados (média de 3 execuções)
+### Resultados (média de 3 execuções)
 
 ### POST
 
@@ -36,7 +57,7 @@ A ficha pede degraus até 64 "ou até saturar". O POST ainda aceitava mais carga
 | 128 | 89.556 | 142,5 | 28,9 | 83,9 | 186,5 | 96,01 | 498 | 402 | 58.246 |
 | 256 | 103.294 | 131,0 | 51,2 | 175,8 | 213,4 | 95,93 | 498 | 275 | 48.985 |
 
-![Linha de base do POST](../../resultados/base/grafico-post.png)
+![Linha de base do POST](../../resultados/antes-da-remocao/base/grafico-post.png)
 
 ### GET
 
@@ -52,9 +73,9 @@ A ficha pede degraus até 64 "ou até saturar". O POST ainda aceitava mais carga
 | 128 | 42.816 | 1.712,6 | 79,0 | 116,8 | 347,3 | 0 | 451 | 28 |
 | 256 | 99.752 | 785,4 | 63,1 | 130,5 | 367,2 | 66,67 | 469 | 53 |
 
-![Linha de base do GET](../../resultados/base/grafico-get.png)
+![Linha de base do GET](../../resultados/antes-da-remocao/base/grafico-get.png)
 
-## Análise
+### Análise
 
 **Frase-régua.** Com uma réplica (limite de 500m de CPU), a ingestão chega a 832 req/s com p95 de 108 ms em 64 trabalhadores, sem erros. Em 128 trabalhadores o pod sai do balanceamento e 96% das requisições recebem `503`. O recurso que satura é a CPU do pod, parada em 500m. A vazão de 832 req/s, porém, não é sustentável: a fila de alertas cresce desde 4 trabalhadores e termina com 56 mil mensagens. A maior carga em que a fila acompanhou foi a de 2 trabalhadores, cerca de 240 req/s.
 
@@ -68,7 +89,7 @@ A ficha pede degraus até 64 "ou até saturar". O POST ainda aceitava mais carga
 
 **A máquina hospedeira foi o limite?** Não medimos a CPU total da máquina durante os testes, então não dá para descartar.
 
-## Cuidados ao ler estes números
+### Cuidados ao ler estes números
 
 - **Latência nos degraus com erro.** Em 128 e 256, p50 e p95 parecem melhores porque incluem os `503`, que são quase instantâneos. Nesses degraus, olhe a taxa de erro primeiro.
 - **Médias de 256 trabalhadores.** O resultado variou muito. No GET, duas execuções deram 100% de `503` e uma deu 2.356 req/s sem erros. A média de 66,67% não descreve nenhuma delas. Por isso, a vazão máxima do GET registrada é a de 128 trabalhadores (1.713 req/s, p95 de 117 ms).
@@ -77,7 +98,7 @@ A ficha pede degraus até 64 "ou até saturar". O POST ainda aceitava mais carga
 - **Saltos de latência.** O p95 sobe para 50 a 80 ms já com poucos trabalhadores, enquanto o p50 continua baixo. Suspeitamos do estrangulamento de CPU do limite de 500m (CPU throttling), mas não confirmamos.
 - **Execuções descartadas.** `post-rep1` e `post-rep2` são ensaios: a primeira não tem dados de CPU, e a segunda tem o `top` fora do horário do teste. A `post-rep2` mostrou 41% de `503` em 128 trabalhadores, então o ponto de ruptura variou.
 
-## Verificação com 2 réplicas
+### Verificação com 2 réplicas
 
 `python carga/loadgen.py .../particulate --payload ar -c 8 -d 20`: 296 req/s, p95 de 90 ms, 0% de erro, 2.218 requisições em cada pod.
 

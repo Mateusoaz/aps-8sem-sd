@@ -33,9 +33,7 @@ def recursos(nome):
         por_amostra = [sum(int(m) for m in re.findall(rf"^{prefixo}\S*\s+(\d+)m", a["top_pods"], re.M)) for a in amostras]
         return max(por_amostra) if por_amostra else None
 
-    filas = [a["fila"] for a in amostras if a["fila"] is not None]
-    return {"cpu_api": cpu("air-quality-api"), "cpu_banco": cpu("postgres"), "cpu_redis": cpu("redis"),
-            "fila_fim": filas[-1] if filas else None,
+    return {"cpu_api": cpu("air-quality-api"), "cpu_banco": cpu("postgres"),
             "cpu_maquina": max(a["cpu_maquina_pct"] for a in amostras),
             "memoria_maquina": max(a["memoria_maquina_pct"] for a in amostras)}
 
@@ -60,7 +58,7 @@ def tabela_escala(prefixo):
                        # Amdahl: s = (N/ganho - 1) / (N - 1)
                        "s_amdahl": round((n / ganho - 1) / (n - 1), 3) if n > 1 else None,
                        "cpu_api": media([r["cpu_api"] for r in rec]), "cpu_banco": media([r["cpu_banco"] for r in rec]),
-                       "fila_fim": media([r["fila_fim"] for r in rec]), "cpu_maquina": media([r["cpu_maquina"] for r in rec])})
+                       "cpu_maquina": media([r["cpu_maquina"] for r in rec])})
     return linhas
 
 
@@ -115,7 +113,7 @@ def grafico_escala(post, get):
     xs = [l["replicas"] for l in post]
     a.plot(xs, xs, "--", color=CINZA, label="Ideal")
     a.plot(xs, [l["ganho"] for l in post], "o-", color=AZUL, label="POST (ingestão)")
-    a.plot(xs, [l["ganho"] for l in get], "o-", color=LARANJA, label="GET (com cache)")
+    a.plot(xs, [l["ganho"] for l in get], "o-", color=LARANJA, label="GET (consulta agregada)")
     for l in post:
         a.annotate(f"{l['ganho']:.2f}×", (l["replicas"], l["ganho"]), textcoords="offset points", xytext=(0, 8), ha="center", color=AZUL)
     a.set_xticks(xs)
@@ -123,12 +121,13 @@ def grafico_escala(post, get):
     a.legend()
     a.set_title("Ganho de vazão com 64 trabalhadores")
     b.plot(xs, [l["cpu_banco"] for l in post], "o-", color=VERMELHO, label="CPU do banco (POST)")
+    b.plot(xs, [l["cpu_banco"] for l in get], "o-", color=LARANJA, label="CPU do banco (GET)")
     b.axhline(1000, ls="--", color=CINZA, label="Limite do banco (1000m)")
     b.set_xticks(xs)
     eixo(b, "Réplicas", "CPU (milicores)")
     b.set_ylim(0, 1150)
     b.legend(loc="lower right")
-    b.set_title("O banco chega ao limite com 4 réplicas")
+    b.set_title("CPU do banco por número de réplicas")
     fig.tight_layout()
     fig.savefig(f"{PASTA}/grafico-51-escala.png", dpi=150)
     plt.close(fig)
@@ -142,7 +141,8 @@ def grafico_hpa(nome, eventos):
     fig, (a, b) = plt.subplots(2, 1, figsize=(10, 6.4), sharex=True)
     a.plot([x["decorrido_s"] for x in s], [x["p95_ms"] for x in s], color=CINZA, lw=1, label="p95 (ms)")
     eixo(a, "", "p95 (ms)")
-    a.set_ylim(0, 400)
+    p95 = sorted(x["p95_ms"] for x in s if x["p95_ms"] != "")
+    a.set_ylim(0, p95[int(len(p95) * 0.98)] * 1.2)  # corta só os picos isolados
     a2 = a.twinx()
     a2.plot([x["decorrido_s"] for x in s], [x["vazao_req_s"] for x in s], color=AZUL, lw=1.2, label="Vazão (req/s)")
     a2.set_ylabel("Vazão (req/s)")
@@ -189,54 +189,43 @@ def grafico_rolling():
     a.legend(loc="lower left")
     a.set_title("As duas versões coexistem durante a troca")
     grupos = ["update", "undo"]
+    maior = 0
     for i, (rotulo, cor, nome) in enumerate((("Sem preStop", VERMELHO, "sem-prestop"), ("Com preStop", AZUL, "com-prestop"))):
         valores = [media([atualizacao(f"54-{nome}-{g}-exec{k}")["falhas"] for k in (1, 2, 3)]) for g in grupos]
+        maior = max(maior, *valores)
         barras = b.bar([j + i * 0.38 for j in range(2)], valores, 0.36, color=cor, label=rotulo)
         b.bar_label(barras, fmt="%.1f")
     b.set_xticks([0.19, 1.19], ["Rolling update", "Rollout undo"])
     eixo(b, "", "Falhas por execução (média de 3)")
-    b.set_ylim(0, 50)
+    b.set_ylim(0, max(5, maior * 1.3))
     b.legend(loc="upper center", ncol=2)
-    b.set_title("preStop eliminou as falhas")
+    b.set_title("Falhas com e sem preStop")
     fig.tight_layout()
     fig.savefig(f"{PASTA}/grafico-54-rolling.png", dpi=150)
     plt.close(fig)
 
 
-def linha_55(cenario):
-    grupo = [resumo(f"55-{cenario}-exec{i}") for i in (1, 2, 3)]
-    rec = [recursos(f"55-{cenario}-exec{i}") for i in (1, 2, 3)]
-    return {"cenario": cenario, "vazoes": [g["vazao_req_s"] for g in grupo],
-            "vazao": statistics.median(g["vazao_req_s"] for g in grupo), "p50": statistics.median(g["p50_ms"] for g in grupo),
-            "p95": statistics.median(g["p95_ms"] for g in grupo), "erros": media([g["taxa_erro_pct"] for g in grupo]),
-            "cpu_banco": statistics.median(r["cpu_banco"] for r in rec), "fila_fim": [r["fila_fim"] for r in rec]}
-
-
-def grafico_fila(linhas):
-    fig, a = plt.subplots(figsize=(7, 4.2))
-    nomes = ["Com fila", "Sem fila (síncrono)"]
-    barras = a.bar(nomes, [l["vazao"] for l in linhas], color=[CINZA, AZUL], width=0.5)
-    a.bar_label(barras, fmt="%.0f req/s")
-    for i, l in enumerate(linhas):
-        a.scatter([i] * 3, l["vazoes"], color="black", s=18, zorder=3)
-    eixo(a, "", "Vazão (req/s): barra = mediana, pontos = execuções")
-    a.set_ylim(bottom=0)
-    a.set_title("Fila × síncrono, 1 réplica e 32 trabalhadores")
-    fig.tight_layout()
-    fig.savefig(f"{PASTA}/grafico-55-fila.png", dpi=150)
-    plt.close(fig)
+def distribuicao(nome):
+    """Quantas réplicas da API havia em cada nó no início da execução."""
+    pods = json.load(open(f"{PASTA}/{nome}-pods.json", encoding="utf-8"))
+    primeiros = pods[0]["pods"] if pods else []
+    contagem = {}
+    for p in primeiros:
+        contagem[p["no"]] = contagem.get(p["no"], 0) + 1
+    return dict(sorted(contagem.items()))
 
 
 def main():
-    saida = {"escala_antes": tabela_escala("51"), "escala_post": tabela_escala("51b"), "escala_get": tabela_escala("51g")}
+    saida = {"escala_post": tabela_escala("51"), "escala_get": tabela_escala("51g")}
+    saida["distribuicao_escala"] = {n: distribuicao(f"51-r{n}-exec1") for n in (1, 2, 4, 8)}
     grafico_escala(saida["escala_post"], saida["escala_get"])
 
-    t0 = resumo("52b-hpa")["inicio_epoch"]
-    brutos = json.load(open(f"{PASTA}/52b-hpa-eventos-k8s.json", encoding="utf-8"))["items"]
+    t0 = resumo("52-hpa")["inicio_epoch"]
+    brutos = json.load(open(f"{PASTA}/52-hpa-eventos-k8s.json", encoding="utf-8"))["items"]
     decisoes = sorted(({"t": round(epoca_iso(e["lastTimestamp"]) - t0), "hora": datetime.datetime.fromtimestamp(epoca_iso(e["lastTimestamp"])).strftime("%H:%M:%S"),
                         "mensagem": e["message"][:60]} for e in brutos if e["reason"] == "SuccessfulRescale" and e["lastTimestamp"] and epoca_iso(e["lastTimestamp"]) >= t0 - 5), key=lambda e: e["t"])
-    saida["hpa"] = {"decisoes": decisoes, "resumo": {k: resumo("52b-hpa")[k] for k in ("requisicoes", "falhas", "vazao_req_s", "p95_ms")}}
-    grafico_hpa("52b-hpa", decisoes)
+    saida["hpa"] = {"decisoes": decisoes, "resumo": {k: resumo("52-hpa")[k] for k in ("requisicoes", "falhas", "vazao_req_s", "p95_ms")}}
+    grafico_hpa("52-hpa", decisoes)
 
     saida["resiliencia"] = [recuperacao(n) for n in ("53-pod-exec1", "53-pod-exec2", "53-pod-exec3", "53-no-sem-banco", "53-no-com-banco")]
     grafico_resiliencia()
@@ -244,8 +233,6 @@ def main():
     saida["rolling"] = [atualizacao(f"54-{p}-{g}-exec{i}") for p in ("sem-prestop", "com-prestop") for g in ("update", "undo") for i in (1, 2, 3)]
     grafico_rolling()
 
-    saida["fila"] = [linha_55("com-fila"), linha_55("sem-fila")]
-    grafico_fila(saida["fila"])
     json.dump(saida, open(f"{PASTA}/tabelas.json", "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     print(json.dumps(saida, ensure_ascii=False, indent=1))
 

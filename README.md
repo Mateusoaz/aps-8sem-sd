@@ -1,6 +1,8 @@
 # APS 2026 — Gerenciamento de Informações Ambientais Urbanas
 
-Três APIs REST em **.NET 8 (C#)**, cada uma cuidando de um domínio ambiental, gravando num **PostgreSQL**, com cache no **Redis**, fila no **RabbitMQ** e um cliente web leve. Tudo roda em contêineres: no **Docker Compose** (desenvolvimento) ou num cluster **Kubernetes** (Etapa 3).
+Três APIs REST em **.NET 8 (C#)**, cada uma cuidando de um domínio ambiental, gravando num **PostgreSQL**. Tudo roda em contêineres: no **Docker Compose** (desenvolvimento) ou num cluster **Kubernetes** (Etapa 3).
+
+> Em 12/11/2026 tiramos o Redis, o RabbitMQ e o cliente web: o alerta é avaliado dentro do POST e as consultas vão direto ao banco. As medições das Etapas 4 e 5 foram refeitas depois disso; os resultados antigos estão em `resultados/antes-da-remocao/`.
 
 | API | Domínio | Porta (host) | Banco |
 |---|---|---|---|
@@ -13,14 +15,13 @@ Três APIs REST em **.NET 8 (C#)**, cada uma cuidando de um domínio ambiental, 
  ┌──────────────────────────────────────────────────────────────────────┐
  │  rede "backend" (DNS interno: cada serviço é achado pelo NOME)       │
  │                                                                      │
- │  web-client :80 (página + encaminha os prefixos para as APIs)        │
- │       │                                                              │
- │  air-quality-api :8080 ─┐    ┌─► postgres:5432 ─► volume postgres-data
- │  flooding-api    :8080 ─┼────┼─► redis:6379     (cache das consultas)│
- │  thermal-inv-api :8080 ─┘    └─► rabbitmq:5672  (fila dos alertas)   │
+ │                                                                      │
+ │  air-quality-api :8080 ─┐                                            │
+ │  flooding-api    :8080 ─┼──► postgres:5432 ─► volume postgres-data   │
+ │  thermal-inv-api :8080 ─┘                                            │
  └──────────────────────────────────────────────────────────────────────┘
-   ▲ 8080     ▲ 5001   ▲ 5002   ▲ 5003     ▲ 5432      ▲ 15672
-   └──────── portas publicadas no seu computador (localhost) ────────┘
+          ▲ 5001   ▲ 5002   ▲ 5003     ▲ 5432
+          └──── portas publicadas no seu computador (localhost) ────┘
 ```
 
 ## Como rodar (máquina limpa)
@@ -36,11 +37,9 @@ docker compose up -d --build
 
 Depois abra no navegador:
 
-- http://localhost:8080 — **cliente web** (leituras, alertas e qual instância respondeu)
 - http://localhost:5001/swagger — Qualidade do ar
 - http://localhost:5002/swagger — Alagamento
 - http://localhost:5003/swagger — Inversão térmica
-- http://localhost:15672 — painel do RabbitMQ (usuário e senha do `.env`)
 
 ### Comandos do dia a dia
 
@@ -107,9 +106,8 @@ k3d cluster create aps --agents 2 -p "8081:80@loadbalancer"
 docker build --build-arg APP_VERSION=1.1.0 -t aps-sd/air-quality-api:1.1.0       ./src/AirQuality.Api
 docker build --build-arg APP_VERSION=1.1.0 -t aps-sd/flooding-api:1.1.0          ./src/Flooding.Api
 docker build --build-arg APP_VERSION=1.1.0 -t aps-sd/thermal-inversion-api:1.1.0 ./src/ThermalInversion.Api
-docker build -t aps-sd/web-client:1.1.0 ./src/WebClient
 k3d image import aps-sd/air-quality-api:1.1.0 aps-sd/flooding-api:1.1.0 \
-  aps-sd/thermal-inversion-api:1.1.0 aps-sd/web-client:1.1.0 -c aps
+  aps-sd/thermal-inversion-api:1.1.0 -c aps
 
 # 3. namespace, Secret (a partir do .env, que não vai para o Git) e o resto
 cp .env.example .env
@@ -119,13 +117,12 @@ kubectl apply -f k8s/
 kubectl rollout status deployment/air-quality-api -n aps
 ```
 
-> Postgres, Redis e RabbitMQ são baixados pelo próprio cluster na primeira vez (1 a 3 minutos). Enquanto isso as APIs ficam `0/1`, esperando o banco — é a startup probe funcionando, não um erro.
+> O Postgres é baixado pelo próprio cluster na primeira vez (1 a 3 minutos). Enquanto isso as APIs ficam `0/1`, esperando o banco — é a startup probe funcionando, não um erro.
 
-Tudo entra pelo **Ingress** (gateway único), roteado por caminho. O prefixo vem antes da rota normal da API:
+Tudo entra pelo **Ingress** (gateway único), roteado por caminho. O prefixo vem antes da rota normal da API. O Swagger de cada API, acessado pelo gateway, faz o papel de cliente leve:
 
 | Serviço | Prefixo no gateway | Endereço |
 |---|---|---|
-| Cliente web | `/` | http://localhost:8081 |
 | Qualidade do ar | `/air-quality` | http://localhost:8081/air-quality/swagger |
 | Alagamento | `/flooding` | http://localhost:8081/flooding/swagger |
 | Inversão térmica | `/thermal-inversion` | http://localhost:8081/thermal-inversion/swagger |
@@ -139,11 +136,8 @@ for i in $(seq 10); do
   curl -s -o /dev/null -D - http://localhost:8081/air-quality/health/live | grep -i x-pod
 done | sort | uniq -c
 
-# cache: a 1ª chamada é MISS, as seguintes HIT — mesmo caindo em pods diferentes
-curl -s -o /dev/null -D - http://localhost:8081/air-quality/api/v1/air-quality/areas/CENTRO/average | grep -iE "x-cache|x-pod"
-
-# fila: quantas mensagens esperando e quantos consumidores (um por pod de API)
-kubectl exec -n aps rabbitmq-0 -- rabbitmqctl -q list_queues name messages consumers
+# em qual nó está cada pod (as réplicas ficam espalhadas pelos 3 nós)
+kubectl get pods -n aps -o wide
 
 # gerador de carga pelo gateway
 python tools/load-generator/generator.py --rate 100 --duration 60 \
@@ -155,13 +149,10 @@ python tools/load-generator/generator.py --rate 100 --duration 60 \
 | Arquivo | O que cria |
 |---|---|
 | `k8s/00-namespace.yaml` | namespace `aps` |
-| `k8s/01-configmap.yaml` | configuração comum (hosts, tempo do cache, limites de alerta) |
+| `k8s/01-configmap.yaml` | configuração comum (host do banco, limites de alerta) |
 | `k8s/10-postgres.yaml` | Service headless + StatefulSet do PostgreSQL, com volume de 1 GiB |
-| `k8s/11-redis.yaml` | Deployment + Service do Redis (cache, sem volume) |
-| `k8s/12-rabbitmq.yaml` | Service headless + StatefulSet do RabbitMQ, com volume de 1 GiB |
-| `k8s/20…22-*-api.yaml` | Deployment (2 réplicas, rolling update, probes, `preStop`, requests/limits) + Service de cada API |
-| `k8s/23-web-client.yaml` | Deployment (2 réplicas) + Service do cliente web |
-| `k8s/30-ingress.yaml` | gateway: os três prefixos das APIs e `/` para o cliente |
+| `k8s/20…22-*-api.yaml` | Deployment (2 réplicas, rolling update, probes, `preStop`, requests/limits, espalhamento pelos nós) + Service de cada API |
+| `k8s/30-ingress.yaml` | gateway: os três prefixos das APIs |
 | `k8s/40-hpa.yaml` | HPA da API de qualidade do ar (2 a 10 réplicas, CPU a 50%) |
 | `secret.example.yaml` | modelo do Secret — documentação, **não** é aplicado |
 
@@ -169,25 +160,7 @@ As evidências dos experimentos (saídas reais) e o diagrama de implantação es
 
 `GET /<prefixo>/processar?n=2000000` gasta CPU de propósito, para acionar o HPA. Para limpar: `kubectl delete namespace aps` (apaga a aplicação e os volumes) e `k3d cluster delete aps`.
 
-## Cache e fila
-
-**Cache (Redis).** As consultas agregadas mais pedidas ficam guardadas por alguns segundos (`CACHE_TTL_SECONDS`, padrão 10). É o padrão *cache-aside*: procura no Redis; se não achar, consulta o banco e guarda.
-
-| API | Consulta com cache |
-|---|---|
-| Qualidade do ar | `GET /areas/{areaId}/average` |
-| Alagamento | `GET /monitoring-points/{id}/latest` |
-| Inversão térmica | `GET /areas/{areaId}/thermal-profile` |
-
-A resposta leva o cabeçalho `X-Cache`: `HIT` (veio do cache), `MISS` (veio do banco) ou `BYPASS` (Redis fora do ar, foi direto ao banco). Como o cache fica **fora** dos pods, o que um pod guardou vale para todas as réplicas. O preço é o dado poder estar até 10 s desatualizado.
-
-**Fila (RabbitMQ).** O POST da leitura que gera alerta (`particulate`, `water-level`, `temperature-profile`) grava no banco, publica o id da leitura numa fila e responde. A regra de alerta roda depois, num consumidor em segundo plano (`Messaging/AlertConsumer.cs`).
-
-- Cada réplica da API consome a **mesma** fila (consumidores concorrentes): o RabbitMQ entrega cada mensagem a apenas uma delas.
-- Fila durável, mensagem persistente e ack manual: se o pod morrer no meio, a mensagem volta para a fila. A garantia é "ao menos uma vez", então uma reentrega pode, em caso raro, repetir um alerta.
-- Se o RabbitMQ estiver fora, o POST não falha: o alerta é avaliado ali mesmo, como antes.
-
-Por isso o `/health/ready` verifica **só o banco**: sem cache ou sem fila a API continua atendendo, só que de forma degradada.
+**Distribuição dos pods.** Os Deployments das APIs usam `topologySpreadConstraints`: as réplicas de cada serviço ficam espalhadas pelos 3 nós (`server-0`, `agent-0` e `agent-1`), com no máximo 1 de diferença, e todas as APIs juntas também tendem a se dividir entre os nós. O `nodeTaintsPolicy: Honor` ignora um nó em `drain`, para os pods não ficarem `Pending` durante a manutenção. O Kubernetes só escolhe o nó quando o pod nasce; para redistribuir depois de um `drain`, use `kubectl rollout restart deployment -n aps`. O PostgreSQL fica preso ao nó onde o volume `local-path` foi criado.
 
 ## Gerador de carga e linha de base (Etapa 4)
 
@@ -206,16 +179,15 @@ python carga/loadgen.py http://localhost:8081/air-quality/api/v1/air-quality/par
 
 Cada execução grava em `resultados/` um CSV por requisição, um CSV por segundo e um JSON com o resumo.
 
-Para repetir a linha de base, deixe 1 réplica de cada serviço e remova o HPA. No fim, `kubectl apply -f k8s/` restaura o cluster.
+Para repetir a linha de base (o script deixa 1 réplica de cada serviço e remove o HPA; no fim, `kubectl apply -f k8s/` restaura o cluster):
 
 ```bash
-kubectl delete hpa air-quality-api -n aps
-kubectl scale deployment air-quality-api flooding-api thermal-inversion-api web-client -n aps --replicas=1
 bash carga/linha_base.sh
 python carga/analisa_base.py
+kubectl apply -f k8s/
 ```
 
-**Resultado:** com 1 réplica e limite de 500m de CPU, a ingestão chegou a **832 req/s com p95 de 108 ms** em 64 trabalhadores, sem erros. Em 128 trabalhadores, 96% das requisições receberam `503`. O recurso que saturou foi a CPU do pod. Esse valor não é sustentável, porque a fila de alertas acumulou 56 mil mensagens; ela só acompanhou até cerca de 240 req/s. Análise completa em [`docs/etapa4/`](docs/etapa4/README.md).
+**Resultado (12/11/2026):** com 1 réplica e limite de 500m de CPU, a ingestão chegou a **cerca de 490 req/s com p95 de 102 ms** em 32 trabalhadores e depois parou de crescer; só a latência subiu, sem erros até 256 trabalhadores. A consulta agregada, sem cache, chegou a **383 req/s com p95 de 106 ms**. Nas duas rotas o recurso que saturou primeiro foi a CPU do pod. Análise em [`docs/etapa4/`](docs/etapa4/README.md).
 
 ## Experimentos de escalabilidade e resiliência (Etapa 5)
 
@@ -225,21 +197,23 @@ python carga/analisa_base.py
 docker build --build-arg APP_VERSION=1.2.0 -t aps-sd/air-quality-api:1.2.0 ./src/AirQuality.Api
 k3d image import aps-sd/air-quality-api:1.2.0 -c aps
 
-python carga/experimentos.py 5.3 5.4 5.5 5.1b 5.1g 5.2b   # cenários com o pool corrigido, sem as rodadas antigas
-python carga/analisa_etapa5.py                            # tabelas e gráficos
+python carga/experimentos.py        # 5.1, 5.1g, 5.2, 5.3 e 5.4; pula o que já terminou
+python carga/analisa_etapa5.py      # tabelas e gráficos
 ```
+
+Resultados de 12/11/2026, sem Redis e RabbitMQ:
 
 | Experimento | Resultado |
 |---|---|
-| Escala manual (POST, 64 trabalhadores) | 616 req/s com 1 réplica e 1.378 com 4, ganho de 2,24×; o banco chegou ao limite de CPU |
-| HPA | De 2 para 10 réplicas em 59 s, 0 falhas em 244.835 requisições |
-| Pod apagado | 0 a 29 falhas, substituto pronto em 4 a 5 s |
-| Nó drenado sem banco | 6 falhas em 56.713 requisições |
-| Nó drenado com banco | Cerca de 53 s fora do ar, porque o volume está preso ao nó |
-| Rolling update | 0 falhas com `preStop`; 24 a 47 sem ele |
-| Fila × síncrono | Com fila o p50 é menor, mas o trabalho só é adiado (cerca de 34 mil mensagens pendentes) |
+| Escala manual (POST, 64 trabalhadores) | 588 req/s com 1 réplica, 1.124 com 4 e 1.140 com 8: ganho máximo de 1,94×; o banco chegou ao limite de CPU com 4 |
+| Escala manual (GET) | 351 req/s com 1 réplica e cerca de 450 com 2 ou mais; sem cache, o banco limita |
+| HPA | De 2 para 10 réplicas em 68 s; no pico da rampa, 5 s de `503` (17.359 falhas em 212.707), porque a readiness falhou nas 10 réplicas juntas com o banco no limite |
+| Pod apagado | 0 falhas, substituto pronto em 4 a 8 s |
+| Nó drenado sem banco | 0 falhas em 71.055 requisições |
+| Nó drenado com banco | Cerca de 52 s fora do ar, porque o volume está preso ao nó |
+| Rolling update | 0 falhas com `preStop`; 25 a 48 sem ele |
 
-Os testes revelaram um defeito: cada pod podia abrir até 100 conexões, e as réplicas esgotavam as 100 vagas do PostgreSQL, derrubando todos os pods ao mesmo tempo. Por isso os manifestos das APIs usam `Maximum Pool Size=8`, e também um `preStop` de 5 s, que elimina as falhas na troca de versão.
+Os testes da primeira rodada revelaram um defeito: cada pod podia abrir até 100 conexões, e as réplicas esgotavam as 100 vagas do PostgreSQL, derrubando todos os pods ao mesmo tempo. Por isso os manifestos das APIs usam `Maximum Pool Size=8`, e também um `preStop` de 5 s, que elimina as falhas na troca de versão.
 
 Hipóteses em [`docs/etapa5/hipoteses.md`](docs/etapa5/hipoteses.md) e análise em [`docs/etapa5/`](docs/etapa5/README.md). Os CSVs por requisição estão compactados (`.csv.gz`).
 
@@ -258,20 +232,18 @@ aps-8sem-sd/
 ├── tools/
 │   └── load-generator/         # gerador de carga em Python (dados aleatórios)
 └── src/
-    ├── WebClient/              # cliente leve: index.html servido por nginx
     ├── AirQuality.Api/
     ├── Flooding.Api/
     └── ThermalInversion.Api/
         ├── Dockerfile          # build multi-stage
         ├── .dockerignore
-        ├── Program.cs          # configuração: banco, cache, fila, health checks, swagger
+        ├── Program.cs          # configuração: banco, health checks, swagger
         ├── ApiRoutes.cs        # prefixo das rotas (api/v1/<domínio>)
         ├── Controllers/        # rotas HTTP
         ├── Models/             # entidades = tabelas do banco
         ├── Dtos/               # formato do que entra (POST) e sai (respostas agregadas)
         ├── Data/               # DbContext, criação do banco, filtros reutilizáveis
-        ├── Services/           # regra de alerta e cache das consultas
-        ├── Messaging/          # fila: publicação da leitura e consumidor dos alertas
+        ├── Services/           # regra de alerta
         └── Options/            # limites configuráveis dos alertas
 ```
 
@@ -363,7 +335,7 @@ Limites configuráveis pelo `.env`, sem recompilar:
 
 O alerta é gerado **uma vez por episódio**, e não a cada leitura acima do limite. Exemplo com cota de 300 cm e leituras 250 → 320 → 350 → 200 → 310: são emitidos 2 alertas, um no 320 e outro no 310.
 
-A regra roda **fora do POST**: a leitura é publicada numa fila e um consumidor avalia o alerta (veja [Cache e fila](#cache-e-fila)). É o processamento assíncrono pedido pela APS.
+A regra roda **dentro do POST**, logo depois de gravar a leitura.
 
 ## Convenções de nomenclatura
 
@@ -382,7 +354,7 @@ A regra roda **fora do POST**: a leitura é publicada numa fila e um consumidor 
 
 ## Como funciona — conceitos
 
-**Compose não é "contêiner dentro de contêiner".** O `docker-compose.yml` descreve 7 contêineres **irmãos** (postgres, redis, rabbitmq, 3 APIs e o cliente web) e o Compose sobe todos juntos, com um comando. Eles ficam numa rede virtual própria (`backend`) com DNS interno. Por isso a API encontra o banco pelo nome `postgres` (`Host=postgres`), sem IP fixo e sem `localhost`. Dentro de um contêiner, `localhost` é o **próprio** contêiner.
+**Compose não é "contêiner dentro de contêiner".** O `docker-compose.yml` descreve 4 contêineres **irmãos** (postgres e as 3 APIs) e o Compose sobe todos juntos, com um comando. Eles ficam numa rede virtual própria (`backend`) com DNS interno. Por isso a API encontra o banco pelo nome `postgres` (`Host=postgres`), sem IP fixo e sem `localhost`. Dentro de um contêiner, `localhost` é o **próprio** contêiner.
 
 **`depends_on` + `healthcheck`.** As APIs só iniciam depois que o Postgres responde ao `pg_isready`. Mesmo assim, a API tem sua própria lógica de nova tentativa (`DatabaseInitializer`), porque no Kubernetes (etapa 3) não existe `depends_on`.
 
@@ -414,7 +386,7 @@ A regra roda **fora do POST**: a leitura é publicada numa fila e um consumidor 
 | 10 | Config por variáveis de ambiente | `.env.example` versionado, `.env` no `.gitignore` |
 | 11 | Nenhuma credencial no código | senha só no `.env` |
 | 12 | Liveness e readiness distintos | `curl localhost:5002/health/live` e `/health/ready` |
-| 13 | Cliente leve consumindo a API | Cliente web em `src/WebClient/` e Swagger UI (`/swagger`) |
+| 13 | Cliente leve consumindo a API | Swagger UI (`/swagger`) de cada API |
 
 ### Dados para a ficha (seções 5 e 6)
 

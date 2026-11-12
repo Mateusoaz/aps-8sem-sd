@@ -7,37 +7,34 @@
     "rampa_s": null,
     "processos_gerador": 4,
     "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate",
-    "replicas": 8
+    "replicas": 8,
+    "pool_conexoes": 8
   },
-  "inicio": "2026-11-01T04:15:47",
-  "inicio_epoch": 1793517347.5003247,
+  "inicio": "2026-11-12T02:03:18",
+  "inicio_epoch": 1794459798.1746526,
   "eventos": [],
-  "requisicoes": 24740,
-  "falhas": 31,
-  "taxa_erro_pct": 0.125,
-  "vazao_req_s": 494.2,
-  "latencia_media_ms": 128.77,
-  "p50_ms": 93.24,
-  "p95_ms": 222.81,
-  "p99_ms": 1298.11,
-  "little_trabalhadores": 63.7,
+  "requisicoes": 58136,
+  "falhas": 0,
+  "taxa_erro_pct": 0.0,
+  "vazao_req_s": 1162.7,
+  "latencia_media_ms": 54.98,
+  "p50_ms": 71.0,
+  "p95_ms": 98.19,
+  "p99_ms": 109.98,
+  "little_trabalhadores": 63.9,
   "por_pod": {
-    "air-quality-api-68cd867567-ng9lk": 3148,
-    "air-quality-api-68cd867567-857w5": 3076,
-    "air-quality-api-68cd867567-wn6t7": 3442,
-    "air-quality-api-68cd867567-f994j": 3188,
-    "air-quality-api-68cd867567-htvtt": 2859,
-    "air-quality-api-68cd867567-bk9zv": 3445,
-    "air-quality-api-68cd867567-bhj7x": 2437,
-    "(sem X-Pod)": 31,
-    "air-quality-api-68cd867567-29fc4": 3114
+    "air-quality-api-68cf988864-xxbvb": 7268,
+    "air-quality-api-68cf988864-px4jm": 7267,
+    "air-quality-api-68cf988864-2gps2": 7268,
+    "air-quality-api-68cf988864-ggprj": 7266,
+    "air-quality-api-68cf988864-l2bv5": 7267,
+    "air-quality-api-68cf988864-855x2": 7266,
+    "air-quality-api-68cf988864-4kbv2": 7267,
+    "air-quality-api-68cf988864-wvg8b": 7267
   },
   "por_versao": {
-    "1.1.0": 24709,
-    "(sem)": 31
+    "1.1.0": 58136
   },
-  "por_erro": {
-    "timeout": 31
-  },
-  "requisicoes_no_aquecimento": 4688
+  "por_erro": {},
+  "requisicoes_no_aquecimento": 11315
 }

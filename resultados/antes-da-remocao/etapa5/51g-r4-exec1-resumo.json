@@ -1,0 +1,36 @@
+{
+  "nome": "51g-r4-exec1",
+  "parametros": {
+    "trabalhadores": 64,
+    "duracao_s": 60,
+    "aquecimento_s": 10,
+    "rampa_s": null,
+    "processos_gerador": 4,
+    "url": "http://localhost:8081/air-quality/api/v1/air-quality/areas/CENTRO/average?hours=24",
+    "replicas": 4,
+    "pool_conexoes": 8
+  },
+  "inicio": "2026-11-01T12:24:22",
+  "inicio_epoch": 1793546662.9640715,
+  "eventos": [],
+  "requisicoes": 107311,
+  "falhas": 0,
+  "taxa_erro_pct": 0.0,
+  "vazao_req_s": 2146.2,
+  "latencia_media_ms": 30.12,
+  "p50_ms": 8.71,
+  "p95_ms": 68.61,
+  "p99_ms": 790.05,
+  "little_trabalhadores": 64.7,
+  "por_pod": {
+    "air-quality-api-f8944cd8c-hhfn5": 26829,
+    "air-quality-api-f8944cd8c-5547s": 26830,
+    "air-quality-api-f8944cd8c-6kfsn": 26826,
+    "air-quality-api-f8944cd8c-9rzl5": 26826
+  },
+  "por_versao": {
+    "1.1.0": 107311
+  },
+  "por_erro": {},
+  "requisicoes_no_aquecimento": 17469
+}

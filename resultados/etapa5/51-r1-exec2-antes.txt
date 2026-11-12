@@ -1,0 +1,5 @@
+NAME                                   READY   STATUS    RESTARTS      AGE   IP            NODE               NOMINATED NODE   READINESS GATES
+air-quality-api-68cf988864-wvg8b       1/1     Running   0             36m   10.42.1.118   k3d-aps-agent-1    <none>           <none>
+flooding-api-5d7b46f7b8-n4qjg          1/1     Running   0             36m   10.42.2.155   k3d-aps-server-0   <none>           <none>
+postgres-0                             1/1     Running   5 (41m ago)   10d   10.42.1.113   k3d-aps-agent-1    <none>           <none>
+thermal-inversion-api-fd7fd857-26w8c   1/1     Running   0             36m   10.42.1.117   k3d-aps-agent-1    <none>           <none>

@@ -10,38 +10,34 @@
     "replicas": 3,
     "no": "k3d-aps-server-0"
   },
-  "inicio": "2026-11-01T04:37:26",
-  "inicio_epoch": 1793518646.9659302,
+  "inicio": "2026-11-12T02:41:37",
+  "inicio_epoch": 1794462097.8693857,
   "eventos": [
     {
       "evento": "kubectl drain k3d-aps-server-0",
-      "epoch": 1793518671.9666944,
-      "hora": "04:37:51",
+      "epoch": 1794462122.8700738,
+      "hora": "02:42:02",
       "decorrido_s": 25.0
     }
   ],
-  "requisicoes": 52112,
-  "falhas": 6,
-  "taxa_erro_pct": 0.012,
-  "vazao_req_s": 473.7,
-  "latencia_media_ms": 33.73,
-  "p50_ms": 14.53,
-  "p95_ms": 89.2,
-  "p99_ms": 311.37,
+  "requisicoes": 67043,
+  "falhas": 0,
+  "taxa_erro_pct": 0.0,
+  "vazao_req_s": 609.5,
+  "latencia_media_ms": 26.22,
+  "p50_ms": 6.52,
+  "p95_ms": 91.33,
+  "p99_ms": 103.25,
   "little_trabalhadores": 16.0,
   "por_pod": {
-    "air-quality-api-68cd867567-d7c8x": 3066,
-    "air-quality-api-68cd867567-mfmms": 17730,
-    "air-quality-api-68cd867567-h42px": 17730,
-    "(sem X-Pod)": 6,
-    "air-quality-api-68cd867567-kbrkk": 13580
+    "air-quality-api-68cf988864-hm556": 3140,
+    "air-quality-api-68cf988864-zhdtp": 22727,
+    "air-quality-api-68cf988864-5tb9c": 22728,
+    "air-quality-api-68cf988864-r6fqg": 18448
   },
   "por_versao": {
-    "1.1.0": 52106,
-    "(sem)": 6
+    "1.1.0": 67043
   },
-  "por_erro": {
-    "http_502": 6
-  },
-  "requisicoes_no_aquecimento": 4601
+  "por_erro": {},
+  "requisicoes_no_aquecimento": 4012
 }

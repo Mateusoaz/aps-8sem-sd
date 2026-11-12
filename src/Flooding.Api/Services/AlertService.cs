@@ -9,7 +9,7 @@ namespace Flooding.Api.Services;
 /// <summary>
 /// Regra: nível da água acima da cota de transbordamento.
 /// O alerta é gerado quando o nível CRUZA a cota (leitura anterior abaixo ou inexistente), não a cada leitura.
-/// Roda no consumidor da fila (Messaging/AlertConsumer); o POST só publica a leitura.
+/// Chamado pelo POST, logo depois de gravar a leitura.
 /// </summary>
 public class AlertService(FloodingDbContext db, IOptions<AlertOptions> options, ILogger<AlertService> logger)
 {

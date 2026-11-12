@@ -1,7 +1,4 @@
-air-quality-api-68cd867567-p89mz         0/1   Running   1 (7m35s ago)    22h
-flooding-api-64c64bf-rq55w               0/1   Running   13 (7m35s ago)   21d
-postgres-0                               1/1   Running   2 (7m35s ago)    15d
-rabbitmq-0                               1/1   Running   11 (7m33s ago)   21d
-redis-86f665b87d-jfrtr                   1/1   Running   11 (7m33s ago)   21d
-thermal-inversion-api-7467c478df-5879z   0/1   Running   11 (7m35s ago)   20d
-web-client-7447b58975-tlqqf              1/1   Running   1 (7m48s ago)    22h
+air-quality-api-68cf988864-wvg8b       1/1   Running   0             9m26s   10.42.1.118   k3d-aps-agent-1    <none>   <none>
+flooding-api-5d7b46f7b8-n4qjg          1/1   Running   0             9m27s   10.42.2.155   k3d-aps-server-0   <none>   <none>
+postgres-0                             1/1   Running   5 (14m ago)   10d     10.42.1.113   k3d-aps-agent-1    <none>   <none>
+thermal-inversion-api-fd7fd857-26w8c   1/1   Running   0             9m30s   10.42.1.117   k3d-aps-agent-1    <none>   <none>

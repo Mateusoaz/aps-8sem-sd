@@ -1,0 +1,500 @@
+{
+  "escala_antes": [
+    {
+      "replicas": 1,
+      "vazao": 760.17,
+      "vazao_min": 542.0,
+      "vazao_max": 873.5,
+      "p50": 88.39,
+      "p95": 138.07,
+      "erros": 0.0,
+      "ganho": 1.0,
+      "ideal": 1,
+      "s_amdahl": null,
+      "cpu_api": 499.67,
+      "cpu_banco": 410.33,
+      "fila_fim": 35872.33,
+      "cpu_maquina": 44.87
+    },
+    {
+      "replicas": 2,
+      "vazao": 666.3,
+      "vazao_min": 433.4,
+      "vazao_max": 1046.2,
+      "p50": 52.24,
+      "p95": 261.83,
+      "erros": 30.46,
+      "ganho": 0.88,
+      "ideal": 2,
+      "s_amdahl": 1.282,
+      "cpu_api": 884,
+      "cpu_banco": 899.33,
+      "fila_fim": 30984.67,
+      "cpu_maquina": 66.57
+    },
+    {
+      "replicas": 4,
+      "vazao": 242.2,
+      "vazao_min": 207.4,
+      "vazao_max": 273.9,
+      "p50": 72.32,
+      "p95": 694.13,
+      "erros": 0.44,
+      "ganho": 0.32,
+      "ideal": 4,
+      "s_amdahl": 3.851,
+      "cpu_api": 1303.33,
+      "cpu_banco": 942.33,
+      "fila_fim": 4522.33,
+      "cpu_maquina": 51.07
+    },
+    {
+      "replicas": 8,
+      "vazao": 378.97,
+      "vazao_min": 242.3,
+      "vazao_max": 494.2,
+      "p50": 92.74,
+      "p95": 377.02,
+      "erros": 0.4,
+      "ganho": 0.5,
+      "ideal": 8,
+      "s_amdahl": 2.15,
+      "cpu_api": 1785.33,
+      "cpu_banco": 955,
+      "fila_fim": 4191,
+      "cpu_maquina": 48.83
+    }
+  ],
+  "escala_post": [
+    {
+      "replicas": 1,
+      "vazao": 615.83,
+      "vazao_min": 564.2,
+      "vazao_max": 675.6,
+      "p50": 96.54,
+      "p95": 233.12,
+      "erros": 0.0,
+      "ganho": 1.0,
+      "ideal": 1,
+      "s_amdahl": null,
+      "cpu_api": 498.67,
+      "cpu_banco": 343.33,
+      "fila_fim": 32038,
+      "cpu_maquina": 42.47
+    },
+    {
+      "replicas": 2,
+      "vazao": 1054.13,
+      "vazao_min": 961.4,
+      "vazao_max": 1102.5,
+      "p50": 68.06,
+      "p95": 105.46,
+      "erros": 0.0,
+      "ganho": 1.71,
+      "ideal": 2,
+      "s_amdahl": 0.168,
+      "cpu_api": 993.67,
+      "cpu_banco": 649.67,
+      "fila_fim": 52505.67,
+      "cpu_maquina": 54.83
+    },
+    {
+      "replicas": 4,
+      "vazao": 1377.87,
+      "vazao_min": 1354.1,
+      "vazao_max": 1420.4,
+      "p50": 37.13,
+      "p95": 89.68,
+      "erros": 0.0,
+      "ganho": 2.24,
+      "ideal": 4,
+      "s_amdahl": 0.263,
+      "cpu_api": 1977,
+      "cpu_banco": 972,
+      "fila_fim": 61255,
+      "cpu_maquina": 67.13
+    },
+    {
+      "replicas": 8,
+      "vazao": 1044.63,
+      "vazao_min": 1024.5,
+      "vazao_max": 1065.4,
+      "p50": 61.56,
+      "p95": 100.58,
+      "erros": 0.0,
+      "ganho": 1.7,
+      "ideal": 8,
+      "s_amdahl": 0.531,
+      "cpu_api": 2976,
+      "cpu_banco": 999.67,
+      "fila_fim": 27266,
+      "cpu_maquina": 62.43
+    }
+  ],
+  "escala_get": [
+    {
+      "replicas": 1,
+      "vazao": 1755.0,
+      "vazao_min": 1635.0,
+      "vazao_max": 1838.5,
+      "p50": 10.88,
+      "p95": 91.0,
+      "erros": 0.0,
+      "ganho": 1.0,
+      "ideal": 1,
+      "s_amdahl": null,
+      "cpu_api": 456.33,
+      "cpu_banco": 27,
+      "fila_fim": 0,
+      "cpu_maquina": 45.03
+    },
+    {
+      "replicas": 2,
+      "vazao": 2375.17,
+      "vazao_min": 2277.2,
+      "vazao_max": 2527.1,
+      "p50": 9.88,
+      "p95": 78.18,
+      "erros": 0.0,
+      "ganho": 1.35,
+      "ideal": 2,
+      "s_amdahl": 0.478,
+      "cpu_api": 857,
+      "cpu_banco": 24.33,
+      "fila_fim": 0,
+      "cpu_maquina": 60.27
+    },
+    {
+      "replicas": 4,
+      "vazao": 2334.07,
+      "vazao_min": 2146.2,
+      "vazao_max": 2605.0,
+      "p50": 9.22,
+      "p95": 64.52,
+      "erros": 0.0,
+      "ganho": 1.33,
+      "ideal": 4,
+      "s_amdahl": 0.669,
+      "cpu_api": 1346.33,
+      "cpu_banco": 28.33,
+      "fila_fim": 0,
+      "cpu_maquina": 65.17
+    },
+    {
+      "replicas": 8,
+      "vazao": 2228.57,
+      "vazao_min": 1773.5,
+      "vazao_max": 2571.3,
+      "p50": 9.03,
+      "p95": 44.04,
+      "erros": 0.0,
+      "ganho": 1.27,
+      "ideal": 8,
+      "s_amdahl": 0.757,
+      "cpu_api": 2305,
+      "cpu_banco": 35.67,
+      "fila_fim": 0,
+      "cpu_maquina": 70.3
+    }
+  ],
+  "hpa": {
+    "decisoes": [
+      {
+        "t": 29,
+        "hora": "12:35:14",
+        "mensagem": "New size: 4; reason: cpu resource utilization (percentage of"
+      },
+      {
+        "t": 44,
+        "hora": "12:35:29",
+        "mensagem": "New size: 8; reason: cpu resource utilization (percentage of"
+      },
+      {
+        "t": 59,
+        "hora": "12:35:44",
+        "mensagem": "New size: 10; reason: cpu resource utilization (percentage o"
+      },
+      {
+        "t": 675,
+        "hora": "12:46:00",
+        "mensagem": "New size: 4; reason: All metrics below target"
+      },
+      {
+        "t": 690,
+        "hora": "12:46:15",
+        "mensagem": "New size: 2; reason: All metrics below target"
+      }
+    ],
+    "resumo": {
+      "requisicoes": 244835,
+      "falhas": 0,
+      "vazao_req_s": 816.1,
+      "p95_ms": 105.32
+    }
+  },
+  "resiliencia": [
+    {
+      "nome": "53-pod-exec1",
+      "requisicoes": 31111,
+      "falhas": 0,
+      "substituto_s": 4.3,
+      "patamar_s": 10.0,
+      "p95_antes": 65.3,
+      "por_erro": {},
+      "evento_decorrido": 25.1
+    },
+    {
+      "nome": "53-pod-exec2",
+      "requisicoes": 27895,
+      "falhas": 29,
+      "substituto_s": 4.4,
+      "patamar_s": 0.0,
+      "p95_antes": 67.9,
+      "por_erro": {
+        "http_502": 29
+      },
+      "evento_decorrido": 25.1
+    },
+    {
+      "nome": "53-pod-exec3",
+      "requisicoes": 28300,
+      "falhas": 10,
+      "substituto_s": 5.1,
+      "patamar_s": 6.0,
+      "p95_antes": 86.4,
+      "por_erro": {
+        "http_502": 10
+      },
+      "evento_decorrido": 25.1
+    },
+    {
+      "nome": "53-no-sem-banco",
+      "requisicoes": 56713,
+      "falhas": 6,
+      "substituto_s": 6.1,
+      "patamar_s": 7.0,
+      "p95_antes": 73.4,
+      "por_erro": {
+        "http_502": 6
+      },
+      "evento_decorrido": 25.0
+    },
+    {
+      "nome": "53-no-com-banco",
+      "requisicoes": 378472,
+      "falhas": 334738,
+      "substituto_s": 61.7,
+      "patamar_s": 53.0,
+      "p95_antes": 75.2,
+      "por_erro": {
+        "timeout": 20,
+        "http_500": 2,
+        "conexao_encerrada": 14703,
+        "http_503": 320013
+      },
+      "evento_decorrido": 25.0
+    }
+  ],
+  "rolling": [
+    {
+      "nome": "54-sem-prestop-update-exec1",
+      "requisicoes": 29861,
+      "falhas": 34,
+      "por_erro": {
+        "http_502": 18,
+        "timeout": 16
+      },
+      "rollout_s": 15.3,
+      "coexistencia_s": 1,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-sem-prestop-update-exec2",
+      "requisicoes": 27602,
+      "falhas": 44,
+      "por_erro": {
+        "http_502": 28,
+        "timeout": 16
+      },
+      "rollout_s": 12.6,
+      "coexistencia_s": 1,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-sem-prestop-update-exec3",
+      "requisicoes": 27565,
+      "falhas": 24,
+      "por_erro": {
+        "http_502": 8,
+        "timeout": 16
+      },
+      "rollout_s": 12.8,
+      "coexistencia_s": 2,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-sem-prestop-undo-exec1",
+      "requisicoes": 27421,
+      "falhas": 43,
+      "por_erro": {
+        "http_502": 27,
+        "timeout": 16
+      },
+      "rollout_s": 13.2,
+      "coexistencia_s": 2,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-sem-prestop-undo-exec2",
+      "requisicoes": 26894,
+      "falhas": 28,
+      "por_erro": {
+        "http_502": 12,
+        "timeout": 16
+      },
+      "rollout_s": 13.2,
+      "coexistencia_s": 2,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-sem-prestop-undo-exec3",
+      "requisicoes": 27312,
+      "falhas": 47,
+      "por_erro": {
+        "http_502": 31,
+        "timeout": 16
+      },
+      "rollout_s": 13.6,
+      "coexistencia_s": 1,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-com-prestop-update-exec1",
+      "requisicoes": 23741,
+      "falhas": 0,
+      "por_erro": {},
+      "rollout_s": 16.0,
+      "coexistencia_s": 11,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-com-prestop-update-exec2",
+      "requisicoes": 34437,
+      "falhas": 0,
+      "por_erro": {},
+      "rollout_s": 13.0,
+      "coexistencia_s": 9,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-com-prestop-update-exec3",
+      "requisicoes": 34374,
+      "falhas": 0,
+      "por_erro": {},
+      "rollout_s": 13.4,
+      "coexistencia_s": 10,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-com-prestop-undo-exec1",
+      "requisicoes": 33856,
+      "falhas": 0,
+      "por_erro": {},
+      "rollout_s": 12.5,
+      "coexistencia_s": 7,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-com-prestop-undo-exec2",
+      "requisicoes": 33681,
+      "falhas": 0,
+      "por_erro": {},
+      "rollout_s": 12.9,
+      "coexistencia_s": 10,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    },
+    {
+      "nome": "54-com-prestop-undo-exec3",
+      "requisicoes": 32720,
+      "falhas": 0,
+      "por_erro": {},
+      "rollout_s": 13.8,
+      "coexistencia_s": 10,
+      "versoes": [
+        "1.1.0",
+        "1.2.0"
+      ]
+    }
+  ],
+  "fila": [
+    {
+      "cenario": "com-fila",
+      "vazoes": [
+        351.5,
+        781.9,
+        659.8
+      ],
+      "vazao": 659.8,
+      "p50": 19.64,
+      "p95": 93.78,
+      "erros": 0.0,
+      "cpu_banco": 351,
+      "fila_fim": [
+        15082,
+        35863,
+        34312
+      ]
+    },
+    {
+      "cenario": "sem-fila",
+      "vazoes": [
+        298.8,
+        763.5,
+        779.2
+      ],
+      "vazao": 763.5,
+      "p50": 34.23,
+      "p95": 88.86,
+      "erros": 0.0,
+      "cpu_banco": 429,
+      "fila_fim": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

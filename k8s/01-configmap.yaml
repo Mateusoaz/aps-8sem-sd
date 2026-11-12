@@ -6,10 +6,7 @@ metadata:
   name: aps-config
   namespace: aps
 data:
-  BANCO_HOST: "postgres"                    # nomes dos Services (os mesmos do Compose)
-  CACHE_HOST: "redis"
-  FILA_HOST: "rabbitmq"
-  Cache__TtlSeconds: "10"                   # segundos que uma consulta agregada fica no cache
+  BANCO_HOST: "postgres"                    # nome do Service do banco (o mesmo do Compose)
   Alerts__Pm25Limit: "25"                   # qualidade do ar
   Alerts__Pm25ConsecutiveReadings: "3"
   Alerts__OverflowLevelCm: "300"            # alagamento

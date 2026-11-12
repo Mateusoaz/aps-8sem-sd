@@ -1,0 +1,17 @@
+NAMESPACE     NAME                                      READY   STATUS    RESTARTS       AGE     IP            NODE               NOMINATED NODE   READINESS GATES
+aps           air-quality-api-68cd867567-f5bll          1/1     Running   0              97s     10.42.2.95    k3d-aps-server-0   <none>           <none>
+aps           air-quality-api-68cd867567-kbrkk          1/1     Running   0              4m29s   10.42.0.208   k3d-aps-agent-0    <none>           <none>
+aps           air-quality-api-68cd867567-mfmms          1/1     Running   0              7m58s   10.42.0.207   k3d-aps-agent-0    <none>           <none>
+aps           flooding-api-64c64bf-ssdnb                1/1     Running   0              97s     10.42.2.94    k3d-aps-server-0   <none>           <none>
+aps           postgres-0                                1/1     Running   0              96s     10.42.1.10    k3d-aps-agent-1    <none>           <none>
+aps           rabbitmq-0                                1/1     Running   12 (76m ago)   22d     10.42.0.196   k3d-aps-agent-0    <none>           <none>
+aps           redis-86f665b87d-jfrtr                    1/1     Running   12 (76m ago)   22d     10.42.0.194   k3d-aps-agent-0    <none>           <none>
+aps           thermal-inversion-api-7467c478df-ctf2v    1/1     Running   0              97s     10.42.2.93    k3d-aps-server-0   <none>           <none>
+aps           web-client-7447b58975-7nt7n               1/1     Running   1 (76m ago)    8h      10.42.0.201   k3d-aps-agent-0    <none>           <none>
+kube-system   coredns-8db54c48d-ngl5p                   1/1     Running   0              97s     10.42.2.96    k3d-aps-server-0   <none>           <none>
+kube-system   local-path-provisioner-5d9d9885bc-bb6ns   1/1     Running   12 (76m ago)   22d     10.42.0.193   k3d-aps-agent-0    <none>           <none>
+kube-system   metrics-server-786d997795-ss7fj           1/1     Running   0              97s     10.42.2.98    k3d-aps-server-0   <none>           <none>
+kube-system   svclb-traefik-9c6dd2c8-6674r              2/2     Running   39 (76m ago)   22d     10.42.0.190   k3d-aps-agent-0    <none>           <none>
+kube-system   svclb-traefik-9c6dd2c8-n4xtr              2/2     Running   22 (76m ago)   22d     10.42.2.81    k3d-aps-server-0   <none>           <none>
+kube-system   svclb-traefik-9c6dd2c8-sctcg              2/2     Running   38 (76m ago)   22d     10.42.1.246   k3d-aps-agent-1    <none>           <none>
+kube-system   traefik-9bcdbbd9-vvhmt                    1/1     Running   0              97s     10.42.2.97    k3d-aps-server-0   <none>           <none>

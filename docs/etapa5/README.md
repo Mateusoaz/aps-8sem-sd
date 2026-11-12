@@ -1,14 +1,48 @@
 # Etapa 5: experimentos de escalabilidade e resiliência
 
+## Medição atual (12/11/2026, sem Redis e RabbitMQ)
+
+Todos os experimentos foram refeitos depois de tirar o cache e a fila e de espalhar as réplicas pelos 3 nós (`topologySpreadConstraints`). Mesmos procedimentos de antes; o experimento da fila saiu, porque a fila não existe mais. Arquivos em `resultados/etapa5/`, tabelas em `resultados/etapa5/tabelas.json`.
+
+| Experimento | Resultado | Hipótese |
+|---|---|---|
+| Escala manual, POST | 588 → 954 → 1.124 → 1.140 req/s com 1, 2, 4 e 8 réplicas (ganho 1,62×, 1,91×, 1,94×); banco a 992m com 4 e 998m com 8; 0 falhas | Refutada |
+| Escala manual, GET | 351 → 452 → 441 → 438 req/s; sem cache, o banco chega a 898m com 2 e 1.000m com 4 | — |
+| HPA | Decisões aos 29, 44 e 59 s; 10 réplicas prontas aos 68 s; no pico da rampa (120 s) o p95 passou de 7 s, a readiness falhou nas 10 réplicas juntas e houve 5 s de `503` (17.359 falhas em 212.707); redução 315 s depois do fim da carga | Em parte |
+| Pod apagado | 0 falhas nas 3 execuções; substituto pronto em 4,1 a 8,0 s | Confirmada |
+| Nó drenado sem banco (`server-0`) | 0 falhas em 71.055 | Confirmada |
+| Nó drenado com banco (`agent-1`) | ~52 s fora do ar, até 7 s depois do `uncordon`; vazão normal 31 s depois dele | Confirmada |
+| Rolling update e undo | 0 falhas com `preStop`; 25 a 48 sem ele (16 timeouts em cada); versões juntas por 8 s com `preStop` e 1 s sem | Confirmada |
+
+![Ganho de vazão e CPU do banco](../../resultados/etapa5/grafico-51-escala.png)
+
+![HPA sob carga em rampa](../../resultados/etapa5/grafico-52-hpa.png)
+
+![Resiliência](../../resultados/etapa5/grafico-53-resiliencia.png)
+
+![Rolling update](../../resultados/etapa5/grafico-54-rolling.png)
+
+**Amdahl.** Com ganho de 1,91 em 4 réplicas, s ≈ 0,37: cerca de 37% do trabalho depende do banco único. A previsão para 8 réplicas seria 2,2×; medimos 1,94×. O ganho caiu em relação à medição anterior (2,24× com 4) porque, sem a fila, cada POST também consulta o banco para avaliar o alerta.
+
+**Distribuição.** Com 8 réplicas da air-quality-api, ficaram 3 no `server-0`, 3 no `agent-0` e 2 no `agent-1`. O PostgreSQL continua no `agent-1`, preso ao volume.
+
+**Limitações.** Os 3 nós dividem o mesmo notebook, com memória entre 94% e 97% durante os testes; o HPA e cada drenagem têm uma execução só.
+
+---
+
+## Medição anterior (01/11/2026, com Redis e RabbitMQ)
+
+O texto abaixo descreve a primeira rodada de experimentos. Os arquivos estão em `resultados/antes-da-remocao/etapa5/`.
+
 Medições de 01/11/2026, comparadas com a linha de base da Etapa 4. As hipóteses foram registradas antes de medir, em
-[hipoteses.md](hipoteses.md). Os arquivos brutos estão em `resultados/etapa5/`, os procedimentos em `carga/experimentos.py`
-e as tabelas em `resultados/etapa5/tabelas.json`.
+[hipoteses.md](hipoteses.md). Os arquivos brutos estão em `resultados/antes-da-remocao/etapa5/`, os procedimentos em `carga/experimentos.py`
+e as tabelas em `resultados/antes-da-remocao/etapa5/tabelas.json`.
 
 **Resultado principal:** escalar a API levou a vazão de ingestão de 616 para 1.378 req/s com 4 réplicas (2,24×, longe dos 4×
 ideais), porque o gargalo passou da CPU do pod para o banco, que chegou ao limite de 1 núcleo. Antes disso, os experimentos
 revelaram um defeito real: sem limite de conexões, as réplicas esgotavam o banco e derrubavam o sistema inteiro.
 
-## Ambiente
+### Ambiente
 
 | Item | Valor |
 |---|---|
@@ -20,7 +54,7 @@ revelaram um defeito real: sem limite de conexões, as réplicas esgotavam o ban
 
 Usamos 4 processos porque um só limitaria a medição: na Etapa 4, ele usou 52% de um núcleo a 830 req/s.
 
-## O defeito encontrado: conexões esgotadas
+### O defeito encontrado: conexões esgotadas
 
 A primeira rodada contrariou a hipótese: com 4 e 8 réplicas a vazão **caiu**, e no HPA as 10 réplicas ficaram fora do ar por
 mais de 2 minutos, com 97% de `503`.
@@ -45,14 +79,14 @@ aquecimento dos pods. O teste direto das conexões é o que sustenta a causa.
 | 4 | 242 | 0,44 | 1.378 | 0 |
 | 8 | 379 | 0,40 | 1.045 | 0 |
 
-## 5.1 Escalabilidade horizontal manual
+### 5.1 Escalabilidade horizontal manual
 
 **Hipótese.** A vazão cresceria abaixo do ideal, entre 4× e 6× com 8 réplicas, e a fila acumularia menos.
 
 **Procedimento.** HPA removido; `kubectl scale` para 1, 2, 4 e 8 réplicas; 64 trabalhadores, 60 s, 10 s de aquecimento,
 3 execuções por nível. Fila vazia e pods prontos antes de cada execução. Pool limitado a 8 conexões.
 
-**Evidências.** `resultados/etapa5/51b-*` (POST) e `51g-*` (GET).
+**Evidências.** `resultados/antes-da-remocao/etapa5/51b-*` (POST) e `51g-*` (GET).
 
 **Tabela: POST (média de 3 execuções)**
 
@@ -74,7 +108,7 @@ aquecimento dos pods. O teste direto das conexões é o que sustenta a causa.
 
 **Gráfico.**
 
-![Ganho de vazão por réplicas](../../resultados/etapa5/grafico-51-escala.png)
+![Ganho de vazão por réplicas](../../resultados/antes-da-remocao/etapa5/grafico-51-escala.png)
 
 **Análise crítica.** A hipótese de ganho foi **refutada**: o máximo foi 2,24×, com 4 réplicas.
 
@@ -90,7 +124,7 @@ aquecimento dos pods. O teste direto das conexões é o que sustenta a causa.
   de 91 para 44 ms, o que sugere alívio do limite de 500m de CPU.
 - **O que mudaria o resultado:** dar mais CPU ao banco, reduzir as consultas do consumidor de alertas, ou usar nós reais.
 
-## 5.2 Escalabilidade automática (HPA)
+### 5.2 Escalabilidade automática (HPA)
 
 **Hipótese.** Chegar a 10 réplicas em 1 a 2 minutos, com o p95 melhorando só depois de os pods ficarem prontos, e reduzir
 cerca de 5 minutos após o fim da carga.
@@ -113,7 +147,7 @@ cerca de 5 minutos após o fim da carga.
 
 **Gráfico.**
 
-![Linha do tempo do HPA](../../resultados/etapa5/grafico-52-hpa.png)
+![Linha do tempo do HPA](../../resultados/antes-da-remocao/etapa5/grafico-52-hpa.png)
 
 **Análise crítica.** A hipótese foi **confirmada**.
 
@@ -128,7 +162,7 @@ cerca de 5 minutos após o fim da carga.
 - **Sem a correção do pool,** o HPA piorou o sistema: mais réplicas esgotaram as conexões (execução `52-hpa`). Escalar sem olhar
   as dependências pode causar a queda.
 
-## 5.3 Resiliência e autorrecuperação
+### 5.3 Resiliência e autorrecuperação
 
 **Hipótese.** Poucas falhas ao apagar um pod, substituto pronto em 5 a 7 s. Poucas falhas ao drenar nó sem banco. Banco
 `Pending` e `503` ao drenar o nó com banco.
@@ -150,7 +184,7 @@ drenado: 3 réplicas, 120 s, `kubectl drain` aos 25 s, uma execução por nó. N
 
 **Gráfico.**
 
-![Resiliência](../../resultados/etapa5/grafico-53-resiliencia.png)
+![Resiliência](../../resultados/antes-da-remocao/etapa5/grafico-53-resiliencia.png)
 
 **Análise crítica.** As três hipóteses foram **confirmadas**, e o substituto foi um pouco mais rápido que o previsto.
 
@@ -166,7 +200,7 @@ drenado: 3 réplicas, 120 s, `kubectl drain` aos 25 s, uma execução por nó. N
 - **O que mudaria o resultado:** réplica do banco e armazenamento em rede. Um PodDisruptionBudget faria o `drain` esperar em vez de
   despejar o único pod do banco, mas a manutenção do nó continuaria bloqueada.
 
-## 5.4 Atualização sem interrupção
+### 5.4 Atualização sem interrupção
 
 **Hipótese.** Poucas falhas sem `preStop`, menos ou zero com `preStop`, e as duas versões coexistindo.
 
@@ -186,7 +220,7 @@ drenado: 3 réplicas, 120 s, `kubectl drain` aos 25 s, uma execução por nó. N
 
 **Gráfico.**
 
-![Rolling update](../../resultados/etapa5/grafico-54-rolling.png)
+![Rolling update](../../resultados/antes-da-remocao/etapa5/grafico-54-rolling.png)
 
 **Análise crítica.** A hipótese foi **confirmada**, com resultado melhor que o esperado: 0 falhas nas 6 execuções com `preStop`,
 contra 24 a 47 nas 6 sem ele.
@@ -201,7 +235,7 @@ contra 24 a 47 nas 6 sem ele.
   elas rodaram depois e com pods já aquecidos.
 - **Decisão:** o `preStop` de 5 s foi incorporado aos manifestos das três APIs em `k8s/`, junto com o limite do pool.
 
-## 5.5 Efeito do processamento assíncrono
+### 5.5 Efeito do processamento assíncrono
 
 **Hipótese.** Sem fila, o POST ficaria mais lento e a vazão cairia, mas nada acumularia.
 
@@ -219,7 +253,7 @@ contra 24 a 47 nas 6 sem ele.
 
 **Gráfico.**
 
-![Fila e síncrono](../../resultados/etapa5/grafico-55-fila.png)
+![Fila e síncrono](../../resultados/antes-da-remocao/etapa5/grafico-55-fila.png)
 
 **Análise crítica.** A hipótese foi **parcialmente confirmada**.
 
@@ -232,7 +266,7 @@ contra 24 a 47 nas 6 sem ele.
 - **Conclusão prática:** a fila vale pela resposta rápida e pela absorção de picos, mas aceita alertas atrasados. Sob carga contínua,
   o alerta de um alagamento poderia chegar minutos depois. Para isso, seria melhor separar o consumidor em um serviço próprio.
 
-## Limitações gerais
+### Limitações gerais
 
 - Todos os nós dividem a mesma máquina, então o ganho medido inclui essa disputa.
 - A memória da máquina esteve alta durante os testes, chegando a 99% na primeira rodada.

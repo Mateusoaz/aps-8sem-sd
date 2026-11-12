@@ -1,5 +1,4 @@
 using ThermalInversion.Api.Data;
-using ThermalInversion.Api.Messaging;
 using ThermalInversion.Api.Options;
 using ThermalInversion.Api.Services;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -21,21 +20,6 @@ builder.Services.AddDbContext<ThermalInversionDbContext>(options => options
 builder.Services.Configure<AlertOptions>(builder.Configuration.GetSection(AlertOptions.SectionName));
 builder.Services.AddScoped<AlertService>();
 
-// Cache distribuído no Redis (ConnectionStrings__Redis). Sem a variável, usa memória local (desenvolvimento).
-var redis = builder.Configuration.GetConnectionString("Redis");
-if (string.IsNullOrEmpty(redis))
-    builder.Services.AddDistributedMemoryCache();
-else
-    builder.Services.AddStackExchangeRedisCache(options =>
-    {
-        options.Configuration = redis;
-        options.InstanceName = "thermal-inversion:";
-    });
-builder.Services.AddSingleton<QueryCache>();
-
-// Fila no RabbitMQ (ConnectionStrings__RabbitMq): o POST publica a leitura e o consumidor avalia o alerta.
-builder.Services.AddSingleton<ReadingQueue>();
-builder.Services.AddHostedService<AlertConsumer>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -76,13 +60,11 @@ app.UseSwaggerUI();
 
 app.MapControllers();
 
-// Liveness: "o processo está vivo?" — NÃO consulta dependências (banco, fila...).
+// Liveness: "o processo está vivo?" — NÃO consulta dependências (banco).
 // Se falhar, o orquestrador REINICIA o contêiner.
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 
 // Readiness: "estou apto a receber tráfego?" — verifica o banco a cada chamada.
-// Cache e fila ficam de fora de propósito: se caírem, a API continua atendendo
-// (consulta direto no banco; alerta avaliado dentro do POST).
 // Se falhar, o orquestrador TIRA do balanceamento, sem reiniciar.
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 
