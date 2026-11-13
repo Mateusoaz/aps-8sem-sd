@@ -1,6 +1,5 @@
 using AirQuality.Api.Data;
 using AirQuality.Api.Dtos;
-using AirQuality.Api.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,13 +7,13 @@ namespace AirQuality.Api.Controllers;
 
 [ApiController]
 [Route(ApiRoutes.Base + "/stations")]
-public class StationsController(AirQualityDbContext db, QueryCache cache) : ControllerBase
+public class StationsController(AirQualityDbContext db) : ControllerBase
 {
-    // GET /api/v1/air-quality/stations/EST-01/latest  (no cache por TTL segundos)
+    // GET /api/v1/air-quality/stations/EST-01/latest
     [HttpGet("{stationId}/latest")]
     public async Task<ActionResult<LatestReadingsResponse>> GetLatest(string stationId, CancellationToken ct)
     {
-        var latest = await cache.GetOrCreateAsync(Response, $"station-latest:{stationId}", () => QueryLatestAsync(stationId, ct));
+        var latest = await QueryLatestAsync(stationId, ct);
         return latest is null ? NotFound() : latest;
     }
 

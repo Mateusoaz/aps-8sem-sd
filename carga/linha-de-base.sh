@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # Linha de base da Etapa 4: 1 réplica de cada serviço, HPA removido, carga em degraus até saturar.
-#   ./carga/linha-de-base.sh                 3 repetições, 30 s por degrau (~30 min no total)
-#   REPS=1 DURACAO=15 ./carga/linha-de-base.sh   rodada rápida para conferir
+#   bash carga/linha-de-base.sh                    3 repetições, 30 s por degrau (~35 min no total)
+#   REPS=1 DURACAO=10 bash carga/linha-de-base.sh  rodada rápida para conferir o fluxo
 #
 # Rotas medidas (pelo gateway):
-#   ingestao  POST /api/v1/air-quality/particulate      o serviço que o HPA escala: escrita no banco + fila
-#   consulta  GET  /api/v1/air-quality/stations/{id}/latest   leitura com custo estável (índice), com cache Redis
-# Ao terminar, devolve o cluster ao normal (HPAs de volta, mínimo de 2 réplicas).
+#   ingestao  POST /air-quality/api/v1/air-quality/particulate
+#             CPU do pod + gravação no banco + regra de alerta na própria requisição.
+#             As leituras vão para a área CARGA (corpo "carga" do loadgen).
+#   consulta  GET  /air-quality/api/v1/air-quality/areas/CENTRO/average?hours=24
+#             a consulta agregada mais cara: seis médias sobre três tabelas a cada chamada.
+# Ao terminar, devolve o cluster ao normal (2 réplicas e o HPA de volta).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -15,45 +18,41 @@ GW="${GW:-http://127.0.0.1:8081}"
 REPS="${REPS:-3}"
 DURACAO="${DURACAO:-30}"
 AQUECIMENTO="${AQUECIMENTO:-5}"
-DEGRAUS="${DEGRAUS:-1,2,4,8,16,32,64}"
+DEGRAUS="${DEGRAUS:-1,2,4,8,16,32,64,128,256}"
 PY="${PYTHON:-python}"
 export PYTHONIOENCODING=utf-8
 SAIDA="resultados/base/$(date +%Y%m%d-%H%M)"
 APIS=(air-quality-api flooding-api thermal-inversion-api)
-ESTACOES="EST-01|EST-02|EST-03|EST-04|EST-05|EST-06|EST-07|EST-08|EST-09|EST-10"
-
-# O POST responde antes de o alerta ser avaliado: ao fim da ingestão a fila ainda tem mensagens, e os
-# consumidores seguem gastando CPU da API e do banco. Medir a próxima rota antes de a fila esvaziar
-# contaminaria o resultado. O tempo até esvaziar também é um dado: quanto o consumidor ficou para trás.
-esperar_fila() {
-  local arquivo="$1" inicio=$SECONDS total primeiro=""
-  while :; do
-    total=$(kubectl exec -n "$NS" rabbitmq-0 -- rabbitmqctl -q list_queues messages 2>/dev/null | awk 'NR>1{s+=$1} END{print s+0}')
-    [ -z "$primeiro" ] && primeiro=$total
-    [ "$total" -eq 0 ] && break
-    [ $((SECONDS - inicio)) -ge 600 ] && { echo "   fila ainda com $total mensagens após 600 s"; break; }
-    sleep 3
-  done
-  echo "mensagens na fila ao fim da carga: $primeiro | segundos até esvaziar: $((SECONDS - inicio))" | tee "$arquivo"
-  sleep 20   # deixa a CPU baixar e o metrics-server atualizar antes da próxima rodada
-}
+AR="$GW/air-quality/api/v1/air-quality"
+POST="$AR/particulate"
+CONSULTA="$AR/areas/CENTRO/average?hours=24"
 
 restaurar() {
-  echo ">> devolvendo o cluster ao normal (HPAs de volta)"
+  echo ">> devolvendo o cluster ao normal (2 réplicas e o HPA)"
+  for d in "${APIS[@]}"; do kubectl scale deployment "$d" -n "$NS" --replicas=2 >/dev/null; done
   kubectl apply -f k8s/40-hpa.yaml >/dev/null
 }
 trap restaurar EXIT
 
-mkdir -p "$SAIDA"
+mkdir -p "$SAIDA/descartado"
 echo ">> resultados em $SAIDA"
 
 # 1. Uma réplica de cada serviço. O HPA desfaria a escala manual: sai antes.
 kubectl delete hpa --all -n "$NS" --ignore-not-found
 for d in "${APIS[@]}"; do kubectl scale deployment "$d" -n "$NS" --replicas=1; done
 for d in "${APIS[@]}"; do kubectl rollout status deployment "$d" -n "$NS" --timeout=120s; done
-sleep 10   # espera os pods que estão saindo terminarem (preStop) e o gateway atualizar os destinos
+sleep 15   # espera os pods que estão saindo terminarem (preStop) e o gateway atualizar os destinos
 
-# 2. Estado do cluster durante a medição (evidência do item 10 da ficha)
+# 2. Dados da área CENTRO nas três tabelas da média (a consulta precisa de leituras nas últimas 24 h)
+echo ">> semeando a área CENTRO (particulado, gases e ambiente)"
+"$PY" carga/loadgen.py "$AR/particulate" -X POST -c 2 -d 4 --aquecimento 0 --saida "$SAIDA/descartado/semente-particulado" \
+  --corpo '{"stationId":"EST-{{int:1:5}}","sensorId":"SEN-PM-1","areaId":"CENTRO","pm25":{{num:5:40}},"pm10":{{num:10:70}}}' >/dev/null
+"$PY" carga/loadgen.py "$AR/gases" -X POST -c 2 -d 4 --aquecimento 0 --saida "$SAIDA/descartado/semente-gases" \
+  --corpo '{"stationId":"EST-{{int:1:5}}","sensorId":"SEN-GAS-1","areaId":"CENTRO","co2":{{num:380:900}},"tvoc":{{num:50:600}}}' >/dev/null
+"$PY" carga/loadgen.py "$AR/environment" -X POST -c 2 -d 4 --aquecimento 0 --saida "$SAIDA/descartado/semente-ambiente" \
+  --corpo '{"stationId":"EST-{{int:1:5}}","sensorId":"SEN-AMB-1","areaId":"CENTRO","temperatureC":{{num:12:34}},"humidityPercent":{{num:30:90}}}' >/dev/null
+
+# 3. Estado do cluster durante a medição
 {
   echo "# $(date '+%d/%m/%Y %H:%M:%S')"
   kubectl get deploy,hpa -n "$NS" -o wide 2>&1
@@ -61,35 +60,34 @@ sleep 10   # espera os pods que estão saindo terminarem (preStop) e o gateway a
   kubectl get pods -n "$NS" -o wide
   echo
   kubectl get nodes -o wide
+  echo
+  echo "# leituras da área CENTRO usadas pela consulta"
+  kubectl exec -n "$NS" postgres-0 -- sh -c 'psql -U "$POSTGRES_USER" -d air_quality -At -c "
+    SELECT '"'"'particulate'"'"', count(*) FROM particulate_readings WHERE area_id = '"'"'CENTRO'"'"'
+    UNION ALL SELECT '"'"'gases'"'"', count(*) FROM gas_readings WHERE area_id = '"'"'CENTRO'"'"'
+    UNION ALL SELECT '"'"'environment'"'"', count(*) FROM environment_readings WHERE area_id = '"'"'CENTRO'"'"'"'
 } > "$SAIDA/estado-do-cluster.txt"
 cat "$SAIDA/estado-do-cluster.txt"
 
-# 3. Garante que existe ao menos uma leitura de cada estação (a consulta devolveria 404 sem elas)
-for i in $(seq -w 1 10); do
-  curl -s -o /dev/null -X POST "$GW/api/v1/air-quality/particulate" -H 'Content-Type: application/json' \
-    -d "{\"stationId\":\"EST-$i\",\"sensorId\":\"SEN-PM-1\",\"areaId\":\"CENTRO\",\"pm25\":10,\"pm10\":20}"
-done
-
-# 4. Aquecimento DESCARTADO: na 1ª medição o .NET ainda compila o caminho do POST e os pools de conexão
-#    e o cache do Postgres estão frios (a 1ª repetição saía com metade da vazão nos degraus baixos).
+# 4. Aquecimento DESCARTADO: na 1ª medição o .NET ainda compila o caminho da requisição e os pools de
+#    conexão e o cache do Postgres estão frios.
 echo ">> aquecimento (descartado): 20 s em cada rota"
-mkdir -p "$SAIDA/descartado"
-"$PY" carga/loadgen.py "$GW/api/v1/air-quality/particulate" -X POST --corpo ar -c 8 -d 20 --aquecimento 0   --saida "$SAIDA/descartado/aquecimento-ingestao" > /dev/null
-"$PY" carga/loadgen.py "$GW/api/v1/air-quality/stations/{{escolha:$ESTACOES}}/latest" -c 8 -d 20 --aquecimento 0   --saida "$SAIDA/descartado/aquecimento-consulta" > /dev/null
-esperar_fila "$SAIDA/descartado/aquecimento-fila.txt"
+"$PY" carga/loadgen.py "$POST" -X POST --corpo carga -c 8 -d 20 --aquecimento 0 --saida "$SAIDA/descartado/aquecimento-ingestao" >/dev/null
+"$PY" carga/loadgen.py "$CONSULTA" -c 8 -d 20 --aquecimento 0 --saida "$SAIDA/descartado/aquecimento-consulta" >/dev/null
+sleep 15
 
 # 5. Degraus, REPS vezes cada rota, alternando as rotas entre as repetições
 for rep in $(seq 1 "$REPS"); do
   echo; echo "================ repetição $rep/$REPS: ingestão ================"
-  "$PY" carga/loadgen.py "$GW/api/v1/air-quality/particulate" -X POST --corpo ar \
+  "$PY" carga/loadgen.py "$POST" -X POST --corpo carga \
     --degraus "$DEGRAUS" --duracao-degrau "$DURACAO" --aquecimento "$AQUECIMENTO" --timeout 5 \
-    --top --top-intervalo 3 --saida "$SAIDA/ingestao-rep$rep"
-  esperar_fila "$SAIDA/ingestao-rep$rep-fila.txt"
+    --top --top-intervalo 5 --saida "$SAIDA/ingestao-rep$rep"
+  sleep 20   # deixa a CPU baixar e o metrics-server atualizar antes da próxima rodada
   echo; echo "================ repetição $rep/$REPS: consulta ================"
-  "$PY" carga/loadgen.py "$GW/api/v1/air-quality/stations/{{escolha:$ESTACOES}}/latest" \
+  "$PY" carga/loadgen.py "$CONSULTA" \
     --degraus "$DEGRAUS" --duracao-degrau "$DURACAO" --aquecimento "$AQUECIMENTO" --timeout 5 \
-    --top --top-intervalo 3 --saida "$SAIDA/consulta-rep$rep"
-  esperar_fila "$SAIDA/consulta-rep$rep-fila.txt"
+    --top --top-intervalo 5 --saida "$SAIDA/consulta-rep$rep"
+  sleep 20
 done
 
 # 6. Tabelas e gráficos

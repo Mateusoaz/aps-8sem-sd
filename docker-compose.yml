@@ -1,18 +1,10 @@
-# Pilha completa para desenvolver sem cluster: PostgreSQL + Redis + RabbitMQ + 3 APIs .NET 8 + cliente web.
-# A mesma aplicação roda no Kubernetes (pasta k8s/, scripts/k8s-up.sh); aqui o nginx do cliente faz o papel do gateway.
+# Pilha completa para desenvolver sem cluster: PostgreSQL + 3 APIs .NET 8 (+ gerador de carga sob demanda).
+# A mesma aplicação roda no Kubernetes (pasta k8s/, scripts/k8s-up.sh).
 # Subir tudo:   docker compose up -d --build
 # Derrubar:     docker compose down          (mantém os dados)
-# Zerar dados:  docker compose down -v       (apaga os volumes)
+# Zerar dados:  docker compose down -v       (apaga o volume)
 
 name: aps-sd
-
-# Variáveis comuns às três APIs (âncora YAML, reaproveitada abaixo com <<: *api-env)
-x-api-env: &api-env
-  ConnectionStrings__Redis: redis:6379
-  ConnectionStrings__RabbitMq: amqp://${RABBITMQ_USER:?Defina RABBITMQ_USER no .env}:${RABBITMQ_PASSWORD:?Defina RABBITMQ_PASSWORD no .env}@rabbitmq:5672
-  Cache__Enabled: ${CACHE_ENABLED:-true}
-  Cache__TtlSeconds: ${CACHE_TTL_SECONDS:-10}
-  Queue__Enabled: ${QUEUE_ENABLED:-true}
 
 x-api-common: &api-common
   restart: unless-stopped
@@ -20,10 +12,6 @@ x-api-common: &api-common
     - backend
   depends_on:
     postgres:
-      condition: service_healthy
-    redis:
-      condition: service_healthy
-    rabbitmq:
       condition: service_healthy
   healthcheck:
     test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/health/live"]
@@ -36,7 +24,7 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
-    command: ["-c", "max_connections=300"]
+    command: ["-c", "max_connections=200"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?Defina POSTGRES_USER no .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
@@ -54,40 +42,6 @@ services:
       timeout: 3s
       retries: 10
 
-  # Cache das consultas agregadas. Sem volume: cache é descartável.
-  redis:
-    image: redis:7.4-alpine
-    restart: unless-stopped
-    command: ["--save", "", "--appendonly", "no", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
-    networks:
-      - backend
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  # Fila de avaliação de alertas. Volume: fila durável e mensagens persistentes sobrevivem ao restart.
-  rabbitmq:
-    image: rabbitmq:4.1-management-alpine
-    restart: unless-stopped
-    hostname: rabbitmq          # o RabbitMQ guarda os dados numa pasta com o nome do host: precisa ser fixo
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-    ports:
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"   # painel: http://localhost:15672
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    networks:
-      - backend
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
-      interval: 10s
-      timeout: 10s
-      retries: 12
-      start_period: 20s
-
   air-quality-api:
     <<: *api-common
     build:
@@ -96,9 +50,8 @@ services:
         APP_VERSION: ${APP_VERSION:-1.1.0}
     image: aps-sd/air-quality-api:${APP_VERSION:-1.1.0}
     environment:
-      <<: *api-env
-      # "postgres" é o NOME DO SERVIÇO acima — o DNS interno do Compose resolve para o IP do contêiner
-      ConnectionStrings__Default: Host=postgres;Port=5432;Database=air_quality;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      # "postgres" é o NOME DO SERVIÇO acima: o DNS interno do Compose resolve para o IP do contêiner
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=air_quality;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Maximum Pool Size=8
       Alerts__Pm25Limit: ${AIR_PM25_LIMIT:-25}
       Alerts__Pm25ConsecutiveReadings: ${AIR_PM25_CONSECUTIVE_READINGS:-3}
     ports:
@@ -112,8 +65,7 @@ services:
         APP_VERSION: ${APP_VERSION:-1.1.0}
     image: aps-sd/flooding-api:${APP_VERSION:-1.1.0}
     environment:
-      <<: *api-env
-      ConnectionStrings__Default: Host=postgres;Port=5432;Database=flooding;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=flooding;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Maximum Pool Size=8
       Alerts__OverflowLevelCm: ${FLOODING_OVERFLOW_LEVEL_CM:-300}
     ports:
       - "${FLOODING_API_PORT:-5002}:8080"
@@ -126,29 +78,12 @@ services:
         APP_VERSION: ${APP_VERSION:-1.1.0}
     image: aps-sd/thermal-inversion-api:${APP_VERSION:-1.1.0}
     environment:
-      <<: *api-env
-      ConnectionStrings__Default: Host=postgres;Port=5432;Database=thermal_inversion;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=thermal_inversion;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Maximum Pool Size=8
       Alerts__MinInversionGradientC: ${THERMAL_MIN_INVERSION_GRADIENT_C:-0}
     ports:
       - "${THERMAL_INVERSION_API_PORT:-5003}:8080"
 
-  # Cliente web. No Compose não há Ingress: o nginx do cliente encaminha /api/v1/<serviço> para cada API.
-  web-client:
-    build: ./src/WebClient
-    image: aps-sd/web-client:${APP_VERSION:-1.1.0}
-    restart: unless-stopped
-    volumes:
-      - ./src/WebClient/nginx.compose.conf:/etc/nginx/conf.d/default.conf:ro
-    ports:
-      - "${WEB_CLIENT_PORT:-8080}:8080"
-    networks:
-      - backend
-    depends_on:
-      - air-quality-api
-      - flooding-api
-      - thermal-inversion-api
-
-  # Gerador de carga — NÃO sobe com "docker compose up" (está no profile "load").
+  # Gerador de carga que simula os sensores. NÃO sobe com "docker compose up" (está no profile "load").
   # Rodar:  docker compose run --rm load-generator --rate 100 --duration 60
   load-generator:
     build: ./tools/load-generator
@@ -175,4 +110,3 @@ networks:
 
 volumes:
   postgres-data:
-  rabbitmq-data:

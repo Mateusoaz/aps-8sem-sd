@@ -1,0 +1,13 @@
+# O gateway (Traefik, que o k3s instala sozinho) fica SEMPRE no nó servidor, junto do plano de controle.
+# Os agentes ficam só com a aplicação. Assim, drenar ou perder um agente nunca derruba a porta de entrada
+# do cluster: só os pods da aplicação mudam de nó.
+# HelmChartConfig é o jeito do k3s de ajustar os valores do Traefik que ele mesmo instala (vale só em k3s/k3d).
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"

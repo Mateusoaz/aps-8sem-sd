@@ -1,10 +1,12 @@
-# Gateway único (API Gateway da APS), executado pelo Traefik que já vem no k3d.
-# Roteia POR CAMINHO: cada API tem o seu prefixo, e o que sobrar ("/") vai para o cliente web.
-# O prefixo da regra é o mesmo das rotas das APIs (/api/v1/<serviço>/...), então a URL chega
-# inteira e sem reescrita, sem depender de middleware específico do Traefik.
+# Ponto único de entrada (gateway), executado pelo Traefik que já vem no k3d. Roteia POR CAMINHO:
+#   /air-quality/...        -> Service air-quality-api
+#   /flooding/...           -> Service flooding-api
+#   /thermal-inversion/...  -> Service thermal-inversion-api
+# A URL chega inteira na API, que tira o prefixo sozinha (PATH_BASE no Deployment). Assim o manifesto
+# não depende de nenhum recurso específico do Traefik para reescrever a URL.
 #
-# Camada 7: o Traefik lê a URL de cada requisição e distribui requisição a requisição entre os pods
-# prontos (rodízio). O cabeçalho X-Pod de cada resposta é a prova.
+# Camada 7: o Traefik lê a URL de cada requisição e reparte as requisições entre os pods prontos.
+# O cabeçalho X-Pod de cada resposta mostra qual pod atendeu.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -15,31 +17,24 @@ spec:
   rules:
     - http:
         paths:
-          - path: /api/v1/air-quality
+          - path: /air-quality
             pathType: Prefix
             backend:
               service:
                 name: air-quality-api
                 port:
                   name: http
-          - path: /api/v1/flooding
+          - path: /flooding
             pathType: Prefix
             backend:
               service:
                 name: flooding-api
                 port:
                   name: http
-          - path: /api/v1/thermal-inversion
+          - path: /thermal-inversion
             pathType: Prefix
             backend:
               service:
                 name: thermal-inversion-api
-                port:
-                  name: http
-          - path: /                       # o caminho mais específico ganha; "/" pega o que sobrar
-            pathType: Prefix
-            backend:
-              service:
-                name: web-client
                 port:
                   name: http

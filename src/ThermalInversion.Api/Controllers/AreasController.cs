@@ -4,20 +4,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using ThermalInversion.Api.Data;
 using ThermalInversion.Api.Dtos;
-using ThermalInversion.Api.Infrastructure;
 using ThermalInversion.Api.Options;
 
 namespace ThermalInversion.Api.Controllers;
 
 [ApiController]
 [Route(ApiRoutes.Base + "/areas")]
-public class AreasController(ThermalInversionDbContext db, IOptions<AlertOptions> options, QueryCache cache) : ControllerBase
+public class AreasController(ThermalInversionDbContext db, IOptions<AlertOptions> options) : ControllerBase
 {
     // GET /api/v1/thermal-inversion/areas/CENTRO/thermal-profile?hours=24
-    // Consulta agregada "perfil térmico por região": contagens e médias. Fica no cache por TTL segundos.
+    // Consulta agregada "perfil térmico por região": contagens e médias.
     [HttpGet("{areaId}/thermal-profile")]
     public async Task<ThermalProfileResponse?> GetThermalProfile(string areaId, [FromQuery, Range(1, 720)] int hours = 24, CancellationToken ct = default)
-        => await cache.GetOrCreateAsync(Response, $"thermal-profile:{areaId}:{hours}", () => ComputeThermalProfileAsync(areaId, hours, ct));
+        => await ComputeThermalProfileAsync(areaId, hours, ct);
 
     private async Task<ThermalProfileResponse?> ComputeThermalProfileAsync(string areaId, int hours, CancellationToken ct)
     {

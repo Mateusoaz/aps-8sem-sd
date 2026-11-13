@@ -23,8 +23,8 @@ Só biblioteca padrão: não precisa de pip install.
 Use 127.0.0.1 e não "localhost": no Windows, "localhost" tenta IPv6 primeiro e soma atraso a cada conexão.
 
 Exemplos:
-  python carga/loadgen.py http://127.0.0.1:8081/api/v1/air-quality/health/live -c 8 -d 20
-  python carga/loadgen.py http://127.0.0.1:8081/api/v1/air-quality/particulate -X POST --corpo ar \\
+  python carga/loadgen.py http://127.0.0.1:8081/air-quality/health/live -c 8 -d 20
+  python carga/loadgen.py http://127.0.0.1:8081/air-quality/api/v1/air-quality/particulate -X POST --corpo ar \\
          --degraus 1,2,4,8,16,32,64 --duracao-degrau 25 --aquecimento 5 --top --saida resultados/base/ingestao
 """
 from __future__ import annotations
@@ -65,6 +65,10 @@ PONTOS = "|".join(f"PT-{i:02d}" for i in range(1, 11))
 AREAS = "CENTRO|NORTE|SUL|LESTE|OESTE"
 
 CORPOS_PRONTOS = {
+    # Leituras de teste da Etapa 4 e 5: área CARGA, para a consulta da área CENTRO não ficar mais lenta
+    # a cada execução (a média de 24 h percorreria cada vez mais linhas).
+    "carga": '{"stationId":"{{escolha:%s}}","sensorId":"SEN-PM-{{int:1:3}}","areaId":"CARGA",'
+             '"pm25":{{num:5:60}},"pm10":{{num:10:90}}}' % ESTACOES,
     "ar": '{"stationId":"{{escolha:%s}}","sensorId":"SEN-PM-{{int:1:3}}","areaId":"{{escolha:%s}}",'
           '"pm25":{{num:5:60}},"pm10":{{num:10:90}}}' % (ESTACOES, AREAS),
     "alagamento": '{"monitoringPointId":"{{escolha:%s}}","sensorId":"SEN-N-{{int:1:3}}","waterLevelCm":{{num:100:380}}}'
@@ -99,7 +103,7 @@ def preencher(modelo: str, rnd: random.Random) -> str:
 # ================================ Registro de cada requisição ================================
 
 CAMPOS = ["inicio_epoch", "hora", "segundo", "fase", "trabalhador", "ativos", "aquecimento",
-          "latencia_ms", "status", "erro", "x_pod", "x_versao", "x_cache", "bytes"]
+          "latencia_ms", "status", "erro", "x_pod", "x_versao", "bytes"]
 
 
 @dataclass
@@ -161,7 +165,7 @@ def trabalhador(wid: int, fase: Fase, alvo, args, estado: Estado, partida: float
 
             inicio_epoch = time.time()
             t0 = time.perf_counter()
-            status, erro, pod, versao, cache, tamanho = 0, "", "", "", "", 0
+            status, erro, pod, versao, tamanho = 0, "", "", "", 0
             try:
                 # Corpo em bytes: cabeçalho e corpo vão num pacote só (com str, o Nagle soma ~40 ms)
                 conexao.request(args.metodo, caminho, body=corpo, headers=cabecalhos)
@@ -171,7 +175,6 @@ def trabalhador(wid: int, fase: Fase, alvo, args, estado: Estado, partida: float
                 tamanho = len(dados)
                 pod = resposta.getheader("X-Pod", "")
                 versao = resposta.getheader("X-Versao", "")
-                cache = resposta.getheader("X-Cache", "")
                 if status >= 400:
                     erro = f"http_{status}"
                 if resposta.will_close:
@@ -203,7 +206,6 @@ def trabalhador(wid: int, fase: Fase, alvo, args, estado: Estado, partida: float
                 erro,
                 pod,
                 versao,
-                cache,
                 tamanho,
             ))
     finally:
@@ -275,7 +277,6 @@ def resumir(registros: list, janela_s: float, trabalhadores: int | None, top: li
         "por_status": {str(k): v for k, v in sorted(Counter(r[8] for r in registros).items())},
         "por_erro": dict(Counter(r[9] for r in registros if r[9]).most_common()),
         "por_versao": dict(Counter(r[11] for r in registros if r[11]).most_common()),
-        "por_cache": dict(Counter(r[12] for r in registros if r[12]).most_common()),
     }
     # Lei de Little (laço fechado): trabalhadores = vazão x latência média. Se a conta não fecha, a medição tem erro.
     if trabalhadores and vazao_total > 0:
@@ -568,7 +569,7 @@ def ler_argumentos():
         description="Gerador de carga da APS: laço fechado, latência p50/p95/p99, vazão, erros e X-Pod por requisição.",
         formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__.split("Exemplos:")[1] and
         "Exemplos:" + __doc__.split("Exemplos:")[1])
-    p.add_argument("url", help="URL alvo, sempre pelo gateway (ex.: http://127.0.0.1:8081/api/v1/air-quality/particulate)")
+    p.add_argument("url", help="URL alvo, sempre pelo gateway (ex.: http://127.0.0.1:8081/air-quality/api/v1/air-quality/particulate)")
     p.add_argument("-X", "--metodo", default="GET", help="verbo HTTP (padrão: GET)")
     p.add_argument("--corpo", help=f"corpo JSON: um modelo pronto ({', '.join(CORPOS_PRONTOS)}), JSON literal ou @arquivo")
     p.add_argument("-c", "--trabalhadores", type=int, default=8, help="trabalhadores simultâneos (padrão: 8)")

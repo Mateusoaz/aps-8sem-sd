@@ -2,12 +2,9 @@ namespace Flooding.Api;
 
 public static class ApiRoutes
 {
-    /// <summary>Nome do serviço: aparece no prefixo das rotas, nas chaves do cache e no nome da fila.</summary>
+    /// <summary>Nome do serviço: aparece no prefixo das rotas.</summary>
     public const string ServiceName = "flooding";
 
-    /// <summary>
-    /// Prefixo de todas as rotas. Ele também é a regra do Ingress (/api/v1/flooding -> este serviço),
-    /// então o gateway encaminha a URL sem reescrever nada.
-    /// </summary>
+    /// <summary>Prefixo de todas as rotas da API.</summary>
     public const string Base = "api/v1/" + ServiceName;
 }

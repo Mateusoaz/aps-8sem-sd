@@ -1,5 +1,0 @@
-.git
-*.md
-Dockerfile
-.dockerignore
-nginx.compose.conf

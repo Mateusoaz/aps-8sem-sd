@@ -1,6 +1,6 @@
 ﻿# Verificação rápida da aplicação no cluster, sempre PELO GATEWAY (http://localhost:8081).
-# Confere: cliente web, readiness das 3 APIs, POST com alerta via fila, cache (MISS -> HIT),
-# distribuição das requisições entre os pods (X-Pod) e métricas (kubectl top).
+# Confere: readiness das 3 APIs, POST e consulta, divisão das requisições entre os pods (X-Pod),
+# 404 sem o prefixo do serviço, pods por nó e métricas (kubectl top).
 #
 # Uso:   .\scripts\k8s-verificar.ps1
 param([string]$Gateway = "http://127.0.0.1:8081")
@@ -28,10 +28,6 @@ function Chamar([string]$metodo, [string]$url, [string]$json) {
     }
 }
 
-Write-Host "== Cliente web"
-$r = Chamar GET "$Gateway/"
-if ($r.Status -eq 200) { Ok "GET / -> 200" } else { Erro "GET / -> $($r.Status)" }
-
 $servicos = [ordered]@{
     "air-quality" = @{
         Post = "particulate"; Consulta = "areas/VERIF/average?hours=24"
@@ -46,25 +42,31 @@ $servicos = [ordered]@{
 
 foreach ($nome in $servicos.Keys) {
     $s = $servicos[$nome]
-    $base = "$Gateway/api/v1/$nome"
+    $base = "$Gateway/$nome"
+    $api = "$base/api/v1/$nome"
     Write-Host "== $nome"
 
     $r = Chamar GET "$base/health/ready"
     if ($r.Status -eq 200) { Ok "readiness 200: $($r.Corpo)" } else { Erro "readiness -> $($r.Status): $($r.Corpo)" }
 
-    $r = Chamar POST "$base/$($s.Post)" $s.Json
-    $modo = $r.Cab["X-Alerta"]
-    if ($r.Status -eq 201) { Ok "POST /$($s.Post) -> 201 (alerta: $modo)" } else { Erro "POST /$($s.Post) -> $($r.Status)" }
-    if ($modo -ne "fila") { Erro "alerta não passou pela fila (X-Alerta: $modo)" }
+    $r = Chamar POST "$api/$($s.Post)" $s.Json
+    if ($r.Status -eq 201) { Ok "POST /$($s.Post) -> 201" } else { Erro "POST /$($s.Post) -> $($r.Status)" }
 
-    $c1 = (Chamar GET "$base/$($s.Consulta)").Cab["X-Cache"]
-    $c2 = (Chamar GET "$base/$($s.Consulta)").Cab["X-Cache"]
-    if ($c2 -eq "HIT") { Ok "cache: 1ª $c1, 2ª $c2" } else { Erro "cache: 1ª $c1, 2ª $c2 (esperado HIT na 2ª)" }
+    $r = Chamar GET "$api/$($s.Consulta)"
+    if ($r.Status -eq 200) { Ok "GET /$($s.Consulta) -> 200" } else { Erro "GET /$($s.Consulta) -> $($r.Status)" }
 
-    $pods = 1..10 | ForEach-Object { (Chamar GET "$base/health/live").Cab["X-Pod"] } | Group-Object | Sort-Object Name
-    if ($pods.Count -ge 2) { Ok "10 requisições em $($pods.Count) pods:" } else { Erro "10 requisições caíram em $($pods.Count) pod(s):" }
+    $pods = 1..20 | ForEach-Object { (Chamar GET "$base/health/live").Cab["X-Pod"] } | Group-Object | Sort-Object Name
+    if ($pods.Count -ge 2) { Ok "20 requisições em $($pods.Count) pods:" } else { Erro "20 requisições caíram em $($pods.Count) pod(s):" }
     $pods | ForEach-Object { Write-Host ("         {0,3} {1}" -f $_.Count, $_.Name) }
 }
+
+Write-Host "== Sem o prefixo do serviço"
+$r = Chamar GET "$Gateway/api/v1/flooding/water-level"
+if ($r.Status -eq 404) { Ok "GET /api/v1/flooding/water-level (sem /flooding) -> 404" } else { Erro "sem prefixo -> $($r.Status) (esperado 404)" }
+
+Write-Host "== Pods por nó"
+kubectl get pods -n $NS -o custom-columns="POD:.metadata.name,NO:.spec.nodeName,PRONTO:.status.containerStatuses[0].ready" |
+    ForEach-Object { Write-Host "         $_" }
 
 Write-Host "== Métricas (metrics-server)"
 $top = kubectl top pod -n $NS 2>$null

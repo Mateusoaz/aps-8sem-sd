@@ -20,32 +20,30 @@ builder.Services.AddDbContext<AirQualityDbContext>(options => options
     .UseSnakeCaseNamingConvention());
 
 builder.Services.Configure<AlertOptions>(builder.Configuration.GetSection(AlertOptions.SectionName));
-builder.Services.Configure<CacheOptions>(builder.Configuration.GetSection(CacheOptions.SectionName));
-builder.Services.Configure<QueueOptions>(builder.Configuration.GetSection(QueueOptions.SectionName));
 builder.Services.AddScoped<AlertService>();
 
 // Banco criado em segundo plano: a API abre a porta na hora e só fica "pronta" quando o banco existir
 builder.Services.AddSingleton<DatabaseStatus>();
 builder.Services.AddHostedService<DatabaseInitializer>();
 
-// Cache no Redis (ConnectionStrings__Redis) e fila no RabbitMQ (ConnectionStrings__RabbitMq).
-// Sem as variáveis, a API funciona sozinha: sem cache e com o alerta avaliado dentro do POST.
-builder.Services.AddSingleton<RedisConnection>();
-builder.Services.AddSingleton<QueryCache>();
-builder.Services.AddSingleton<ReadingQueue>();
-builder.Services.AddHostedService<AlertConsumer>();
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Checks marcados com "ready" só são usados pela readiness. Cada um tem 2 s para responder.
+// Só a readiness usa este check (tag "ready"). Ele tem 2 s para responder.
 builder.Services.AddHealthChecks()
-    .AddCheck<DatabaseHealthCheck>("banco", HealthStatus.Unhealthy, ["ready"], TimeSpan.FromSeconds(2))
-    .AddCheck<CacheHealthCheck>("cache", HealthStatus.Degraded, ["ready"], TimeSpan.FromSeconds(2))
-    .AddCheck<QueueHealthCheck>("fila", HealthStatus.Degraded, ["ready"], TimeSpan.FromSeconds(2));
+    .AddCheck<DatabaseHealthCheck>("banco", HealthStatus.Unhealthy, ["ready"], TimeSpan.FromSeconds(2));
 
 var app = builder.Build();
+
+// Prefixo do gateway. No cluster o Ingress manda /air-quality/... para esta API sem reescrever a URL, e o
+// manifesto define PATH_BASE=/air-quality. O UsePathBase tira o prefixo antes de escolher a rota, então
+// /air-quality/api/v1/air-quality/... chega no mesmo controller que /api/v1/air-quality/...
+// Sem a variável (Compose), nada muda.
+var pathBase = app.Configuration["PATH_BASE"];
+if (!string.IsNullOrEmpty(pathBase))
+    app.UsePathBase(pathBase);
+app.UseRouting();   // depois do UsePathBase, senão a rota é escolhida com o prefixo ainda na URL
 
 // Evidência do balanceamento: TODA resposta diz qual pod atendeu e de qual versão da imagem.
 app.Use(async (context, next) =>
@@ -55,38 +53,26 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// O Swagger fica embaixo do prefixo do serviço, para também ser alcançado pelo gateway:
-//   http://localhost:8081/api/v1/air-quality/swagger (Kubernetes)  |  http://localhost:5001/api/v1/air-quality/swagger (Compose)
-app.UseSwagger(options => options.RouteTemplate = ApiRoutes.Base + "/swagger/{documentName}/swagger.json");
-app.UseSwaggerUI(options =>
-{
-    options.RoutePrefix = ApiRoutes.Base + "/swagger";
-    options.SwaggerEndpoint("v1/swagger.json", ApiRoutes.ServiceName);
-});
+// Swagger em /swagger: http://localhost:8081/air-quality/swagger (cluster) | http://localhost:5001/swagger (Compose)
+app.UseSwagger();
+app.UseSwaggerUI(options => options.SwaggerEndpoint("v1/swagger.json", "AirQuality.Api v1"));
 
 app.MapControllers();
 
-// Liveness: "o processo está vivo?" — NÃO consulta dependências (banco, cache, fila).
-// Se falhar, o kubelet REINICIA o contêiner.
-var live = new HealthCheckOptions { Predicate = _ => false, ResponseWriter = HealthResponse.WriteAsync };
-// Readiness: "posso receber tráfego agora?" — verifica banco, cache e fila a cada chamada.
+// Liveness: "o processo está vivo?". NÃO consulta o banco. Se falhar, o kubelet REINICIA o contêiner.
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+// Readiness: "posso receber requisições agora?". Consulta o banco a cada chamada.
 // Se falhar (503), o pod SAI do Service, sem ser reiniciado.
-var ready = new HealthCheckOptions { Predicate = c => c.Tags.Contains("ready"), ResponseWriter = HealthResponse.WriteAsync };
-
-// /health/* é o que as probes chamam (direto no pod). As cópias sob o prefixo passam pelo gateway.
-app.MapHealthChecks("/health/live", live);
-app.MapHealthChecks("/health/ready", ready);
-app.MapHealthChecks($"/{ApiRoutes.Base}/health/live", live);
-app.MapHealthChecks($"/{ApiRoutes.Base}/health/ready", ready);
+app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains("ready") });
 
 // Gasta CPU de propósito (n raízes quadradas), para acionar o HPA nos experimentos de escala.
-app.MapGet($"/{ApiRoutes.Base}/cpu-work", (int n = 1_000_000) =>
+app.MapGet("/processar", (int n = 1_000_000) =>
 {
-    n = Math.Clamp(n, 1, 20_000_000);
-    double total = 0;
+    n = Math.Clamp(n, 1, 50_000_000);
+    double resultado = 0;
     for (var i = 1; i <= n; i++)
-        total += Math.Sqrt(i);
-    return Results.Ok(new { n, total, instancia = AppInfo.Instance });
+        resultado += Math.Sqrt(i);
+    return Results.Ok(new { n, resultado, pod = AppInfo.Instance });
 });
 
 app.Run();

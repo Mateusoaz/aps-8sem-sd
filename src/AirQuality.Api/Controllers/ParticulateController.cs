@@ -1,6 +1,5 @@
 using AirQuality.Api.Data;
 using AirQuality.Api.Dtos;
-using AirQuality.Api.Infrastructure;
 using AirQuality.Api.Models;
 using AirQuality.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +9,7 @@ namespace AirQuality.Api.Controllers;
 
 [ApiController]
 [Route(ApiRoutes.Base + "/particulate")]
-public class ParticulateController(AirQualityDbContext db, AlertService alerts, ReadingQueue queue) : ControllerBase
+public class ParticulateController(AirQualityDbContext db, AlertService alerts) : ControllerBase
 {
     // POST /api/v1/air-quality/particulate
     [HttpPost]
@@ -29,12 +28,8 @@ public class ParticulateController(AirQualityDbContext db, AlertService alerts, 
         db.ParticulateReadings.Add(reading);
         await db.SaveChangesAsync(ct);
 
-        // Alerta assíncrono: publica o id na fila e responde sem esperar a avaliação.
-        // Fila desligada ou fora do ar: avalia aqui mesmo (o POST fica mais lento, mas nenhum alerta se perde).
-        var queued = queue.TryPublish(reading.Id);
-        if (!queued)
-            await alerts.EvaluateParticulateAsync(reading, ct);
-        Response.Headers["X-Alerta"] = queued ? "fila" : "sincrono";
+        // Regra de alerta avaliada aqui mesmo, antes de responder.
+        await alerts.EvaluateParticulateAsync(reading, ct);
 
         return CreatedAtAction(nameof(GetById), new { id = reading.Id }, reading);
     }

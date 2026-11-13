@@ -1,6 +1,5 @@
 using Flooding.Api.Data;
 using Flooding.Api.Dtos;
-using Flooding.Api.Infrastructure;
 using Flooding.Api.Models;
 using Flooding.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +9,7 @@ namespace Flooding.Api.Controllers;
 
 [ApiController]
 [Route(ApiRoutes.Base + "/water-level")]
-public class WaterLevelController(FloodingDbContext db, AlertService alerts, ReadingQueue queue) : ControllerBase
+public class WaterLevelController(FloodingDbContext db, AlertService alerts) : ControllerBase
 {
     // POST /api/v1/flooding/water-level
     [HttpPost]
@@ -27,12 +26,8 @@ public class WaterLevelController(FloodingDbContext db, AlertService alerts, Rea
         db.WaterLevelReadings.Add(reading);
         await db.SaveChangesAsync(ct);
 
-        // Alerta assíncrono: publica o id na fila e responde sem esperar a avaliação.
-        // Fila desligada ou fora do ar: avalia aqui mesmo (o POST fica mais lento, mas nenhum alerta se perde).
-        var queued = queue.TryPublish(reading.Id);
-        if (!queued)
-            await alerts.EvaluateWaterLevelAsync(reading, ct);
-        Response.Headers["X-Alerta"] = queued ? "fila" : "sincrono";
+        // Regra de alerta avaliada aqui mesmo, antes de responder.
+        await alerts.EvaluateWaterLevelAsync(reading, ct);
 
         return CreatedAtAction(nameof(GetById), new { id = reading.Id }, reading);
     }

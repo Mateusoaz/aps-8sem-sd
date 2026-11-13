@@ -1,71 +1,61 @@
 # API Inversão térmica: serviço SEM estado -> Deployment (2 réplicas) + Service.
-# Escala horizontal pelo HPA (40-hpa.yaml) ou à mão: kubectl scale deployment thermal-inversion-api -n aps --replicas=4
+# Sem HPA: fica em 2 réplicas (ou à mão: kubectl scale deployment thermal-inversion-api -n aps --replicas=4).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: thermal-inversion-api
   namespace: aps
-  labels:
-    app: thermal-inversion-api
-    tier: api
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: thermal-inversion-api             # tem que bater com template.metadata.labels
+      app: thermal-inversion-api            # tem que bater com template.metadata.labels
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1             # durante a troca de versão, até 1 pod a mais que o pedido
-      maxUnavailable: 0       # e nunca menos pods prontos que o pedido
+      maxSurge: 1                 # na troca de versão, cria 1 pod novo a mais...
+      maxUnavailable: 0           # ...e só remove um antigo quando o novo estiver pronto
   template:
     metadata:
       labels:
         app: thermal-inversion-api
         tier: api
     spec:
-      # Espalha as réplicas pelos nós: se um nó cair (ou for drenado), as outras continuam atendendo.
-      # "ScheduleAnyway" = preferência; com mais réplicas que nós, o scheduler repete nós.
+      # Divide as réplicas por igual entre os nós de trabalho (diferença máxima de 1 pod entre eles).
+      # O nó servidor tem a marca (taint) de plano de controle e não recebe pods da aplicação, então a
+      # divisão é entre os dois agentes. nodeTaintsPolicy: Honor tira da conta o nó que não aceita o pod
+      # (o servidor e um agente drenado), senão um drain deixaria as réplicas novas presas em Pending.
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
+          whenUnsatisfiable: DoNotSchedule
+          nodeTaintsPolicy: Honor
           labelSelector:
             matchLabels:
               app: thermal-inversion-api
-      # Tempo máximo entre o SIGTERM e o SIGKILL: as requisições em andamento terminam dentro dele
       terminationGracePeriodSeconds: 30
       containers:
         - name: api
-          image: aps-sd/thermal-inversion-api:1.1.0        # tag fixa; levada ao cluster com "k3d image import"
-          imagePullPolicy: IfNotPresent     # usa a imagem importada, sem tentar baixar da internet
+          image: aps-sd/thermal-inversion-api:1.1.0      # tag fixa; levada ao cluster com "k3d image import"
+          imagePullPolicy: IfNotPresent           # usa a imagem importada, sem procurar na internet
           ports:
             - name: http
               containerPort: 8080
           envFrom:
             - configMapRef:
-                name: aps-config            # hosts, pool, cache, fila e regras de alerta
+                name: aps-config                  # host do banco, pool e regras de alerta
           env:
-            # Credenciais: uma a uma do Secret (o .env inteiro está lá, mas a API só recebe o que usa)
+            - name: PATH_BASE                     # prefixo do Ingress, que a API tira antes de rotear
+              value: /thermal-inversion
             - name: POSTGRES_USER
               valueFrom:
-                secretKeyRef: { name: aps-credenciais, key: POSTGRES_USER }
+                secretKeyRef: { name: banco-credenciais, key: POSTGRES_USER }
             - name: POSTGRES_PASSWORD
               valueFrom:
-                secretKeyRef: { name: aps-credenciais, key: POSTGRES_PASSWORD }
-            - name: RABBITMQ_USER
-              valueFrom:
-                secretKeyRef: { name: aps-credenciais, key: RABBITMQ_USER }
-            - name: RABBITMQ_PASSWORD
-              valueFrom:
-                secretKeyRef: { name: aps-credenciais, key: RABBITMQ_PASSWORD }
-            # $(VAR) monta o valor a partir de variáveis já definidas acima (ConfigMap + Secret)
+                secretKeyRef: { name: banco-credenciais, key: POSTGRES_PASSWORD }
+            # $(VAR) monta o valor a partir das variáveis acima (ConfigMap + Secret)
             - name: ConnectionStrings__Default
               value: "Host=$(BANCO_HOST);Port=5432;Database=thermal_inversion;Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD);Maximum Pool Size=$(BANCO_POOL_MAXIMO)"
-            - name: ConnectionStrings__Redis
-              value: "$(CACHE_HOST):6379"
-            - name: ConnectionStrings__RabbitMq
-              value: "amqp://$(RABBITMQ_USER):$(RABBITMQ_PASSWORD)@$(FILA_HOST):5672"
           resources:
             requests: { cpu: 100m, memory: 128Mi }   # reserva; o HPA calcula a % de CPU sobre este valor
             limits:   { cpu: 500m, memory: 384Mi }   # teto: CPU acima disso é estrangulada; memória acima, OOMKilled
@@ -74,22 +64,20 @@ spec:
             httpGet: { path: /health/live, port: http }
             periodSeconds: 2
             failureThreshold: 30
-          # Liveness: só o processo, sem dependências. 3 falhas seguidas -> reinicia o contêiner.
+          # Liveness: só o processo, sem o banco. 3 falhas seguidas -> reinicia o contêiner.
           livenessProbe:
             httpGet: { path: /health/live, port: http }
             periodSeconds: 10
             timeoutSeconds: 2
             failureThreshold: 3
-          # Readiness: banco, cache e fila verificados A CADA chamada. Banco fora -> 503 -> 2 falhas
-          # seguidas -> o pod sai do Service (sem reiniciar). Cache/fila fora -> continua pronto.
+          # Readiness: consulta o banco a cada chamada. 2 falhas seguidas -> o pod sai do Service (sem reiniciar).
           readinessProbe:
             httpGet: { path: /health/ready, port: http }
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 2
-          # Encerramento gracioso: ao receber a ordem de parar, o pod espera 5 s antes do SIGTERM.
-          # Nesse tempo o Service e o gateway tiram o pod da lista de destinos, e nenhuma requisição
-          # nova chega a um processo que está fechando (o 504 do rolling update da Aula Prática 3).
+          # Encerramento gracioso: o pod espera 5 s antes de receber o SIGTERM. Nesse tempo o Service e o
+          # gateway tiram o pod da lista de destinos e nenhuma requisição nova chega a um processo fechando.
           lifecycle:
             preStop:
               sleep:
@@ -100,11 +88,9 @@ kind: Service
 metadata:
   name: thermal-inversion-api
   namespace: aps
-  labels:
-    app: thermal-inversion-api
 spec:
   selector:
-    app: thermal-inversion-api               # manda tráfego para todo pod com este rótulo que esteja PRONTO
+    app: thermal-inversion-api              # manda tráfego para todo pod com este rótulo que esteja PRONTO
   ports:
     - name: http
       port: 80

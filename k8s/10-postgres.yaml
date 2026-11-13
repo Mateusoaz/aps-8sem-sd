@@ -2,15 +2,13 @@
 # Um único servidor com três bancos (air_quality, flooding, thermal_inversion), um por API.
 # As APIs criam o próprio banco e as tabelas ao subir (DatabaseInitializer).
 #
-# Service headless (clusterIP: None): nome DNS fixo "postgres", sem balanceamento. É o mesmo nome
-# usado no Compose, então a string de conexão não muda entre os dois ambientes.
+# Service headless (clusterIP: None): nome DNS fixo "postgres", o mesmo do Compose.
+# Não tem regra no Ingress: só é alcançado de dentro do cluster.
 apiVersion: v1
 kind: Service
 metadata:
   name: postgres
   namespace: aps
-  labels:
-    app: postgres
 spec:
   clusterIP: None
   selector:
@@ -34,23 +32,21 @@ spec:
     metadata:
       labels:
         app: postgres
-        tier: dados
     spec:
       containers:
         - name: postgres
           image: postgres:16-alpine
-          # Mais conexões que o padrão (100): cada réplica das APIs mantém o seu pool (01-configmap.yaml)
-          args: ["-c", "max_connections=300"]
+          args: ["-c", "max_connections=200"]      # cabe o pool de todas as réplicas (01-configmap.yaml)
           ports:
             - name: postgres
               containerPort: 5432
           env:
             - name: POSTGRES_USER
               valueFrom:
-                secretKeyRef: { name: aps-credenciais, key: POSTGRES_USER }
+                secretKeyRef: { name: banco-credenciais, key: POSTGRES_USER }
             - name: POSTGRES_PASSWORD
               valueFrom:
-                secretKeyRef: { name: aps-credenciais, key: POSTGRES_PASSWORD }
+                secretKeyRef: { name: banco-credenciais, key: POSTGRES_PASSWORD }
           resources:
             requests: { cpu: 250m, memory: 256Mi }
             limits:   { cpu: "2",  memory: 1Gi }
@@ -74,8 +70,8 @@ spec:
               command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\""]
             periodSeconds: 5
             failureThreshold: 2
-  # "Um disco de 1 GiB para cada pod": cria o PVC dados-postgres-0, que sobrevive à exclusão do pod.
-  # No k3d o disco é uma pasta no nó, criada pelo provisionador local-path.
+  # Um disco de 1 GiB para o pod: cria o PVC dados-postgres-0, que sobrevive à exclusão do pod.
+  # No k3d o disco é uma pasta no nó (provisionador local-path), por isso o banco fica preso àquele nó.
   volumeClaimTemplates:
     - metadata:
         name: dados

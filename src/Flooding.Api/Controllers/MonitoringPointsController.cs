@@ -1,6 +1,5 @@
 using Flooding.Api.Data;
 using Flooding.Api.Dtos;
-using Flooding.Api.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,13 +7,13 @@ namespace Flooding.Api.Controllers;
 
 [ApiController]
 [Route(ApiRoutes.Base + "/monitoring-points")]
-public class MonitoringPointsController(FloodingDbContext db, QueryCache cache) : ControllerBase
+public class MonitoringPointsController(FloodingDbContext db) : ControllerBase
 {
-    // GET /api/v1/flooding/monitoring-points/PT-01/latest  ("nível atual por ponto de monitoramento", no cache por TTL segundos)
+    // GET /api/v1/flooding/monitoring-points/PT-01/latest  ("nível atual por ponto de monitoramento")
     [HttpGet("{monitoringPointId}/latest")]
     public async Task<ActionResult<LatestReadingsResponse>> GetLatest(string monitoringPointId, CancellationToken ct)
     {
-        var latest = await cache.GetOrCreateAsync(Response, $"point-latest:{monitoringPointId}", () => QueryLatestAsync(monitoringPointId, ct));
+        var latest = await QueryLatestAsync(monitoringPointId, ct);
         return latest is null ? NotFound() : latest;
     }
 

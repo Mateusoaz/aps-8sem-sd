@@ -1,5 +1,5 @@
-﻿# Constrói as 4 imagens com a mesma tag e as importa nos nós do cluster k3d.
-#   .\scripts\k8s-build.ps1              -> tag 1.1.0 (a dos manifestos)
+﻿# Constrói as 3 imagens das APIs com a mesma tag e as importa nos nós do cluster k3d.
+#   .\scripts\k8s-build.ps1                -> tag 1.1.0 (a dos manifestos)
 #   .\scripts\k8s-build.ps1 -Versao 1.2.0  -> outra versão, para o rolling update:
 #        kubectl set image deployment/air-quality-api -n aps api=aps-sd/air-quality-api:1.2.0
 #
@@ -15,7 +15,6 @@ $imagens = [ordered]@{
     "air-quality-api"       = "src/AirQuality.Api"
     "flooding-api"          = "src/Flooding.Api"
     "thermal-inversion-api" = "src/ThermalInversion.Api"
-    "web-client"            = "src/WebClient"
 }
 
 $tags = @()

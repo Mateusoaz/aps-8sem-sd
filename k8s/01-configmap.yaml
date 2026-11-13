@@ -1,28 +1,19 @@
-# Configuração comum, sem nada sensível (usuários e senhas ficam no Secret "aps-credenciais").
-# Todas as chaves viram variáveis de ambiente das APIs (envFrom). "__" é o separador de seção do .NET:
-# Cache__TtlSeconds chega na aplicação como Cache:TtlSeconds.
+# Configuração comum das três APIs, sem nada sensível (usuário e senha ficam no Secret
+# "banco-credenciais", criado a partir do .env). Todas as chaves viram variáveis de ambiente (envFrom).
+# "__" é o separador de seção do .NET: Alerts__Pm25Limit chega na aplicação como Alerts:Pm25Limit.
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: aps-config
   namespace: aps
 data:
-  # Nomes dos Services: o DNS do cluster resolve cada um para o pod certo
+  # Nome do Service do banco: o DNS do cluster resolve para o pod postgres-0
   BANCO_HOST: "postgres"
-  CACHE_HOST: "redis"
-  FILA_HOST: "rabbitmq"
 
-  # Conexões que cada réplica pode abrir com o Postgres. 3 APIs x até 10 réplicas x 8 = 240,
-  # abaixo do max_connections=300 do banco (10-postgres.yaml).
+  # Máximo de conexões que cada réplica abre com o Postgres. Sem limite, o Npgsql deixa 100 por réplica
+  # e poucas réplicas ocupam todas as vagas do banco. Pior caso: 14 réplicas (10 + 2 + 2) x (8 + 1 da
+  # readiness) = 126, abaixo do max_connections=200 do banco (10-postgres.yaml).
   BANCO_POOL_MAXIMO: "8"
-
-  # Cache: "false" desliga sem recompilar (experimento com x sem cache da Etapa 5)
-  Cache__Enabled: "true"
-  Cache__TtlSeconds: "10"
-
-  # Fila: "false" faz o alerta ser avaliado dentro do POST (síncrono x assíncrono)
-  Queue__Enabled: "true"
-  Queue__Prefetch: "20"
 
   # Regras de alerta
   Alerts__Pm25Limit: "25"
