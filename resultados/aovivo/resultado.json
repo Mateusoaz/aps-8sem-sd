@@ -1,0 +1,95 @@
+{
+  "etapa4": {
+    "resumo": {
+      "vazao_req_s": 416.67,
+      "p95_ms": 78.09,
+      "p50_ms": 6.08,
+      "requisicoes": 6250,
+      "taxa_erro_pct": 0.0,
+      "por_pod": {
+        "air-quality-api-658b8d7597-6j697": 3125,
+        "air-quality-api-658b8d7597-r6rv5": 3125
+      }
+    },
+    "maior": {
+      "inicio": "2026-11-13T00:52:01.279",
+      "inicio_epoch": "1794541921.280",
+      "trabalhador": "4",
+      "trabalhadores_ativos": "8",
+      "fase": "0",
+      "aquecimento": "0",
+      "latencia_ms": "99.88",
+      "status": "201",
+      "x_pod": "air-quality-api-658b8d7597-r6rv5",
+      "x_versao": "1.1.0",
+      "x_cache": "",
+      "erro": "",
+      "hora": "00:52:01"
+    }
+  },
+  "escala": {
+    "antes": 456,
+    "depois": 736,
+    "falhas": 0,
+    "requisicoes": 70403
+  },
+  "pod": {
+    "requisicoes": 24950,
+    "falhas": 0,
+    "por_erro": {},
+    "eventos": [
+      {
+        "evento": "kubectl delete pod air-quality-api-658b8d7597-mxst6",
+        "epoch": 1794542129.2662802,
+        "hora": "00:55:29",
+        "decorrido_s": 20.1
+      }
+    ]
+  },
+  "etapa5-versao-update": {
+    "requisicoes": 32573,
+    "falhas": 0,
+    "por_versao": {
+      "1.1.0": 9840,
+      "1.2.0": 22733
+    },
+    "coexistencia_s": 8,
+    "eventos": [
+      {
+        "evento": "kubectl set image 1.2.0",
+        "epoch": 1794542215.1231852,
+        "hora": "00:56:55",
+        "decorrido_s": 20.0
+      },
+      {
+        "evento": "rollout concluído",
+        "epoch": 1794542227.037417,
+        "hora": "00:57:07",
+        "decorrido_s": 31.9
+      }
+    ]
+  },
+  "etapa5-versao-undo": {
+    "requisicoes": 36179,
+    "falhas": 0,
+    "por_versao": {
+      "1.2.0": 15757,
+      "1.1.0": 20422
+    },
+    "coexistencia_s": 7,
+    "eventos": [
+      {
+        "evento": "kubectl rollout undo",
+        "epoch": 1794542292.665547,
+        "hora": "00:58:12",
+        "decorrido_s": 20.0
+      },
+      {
+        "evento": "rollout concluído",
+        "epoch": 1794542304.158865,
+        "hora": "00:58:24",
+        "decorrido_s": 31.5
+      }
+    ]
+  }
+}

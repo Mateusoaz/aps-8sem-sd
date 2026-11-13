@@ -1,0 +1,50 @@
+{
+  "nome": "etapa5-versao-update",
+  "parametros": {
+    "trabalhadores": 16,
+    "duracao_s": 70,
+    "aquecimento_s": 10,
+    "rampa_s": null,
+    "processos_gerador": 4,
+    "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate"
+  },
+  "inicio": "2026-11-13T00:56:35",
+  "inicio_epoch": 1794542195.118159,
+  "eventos": [
+    {
+      "evento": "kubectl set image 1.2.0",
+      "epoch": 1794542215.1231852,
+      "hora": "00:56:55",
+      "decorrido_s": 20.0
+    },
+    {
+      "evento": "rollout concluído",
+      "epoch": 1794542227.037417,
+      "hora": "00:57:07",
+      "decorrido_s": 31.9
+    }
+  ],
+  "requisicoes": 32573,
+  "falhas": 0,
+  "taxa_erro_pct": 0.0,
+  "vazao_req_s": 542.9,
+  "latencia_media_ms": 29.42,
+  "p50_ms": 11.39,
+  "p95_ms": 87.05,
+  "p99_ms": 96.26,
+  "little_trabalhadores": 16.0,
+  "por_pod": {
+    "air-quality-api-658b8d7597-whhw5": 3212,
+    "air-quality-api-658b8d7597-2mw8l": 3804,
+    "air-quality-api-658b8d7597-zg86q": 2824,
+    "air-quality-api-8f8fb4688-7gm99": 8167,
+    "air-quality-api-8f8fb4688-g65gd": 7586,
+    "air-quality-api-8f8fb4688-hztrr": 6980
+  },
+  "por_versao": {
+    "1.1.0": 9840,
+    "1.2.0": 22733
+  },
+  "por_erro": {},
+  "requisicoes_no_aquecimento": 5573
+}

@@ -1,0 +1,41 @@
+{
+  "nome": "etapa5-escala",
+  "parametros": {
+    "trabalhadores": 64,
+    "duracao_s": 120,
+    "aquecimento_s": 10,
+    "rampa_s": null,
+    "processos_gerador": 4,
+    "url": "http://localhost:8081/air-quality/api/v1/air-quality/particulate"
+  },
+  "inicio": "2026-11-13T00:52:37",
+  "inicio_epoch": 1794541957.271758,
+  "eventos": [
+    {
+      "evento": "kubectl scale --replicas=4",
+      "epoch": 1794541997.2729788,
+      "hora": "00:53:17",
+      "decorrido_s": 40.0
+    }
+  ],
+  "requisicoes": 70403,
+  "falhas": 0,
+  "taxa_erro_pct": 0.0,
+  "vazao_req_s": 640.0,
+  "latencia_media_ms": 99.87,
+  "p50_ms": 89.3,
+  "p95_ms": 280.65,
+  "p99_ms": 400.24,
+  "little_trabalhadores": 63.9,
+  "por_pod": {
+    "air-quality-api-658b8d7597-6j697": 29662,
+    "air-quality-api-658b8d7597-mxst6": 13675,
+    "air-quality-api-658b8d7597-42dpr": 13533,
+    "air-quality-api-658b8d7597-whhw5": 13533
+  },
+  "por_versao": {
+    "1.1.0": 70403
+  },
+  "por_erro": {},
+  "requisicoes_no_aquecimento": 2975
+}

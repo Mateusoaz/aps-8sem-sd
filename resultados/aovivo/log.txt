@@ -1,0 +1,81 @@
+### 00:50:44 Preparação: sem HPA, 2 réplicas de cada API, pods espalhados de novo
+NAME                                    READY   STATUS    RESTARTS        AGE   IP            NODE               NOMINATED NODE   READINESS GATES
+air-quality-api-658b8d7597-6j697        1/1     Running   0               56s   10.42.1.152   k3d-aps-agent-1    <none>           <none>
+air-quality-api-658b8d7597-r6rv5        1/1     Running   0               60s   10.42.2.194   k3d-aps-server-0   <none>           <none>
+flooding-api-5fdf94f8c5-ctcbj           1/1     Running   0               56s   10.42.0.117   k3d-aps-agent-0    <none>           <none>
+flooding-api-5fdf94f8c5-q5wmb           1/1     Running   0               60s   10.42.2.195   k3d-aps-server-0   <none>           <none>
+postgres-0                              1/1     Running   1 (3m33s ago)   22h   10.42.1.151   k3d-aps-agent-1    <none>           <none>
+thermal-inversion-api-96877596d-hk2t9   1/1     Running   0               56s   10.42.1.153   k3d-aps-agent-1    <none>           <none>
+thermal-inversion-api-96877596d-p4qxf   1/1     Running   0               60s   10.42.2.196   k3d-aps-server-0   <none>           <none>
+### 00:51:46 FICHA 4: 2 réplicas, 8 trabalhadores, 20 s
+POST http://localhost:8081/air-quality/api/v1/air-quality/particulate | modo constante | até 8 trabalhadores | 20 s | timeout 10 s
+hora      trab    req/s  erros%       p50       p95       p99  pods
+00:51:47     8    398.1     0.0       6.8      73.6      86.5     2
+00:51:48     8    389.1     0.0       6.6      76.4      82.4     2
+00:51:49     8    377.2     0.0       5.9      83.2      88.8     2
+00:51:50     8    393.9     0.0       6.0      80.9      88.0     2
+00:51:51     8    400.0     0.0       5.9      80.0      83.5     2
+00:51:52     8    348.4     0.0       6.3      85.4      91.0     2
+00:51:53     8    394.6     0.0       5.8      81.1      93.4     2
+00:51:54     8    408.5     0.0       5.9      76.1      86.7     2
+00:51:55     8    463.8     0.0       6.0      71.5      76.7     2
+00:51:56     8    436.2     0.0       6.1      76.4      84.8     2
+00:51:57     8    341.7     0.0       6.0      87.9      95.8     2
+00:51:58     8    397.4     0.0       6.0      80.1      85.4     2
+00:51:59     8    478.5     0.0       6.2      70.6      77.1     2
+00:52:00     8    449.4     0.0       5.8      76.0      84.4     2
+00:52:01     8    385.4     0.0       5.8      80.4      85.0     2
+00:52:02     8    439.6     0.0       6.1      75.6      93.5     2
+00:52:03     8    427.6     0.0       6.4      77.2      83.0     2
+00:52:04     8    453.3     0.0       6.5      72.9      75.5     2
+00:52:05     8    383.6     0.0       6.1      80.4      86.8     2
+00:52:06     8    443.7     0.0       6.6      73.5      76.5     2
+
+Resumo (5 s de aquecimento descartados)
+  requisições: 6250   vazão: 416.67 req/s   erros: 0.0%
+  p50: 6.08 ms   p95: 78.09 ms   p99: 87.49 ms   Lei de Little: 7.99 trabalhadores
+  por pod:    {'air-quality-api-658b8d7597-6j697': 3125, 'air-quality-api-658b8d7597-r6rv5': 3125}
+  por código: {'201': 6250}
+
+Arquivos: resultados\aovivo/etapa4-requisicoes.csv, -serie.csv e -resumo.json
+maior latência: {"inicio": "2026-11-13T00:52:01.279", "inicio_epoch": "1794541921.280", "trabalhador": "4", "trabalhadores_ativos": "8", "fase": "0", "aquecimento": "0", "latencia_ms": "99.88", "status": "201", "x_pod": "air-quality-api-658b8d7597-r6rv5", "x_versao": "1.1.0", "x_cache": "", "erro": "", "hora": "00:52:01"}
+### 00:52:06 FICHA 5.1: 1 -> 4 réplicas, 64 trabalhadores, 120 s, escala aos 40 s
+vazão média: 1 réplica 456 req/s (10-39 s); 4 réplicas 736 req/s (70-117 s)
+NAME                               READY   STATUS    RESTARTS   AGE     IP            NODE               NOMINATED NODE   READINESS GATES
+air-quality-api-658b8d7597-42dpr   1/1     Running   0          81s     10.42.1.154   k3d-aps-agent-1    <none>           <none>
+air-quality-api-658b8d7597-6j697   1/1     Running   0          3m49s   10.42.1.152   k3d-aps-agent-1    <none>           <none>
+air-quality-api-658b8d7597-mxst6   1/1     Running   0          81s     10.42.2.197   k3d-aps-server-0   <none>           <none>
+air-quality-api-658b8d7597-whhw5   1/1     Running   0          81s     10.42.0.118   k3d-aps-agent-0    <none>           <none>
+### 00:54:38 FICHA 5.3: 2 réplicas, 16 trabalhadores, 60 s, kubectl delete pod aos 20 s
+### 00:56:10 FICHA 5.4: 3 réplicas, 16 trabalhadores; set image 1.2.0 e depois rollout undo
+etapa5-versao-update: versões juntas por 8 s; 0 falhas em 32573
+etapa5-versao-undo: versões juntas por 7 s; 0 falhas em 36179
+deployment.apps/air-quality-api 
+REVISION  CHANGE-CAUSE
+24        <none>
+25        <none>
+26        <none>
+27        <none>
+34        <none>
+35        <none>
+41        <none>
+42        <none>
+43        <none>
+45        <none>
+46        <none>
+### 00:59:08 Restaurando o cluster (HPA e manifestos)
+NAME                                         READY   STATUS        RESTARTS      AGE     IP            NODE               NOMINATED NODE   READINESS GATES
+pod/air-quality-api-658b8d7597-s7sfv         1/1     Terminating   0             68s     10.42.1.157   k3d-aps-agent-1    <none>           <none>
+pod/air-quality-api-65b9c9db6d-59qc2         1/1     Running       0             7s      10.42.0.122   k3d-aps-agent-0    <none>           <none>
+pod/air-quality-api-65b9c9db6d-rnr5h         1/1     Running       0             11s     10.42.2.201   k3d-aps-server-0   <none>           <none>
+pod/flooding-api-5fdf94f8c5-ctcbj            1/1     Terminating   0             8m32s   10.42.0.117   k3d-aps-agent-0    <none>           <none>
+pod/flooding-api-79ff9ccb6d-g2ljp            1/1     Running       0             7s      10.42.2.203   k3d-aps-server-0   <none>           <none>
+pod/flooding-api-79ff9ccb6d-kclp2            1/1     Running       0             11s     10.42.1.158   k3d-aps-agent-1    <none>           <none>
+pod/postgres-0                               1/1     Running       1 (11m ago)   22h     10.42.1.151   k3d-aps-agent-1    <none>           <none>
+pod/thermal-inversion-api-779699c7c5-c8l6p   1/1     Running       0             8s      10.42.2.202   k3d-aps-server-0   <none>           <none>
+pod/thermal-inversion-api-779699c7c5-mctcv   1/1     Running       0             11s     10.42.0.121   k3d-aps-agent-0    <none>           <none>
+pod/thermal-inversion-api-96877596d-hk2t9    1/1     Terminating   0             8m32s   10.42.1.153   k3d-aps-agent-1    <none>           <none>
+
+NAME                                                  REFERENCE                    TARGETS              MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/air-quality-api   Deployment/air-quality-api   cpu: <unknown>/50%   2         10        0          13s
+### 00:59:22 fim
